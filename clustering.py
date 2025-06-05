@@ -699,7 +699,6 @@ plt.show()
 
 dbscan = DBSCAN(eps=0.5, min_samples=5)
 
-!pip install kneed
 
 from kneed import KneeLocator
 kneedle = KneeLocator(range(len(distances)), distances, curve="convex", direction="increasing")
