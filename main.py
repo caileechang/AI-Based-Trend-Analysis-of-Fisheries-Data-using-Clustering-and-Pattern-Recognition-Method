@@ -41,14 +41,17 @@ def main():
     st.title("🌊🐟 Fisheries Clustering & Pattern Recognition Dashboard")
 
     df_land, df_vess = load_data()
-
-    # Upload additional yearly CSV
-    st.sidebar.markdown("### 📤 Upload Your CSV file")
-    uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
+    
+        # Upload additional yearly data (Excel only)
+    st.sidebar.markdown("### 📤 Upload Your Data (Excel)")
+    uploaded_file = st.sidebar.file_uploader(
+        "Upload an .xlsx file", 
+        type=["xlsx"]
+    )
     if uploaded_file:
         try:
-            user_df = pd.read_csv(uploaded_file)
-            st.subheader("📈 User Uploaded Yearly Data Preview")
+            user_df = pd.read_excel(uploaded_file, engine="openpyxl")
+            st.subheader("📈 Uploaded Data Preview")
             st.dataframe(user_df.head())
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
