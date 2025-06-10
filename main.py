@@ -137,7 +137,7 @@ def main():
         st.pyplot(fig)
 
 
-    elif plot_option == "2D KMeans Scatter":
+    elif plot_option == "2D K-Means Scatter":
         k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
@@ -148,14 +148,14 @@ def main():
         ax.set_title(f"KMeans Clustering (k={k})")
         st.pyplot(fig)
 
-    elif plot_option == "3D KMeans Clustering":
+    elif plot_option == "3D K-Means Clustering":
         k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
         
         from mpl_toolkits.mplot3d import Axes3D
         
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
-        merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
+        merged_df['Cluster'] = KMeans(n_clusters=k, random_state=42).fit_predict(scaled)
 
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111, projection='3d')
