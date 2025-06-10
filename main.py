@@ -149,8 +149,10 @@ def main():
         st.pyplot(fig)
 
     elif plot_option == "3D KMeans Clustering":
-         k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
+        k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
+        
         from mpl_toolkits.mplot3d import Axes3D
+        
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
         merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
