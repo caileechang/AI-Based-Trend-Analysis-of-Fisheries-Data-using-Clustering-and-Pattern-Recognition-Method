@@ -57,7 +57,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
-       
+        "Yearly FIsh  Cluster Trends",
         
         "2D KMeans Scatter",
         "3D KMeans Clustering",
@@ -102,25 +102,38 @@ def main():
 
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("📊 Total Yearly Fish Landing (Merged Dataset)")
-        # Sidebar: choose k for KMeans
-        k_val = st.sidebar.slider("Select number of clusters (k)", min_value=2, max_value=10, value=5)
-
-    # Prepare features
-        features = merged_df[['Year', 'Total Fish Landing (Tonnes)']]
-        scaler = StandardScaler()
-        scaled_features = scaler.fit_transform(features)
-
-    # Apply KMeans
-        kmeans = KMeans(n_clusters=k_val, random_state=42)
-        merged_df['Cluster'] = kmeans.fit_predict(scaled_features)
-
-    # Plot result
-        fig, ax = plt.subplots(figsize=(10, 5))
-        sns.barplot(data=merged_df, x='Year', y='Total Fish Landing (Tonnes)', hue='Cluster', ax=ax)
-        ax.set_yscale('log')
-        ax.set_title(f'Yearly Fish Landing by Cluster (Log Scale) – k={k_val}')
-        ax.set_xlabel('Year')
-        ax.set_ylabel('Total Fish Landing (Tonnes)')
+    
+    # 1. Aggregate
+        yearly_totals = (
+        merged_df
+        .groupby("Year")["Total Fish Landing (Tonnes)"]
+        .sum()
+        .reset_index()
+    )
+    
+    # 2. Cluster **that** table
+        features = yearly_totals[["Year", "Total Fish Landing (Tonnes)"]]
+        scaler  = StandardScaler()
+        X       = scaler.fit_transform(features)
+    
+    # pick a fixed k (or compute via silhouette if you like)
+        k = 5  
+        yearly_totals["Cluster"] = KMeans(n_clusters=k, random_state=42).fit_predict(X)
+    
+    # 3. Plot one bar per year
+        fig, ax = plt.subplots(figsize=(10,5))
+        sns.barplot(
+        data=yearly_totals,
+        x="Year",
+        y="Total Fish Landing (Tonnes)",
+        hue="Cluster",
+        palette="tab10",
+        ax=ax
+        )
+        ax.set_yscale("log")
+        ax.set_title(f"Yearly Fish Landing by Cluster (Log Scale) – k={k}")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Total Fish Landing (Tonnes)")
         ax.grid(True)
         plt.tight_layout()
         st.pyplot(fig)
