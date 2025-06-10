@@ -43,7 +43,7 @@ def main():
     df_land, df_vess = load_data()
 
     # Upload additional yearly CSV
-    st.sidebar.markdown("### 📤 Upload Your Yearly CSV")
+    st.sidebar.markdown("### 📤 Upload Your CSV file")
     uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
     if uploaded_file:
         try:
