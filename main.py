@@ -38,20 +38,17 @@ def load_data():
 
 def main():
     st.set_page_config(layout='wide')
-    st.title("🌊🐟 Fisheries Clustering & Pattern Recognition Dashboard")
+    st.title("🌊 Fisheries Clustering & Pattern Recognition Dashboard")
 
     df_land, df_vess = load_data()
-    
-        # Upload additional yearly data (Excel only)
-    st.sidebar.markdown("### 📤 Upload Your Data (Excel)")
-    uploaded_file = st.sidebar.file_uploader(
-        "Upload an .xlsx file", 
-        type=["xlsx"]
-    )
+
+    # Upload additional yearly CSV
+    st.sidebar.markdown("### 📤 Upload Your Yearly CSV")
+    uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
     if uploaded_file:
         try:
-            user_df = pd.read_excel(uploaded_file, engine="openpyxl")
-            st.subheader("📈 Uploaded Data Preview")
+            user_df = pd.read_csv(uploaded_file)
+            st.subheader("📈 User Uploaded Yearly Data Preview")
             st.dataframe(user_df.head())
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
@@ -60,6 +57,8 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
+        "Yearly K-Means Cluster Trends",
+        "Yearly Elbow & Silhouette",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
         "DBSCAN Anomaly Detection",
@@ -104,42 +103,42 @@ def main():
 
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("📊 Total Yearly Fish Landing (Merged Dataset)")
-    
-    # 1. Aggregate
-        yearly_totals = (
-        merged_df
-        .groupby("Year")["Total Fish Landing (Tonnes)"]
-        .sum()
-        .reset_index()
-    )
-    
-    # 2. Cluster **that** table
-        features = yearly_totals[["Year", "Total Fish Landing (Tonnes)"]]
-        scaler  = StandardScaler()
-        X       = scaler.fit_transform(features)
-    
-    # pick a fixed k (or compute via silhouette if you like)
-        k = 5  
-        yearly_totals["Cluster"] = KMeans(n_clusters=k, random_state=42).fit_predict(X)
-    
-    # 3. Plot one bar per year
-        fig, ax = plt.subplots(figsize=(10,5))
-        sns.barplot(
-        data=yearly_totals,
-        x="Year",
-        y="Total Fish Landing (Tonnes)",
-        hue="Cluster",
-        palette="tab10",
-        ax=ax
-        )
-        ax.set_yscale("log")
-        ax.set_title(f"Yearly Fish Landing by Cluster (Log Scale) – k={k}")
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Total Fish Landing (Tonnes)")
-        ax.grid(True)
-        plt.tight_layout()
+        yearly_summary = merged_df.groupby('Year')[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
+        st.dataframe(yearly_summary)
+
+    elif plot_option == "Yearly KMeans Cluster Trends":
+        features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+        scaled = StandardScaler().fit_transform(features)
+        merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
+
+        cluster_trends = merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']].mean().reset_index()
+        fig, ax = plt.subplots(figsize=(12, 6))
+        sns.lineplot(data=cluster_trends, x='Year', y='Freshwater (Tonnes)', hue='Cluster', marker='o', ax=ax)
+        ax.set_title("Yearly Freshwater Landing Trends by Cluster")
         st.pyplot(fig)
 
+    elif plot_option == "Yearly Elbow & Silhouette":
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        scaled = StandardScaler().fit_transform(features)
+        ks = range(2, 11)
+        inertia = []
+        silhouette = []
+
+        for k in ks:
+            model = KMeans(n_clusters=k, random_state=42).fit(scaled)
+            inertia.append(model.inertia_)
+            silhouette.append(silhouette_score(scaled, model.labels_))
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        ax1.plot(ks, inertia, marker='o')
+        ax1.set_title("Elbow Method")
+        ax1.set_xlabel("k")
+        ax1.set_ylabel("Inertia")
+        ax2.plot(ks, silhouette, marker='o', color='orange')
+        ax2.set_title("Silhouette Score")
+        ax2.set_xlabel("k")
+        ax2.set_ylabel("Score")
+        st.pyplot(fig)
 
     elif plot_option == "2D KMeans Scatter":
         k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
@@ -153,13 +152,10 @@ def main():
         st.pyplot(fig)
 
     elif plot_option == "3D KMeans Clustering":
-        k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
-        
         from mpl_toolkits.mplot3d import Axes3D
-        
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
-        merged_df['Cluster'] = KMeans(n_clusters=k, random_state=42).fit_predict(scaled)
+        merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
 
         fig = plt.figure(figsize=(10, 6))
         ax = fig.add_subplot(111, projection='3d')
@@ -185,8 +181,8 @@ def main():
         st.pyplot(fig)
 
         st.markdown(f"**Outliers Detected:** {(labels == -1).sum()}")
-        
-     elif plot_option == "Nested Relationship":
+
+    elif plot_option == "Nested Relationship":
         st.subheader("🔗 Nested Relationship between Fish Landing, Vessels & States")
 
         # Example: Boxplot of fish landing by state
@@ -199,6 +195,7 @@ def main():
         st.pyplot(fig)
 
         # Optionally add more nested or multi-variable plots here
+
 
 if __name__ == "__main__":
     main()
