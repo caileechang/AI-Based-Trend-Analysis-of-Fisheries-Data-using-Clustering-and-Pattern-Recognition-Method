@@ -185,6 +185,20 @@ def main():
         st.pyplot(fig)
 
         st.markdown(f"**Outliers Detected:** {(labels == -1).sum()}")
+        
+     elif plot_option == "Nested Relationship":
+        st.subheader("🔗 Nested Relationship between Fish Landing, Vessels & States")
+
+        # Example: Boxplot of fish landing by state
+        fig, ax = plt.subplots(figsize=(12, 6))
+        sns.boxplot(data=merged_df, x='State', y='Total Fish Landing (Tonnes)', hue='Year', ax=ax)
+        ax.set_title("Distribution of Fish Landing by State and Year")
+        ax.set_xlabel("State")
+        ax.set_ylabel("Total Fish Landing (Tonnes)")
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
+
+        # Optionally add more nested or multi-variable plots here
 
 if __name__ == "__main__":
     main()
