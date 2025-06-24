@@ -62,7 +62,8 @@ def main():
         "Yearly Fish Landing Summary",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "DBSCAN Anomaly Detection"
+        "DBSCAN Anomaly Detection",
+        "Nested Relationship"
     ])
 
     def prepare_yearly(df_land, df_vess):
