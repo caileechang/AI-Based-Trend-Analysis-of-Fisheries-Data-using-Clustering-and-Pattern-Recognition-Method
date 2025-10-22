@@ -248,48 +248,60 @@ def main():
         from streamlit_folium import st_folium
         import folium
 
-        geo_df = merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]].mean().reset_index()
+        
+    # --- Prepare dataset ---
+    # Ensure consistent naming
+    merged_df.columns = [c.strip().title() for c in merged_df.columns]  # Normalize capitalization
 
-    state_coords = {
-        "JOHOR": [1.4854, 103.7618],
-        "MELAKA": [2.1896, 102.2501],
-        "NEGERI SEMBILAN": [2.7258, 101.9424],
-        "SELANGOR": [3.0738, 101.5183],
-        "PAHANG": [3.8126, 103.3256],
-        "TERENGGANU": [5.3302, 103.1408],
-        "KELANTAN": [6.1254, 102.2381],
-        "PERAK": [4.5921, 101.0901],
-        "PULAU PINANG": [5.4164, 100.3327],
-        "KEDAH": [6.1184, 100.3685],
-        "PERLIS": [6.4449, 100.2048],
-        "SABAH": [5.9788, 116.0753],
-        "SARAWAK": [1.5533, 110.3592],
-        "LABUAN": [5.2831, 115.2308]
-    }
+    if "State" not in merged_df.columns:
+        st.error("Column 'State' not found in dataset.")
+    else:
+        geo_df = (
+            merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total Number Of Fishing Vessels"]]
+            .mean()
+            .reset_index()
+        )
 
-    # Auto-match subregions to parent state coordinates
-    geo_df['State_Clean'] = geo_df['State'].apply(
-        lambda x: next((state for state in state_coords if state in x.upper()), None)
-    )
-    geo_df['Coords'] = geo_df['State_Clean'].map(state_coords)
-    geo_df = geo_df.dropna(subset=['Coords'])
+        # --- Coordinates for states ---
+        state_coords = {
+            "JOHOR": [1.4854, 103.7618],
+            "MELAKA": [2.1896, 102.2501],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "SELANGOR": [3.0738, 101.5183],
+            "PAHANG": [3.8126, 103.3256],
+            "TERENGGANU": [5.3302, 103.1408],
+            "KELANTAN": [6.1254, 102.2381],
+            "PERAK": [4.5921, 101.0901],
+            "PULAU PINANG": [5.4164, 100.3327],
+            "KEDAH": [6.1184, 100.3685],
+            "PERLIS": [6.4449, 100.2048],
+            "SABAH": [5.9788, 116.0753],
+            "SARAWAK": [1.5533, 110.3592],
+            "LABUAN": [5.2831, 115.2308],
+        }
 
-    m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+        # --- Auto-match subregions ---
+        geo_df["State_Clean"] = geo_df["State"].apply(
+            lambda x: next((s for s in state_coords if s in x.upper()), None)
+        )
+        geo_df["Coords"] = geo_df["State_Clean"].map(state_coords)
+        geo_df = geo_df.dropna(subset=["Coords"])
 
-    for _, row in geo_df.iterrows():
-        folium.CircleMarker(
-            location=row["Coords"],
-            radius=8,
-            color="blue",
-            fill=True,
-            fill_color="cyan",
-            popup=f"<b>{row['State']}</b><br>"
-                  f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                  f"Vessels: {row['Total number of fishing vessels']:.0f}",
-            tooltip=row["State"]
-        ).add_to(m)
+        # --- Draw map ---
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+        for _, row in geo_df.iterrows():
+            folium.CircleMarker(
+                location=row["Coords"],
+                radius=8,
+                color="blue",
+                fill=True,
+                fill_color="cyan",
+                popup=f"<b>{row['State']}</b><br>"
+                      f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                      f"Vessels: {row['Total Number Of Fishing Vessels']:.0f}",
+                tooltip=row["State"],
+            ).add_to(m)
 
-    st_folium(m, width=800, height=500)
-
+        st_folium(m, width=800, height=500)
 if __name__ == "__main__":
     main()
