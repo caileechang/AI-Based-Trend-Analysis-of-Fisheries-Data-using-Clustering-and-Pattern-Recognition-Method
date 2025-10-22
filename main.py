@@ -232,7 +232,7 @@ def main():
         st.markdown(f"**Outliers Detected:** {(labels == -1).sum()}")
 
     elif plot_option == "Nested Relationship":
-        st.subheader("🔗 Nested Relationship between Fish Landing, Vessels & States")
+        st.subheader("Nested Relationship between Fish Landing, Vessels & States")
 
         # Example: Boxplot of fish landing by state
         fig, ax = plt.subplots(figsize=(12, 6))
@@ -243,66 +243,83 @@ def main():
         plt.xticks(rotation=45)
         st.pyplot(fig)
 
-        # Optionally add more nested or multi-variable plots here
 
     elif plot_option == "Geospatial Map":
-        st.subheader("Geospatial Distribution of Fish Landings")
+        st.subheader("🗺️ Geospatial Distribution of Fish Landings by Year and Region")
 
+    # Let user choose year
+    available_years = sorted(merged_df['Year'].unique())
+    selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
 
+    # Filter dataset by selected year
+    geo_df = merged_df[merged_df['Year'] == selected_year].copy()
+
+    # ✅ Manually define coordinates for each region (including subregions)
+    state_coords = {
+        # Johor regions
+        "JOHOR TIMUR / EAST JOHORE": [2.0, 104.1],
+        "JOHOR BARAT / WEST JOHORE": [1.9, 103.3],
+        "JOHOR": [1.4854, 103.7618],
+        # Melaka
+        "MELAKA": [2.1896, 102.2501],
+        # Negeri Sembilan
+        "NEGERI SEMBILAN": [2.7258, 101.9424],
+        # Selangor
+        "SELANGOR": [3.0738, 101.5183],
+        # Pahang
+        "PAHANG": [3.8126, 103.3256],
+        # Terengganu
+        "TERENGGANU": [5.3302, 103.1408],
+        # Kelantan
+        "KELANTAN": [6.1254, 102.2381],
+        # Perak
+        "PERAK": [4.5921, 101.0901],
+        # Pulau Pinang
+        "PULAU PINANG": [5.4164, 100.3327],
+        # Kedah
+        "KEDAH": [6.1184, 100.3685],
+        # Perlis
+        "PERLIS": [6.4449, 100.2048],
+        # Sabah & Sarawak regions
+        "SABAH": [5.9788, 116.0753],
         
-    # --- Prepare dataset ---
-    # Ensure consistent naming
-    merged_df.columns = [c.strip().title() for c in merged_df.columns]  # Normalize capitalization
+        "SARAWAK": [1.5533, 110.3592],
+        # Labuan
+        "LABUAN": [5.2831, 115.2308]
+    }
 
-    if "State" not in merged_df.columns:
-        st.error("Column 'State' not found in dataset.")
-    else:
-        geo_df = (
-            merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total Number Of Fishing Vessels"]]
-            .mean()
-            .reset_index()
-        )
+    # Match exactly by dataset name
+    geo_df['Coords'] = geo_df['State'].map(state_coords)
 
-        # --- Coordinates for states ---
-        state_coords = {
-            "JOHOR": [1.4854, 103.7618],
-            "MELAKA": [2.1896, 102.2501],
-            "NEGERI SEMBILAN": [2.7258, 101.9424],
-            "SELANGOR": [3.0738, 101.5183],
-            "PAHANG": [3.8126, 103.3256],
-            "TERENGGANU": [5.3302, 103.1408],
-            "KELANTAN": [6.1254, 102.2381],
-            "PERAK": [4.5921, 101.0901],
-            "PULAU PINANG": [5.4164, 100.3327],
-            "KEDAH": [6.1184, 100.3685],
-            "PERLIS": [6.4449, 100.2048],
-            "SABAH": [5.9788, 116.0753],
-            "SARAWAK": [1.5533, 110.3592],
-            "LABUAN": [5.2831, 115.2308],
-        }
+    # Drop regions with no coordinates (to avoid map crash)
+    missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
+    if len(missing_coords) > 0:
+        st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
 
-        # --- Auto-match subregions ---
-        geo_df["State_Clean"] = geo_df["State"].apply(
-            lambda x: next((s for s in state_coords if s in x.upper()), None)
-        )
-        geo_df["Coords"] = geo_df["State_Clean"].map(state_coords)
-        geo_df = geo_df.dropna(subset=["Coords"])
+    geo_df = geo_df.dropna(subset=['Coords'])
 
-        # --- Draw map ---
-        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
-        for _, row in geo_df.iterrows():
-            folium.CircleMarker(
-                location=row["Coords"],
-                radius=8,
-                color="blue",
-                fill=True,
-                fill_color="cyan",
-                popup=f"<b>{row['State']}</b><br>"
-                      f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                      f"Vessels: {row['Total Number Of Fishing Vessels']:.0f}",
-                tooltip=row["State"],
-            ).add_to(m)
+    # Create Folium map centered on Malaysia
+    m = folium.Map(location=[4.5, 109.5], zoom_start=6)
 
-        st_folium(m, width=800, height=500)
+    # Add markers for each region
+    for _, row in geo_df.iterrows():
+        folium.CircleMarker(
+            location=row['Coords'],
+            radius=8,
+            color='blue',
+            fill=True,
+            fill_color='cyan',
+            popup=f"<b>{row['State']}</b><br>"
+                  f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                  f"Vessels: {row['Total number of fishing vessels']:.0f}",
+            tooltip=row['State']
+        ).add_to(m)
+
+    # Display map
+    st_folium(m, width=800, height=500)
+
+        # Optionally add more nested or multi-variable plots here
+
+   
 if __name__ == "__main__":
     main()
