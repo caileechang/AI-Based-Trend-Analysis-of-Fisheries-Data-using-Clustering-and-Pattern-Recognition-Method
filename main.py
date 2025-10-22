@@ -38,17 +38,17 @@ def load_data():
 
 def main():
     st.set_page_config(layout='wide')
-    st.title("Fisheries Clustering & Pattern Recognition Dashboard")
+    st.title("🌊 Fisheries Clustering & Pattern Recognition Dashboard")
 
     df_land, df_vess = load_data()
 
     # Upload additional yearly CSV
-    st.sidebar.markdown("### Upload Your Yearly CSV")
+    st.sidebar.markdown("### 📤 Upload Your Yearly CSV")
     uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
     if uploaded_file:
         try:
             user_df = pd.read_csv(uploaded_file)
-            st.subheader("User Uploaded Yearly Data Preview")
+            st.subheader("📈 User Uploaded Yearly Data Preview")
             st.dataframe(user_df.head())
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
@@ -107,6 +107,7 @@ def main():
         yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
         st.dataframe(yearly_summary)
 
+   
 
     # Allow filtering by year
         selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
@@ -114,12 +115,40 @@ def main():
         st.write(f"### Fish Landing by State for {selected_year}")
         st.dataframe(filtered)
 
-    # Optional bar chart
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(data=filtered, x='State', y='Total Fish Landing (Tonnes)', ax=ax)
-        ax.set_title(f"Total Fish Landing by State - {selected_year}")
-        plt.xticks(rotation=45)
+    
+
+     
+# Sort states by total landing for better visual clarity
+        filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
+
+# Make the figure a bit wider to prevent label overlap
+        fig, ax = plt.subplots(figsize=(14, 6))
+
+# Plot the bars
+        sns.barplot(
+        data=filtered_sorted,
+        x='State',
+        y='Total Fish Landing (Tonnes)',
+        order=filtered_sorted['State'],  # ensures labels align with bars
+        palette='Blues_d',
+        ax=ax
+    )
+
+# Title and labels
+        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=15)
+        ax.set_xlabel("State", fontsize=12)
+        ax.set_ylabel("Total Fish Landing (Tonnes)", fontsize=12)
+
+# Rotate and align labels properly
+        plt.xticks(rotation=45, ha='center')  # ha='center' keeps each label under its bar
+
+# Add some spacing at bottom for labels
+        plt.tight_layout()
+
+# Display in Streamlit
         st.pyplot(fig)
+
+
 
 
 
