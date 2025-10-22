@@ -103,14 +103,11 @@ def main():
         st.pyplot(fig)
 
     elif plot_option == "Yearly Fish Landing Summary":
-        st.subheader("📊 Total Yearly Fish Landing by State")
+        st.subheader("Total Yearly Fish Landing by State")
         yearly_summary = merged_df.groupby('Year','State')[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
         st.dataframe(yearly_summary)
 
-        selected_year = st.selectbox("Select a year to view details:", sorted(yearly_summary['Year'].unique()))
-        filtered =  yearly_summary[yearly_summary['Year'] == selected_year]
-        st.write(f"### Fish Landing by State for {selected_year}")
-        st.dataframe(filtered)
+        
 
     elif plot_option == "Yearly KMeans Cluster Trends":
         features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
