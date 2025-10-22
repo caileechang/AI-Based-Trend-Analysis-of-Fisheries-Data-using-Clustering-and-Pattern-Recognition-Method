@@ -245,65 +245,65 @@ def main():
 
 
     elif plot_option == "Geospatial Map":
-        st.subheader("🗺️ Geospatial Distribution of Fish Landings by Year and Region")
+        st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
 
     # Let user choose year
-    available_years = sorted(merged_df['Year'].unique())
-    selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+        available_years = sorted(merged_df['Year'].unique())
+        selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
 
     # Filter dataset by selected year
-    geo_df = merged_df[merged_df['Year'] == selected_year].copy()
+        geo_df = merged_df[merged_df['Year'] == selected_year].copy()
 
     # ✅ Manually define coordinates for each region (including subregions)
-    state_coords = {
+        state_coords = {
         # Johor regions
-        "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
-        "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
-        "JOHOR": [1.4854, 103.7618],
+            "JOHOR TIMUR / EAST JOHORE": [2.0, 104.1],
+            "JOHOR BARAT / WEST JOHORE": [1.9, 103.3],
+            "JOHOR": [1.4854, 103.7618],
         # Melaka
-        "MELAKA": [2.1896, 102.2501],
+            "MELAKA": [2.1896, 102.2501],
         # Negeri Sembilan
-        "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
         # Selangor
-        "SELANGOR": [3.0738, 101.5183],
+            "SELANGOR": [3.0738, 101.5183],
         # Pahang
-        "PAHANG": [3.8126, 103.3256],
+            "PAHANG": [3.8126, 103.3256],
         # Terengganu
-        "TERENGGANU": [5.3302, 103.1408],
+            "TERENGGANU": [5.3302, 103.1408],
         # Kelantan
-        "KELANTAN": [6.1254, 102.2381],
+            "KELANTAN": [6.1254, 102.2381],
         # Perak
-        "PERAK": [4.5921, 101.0901],
+            "PERAK": [4.5921, 101.0901],
         # Pulau Pinang
-        "PULAU PINANG": [5.4164, 100.3327],
+            "PULAU PINANG": [5.4164, 100.3327],
         # Kedah
-        "KEDAH": [6.1184, 100.3685],
+            "KEDAH": [6.1184, 100.3685],
         # Perlis
-        "PERLIS": [6.4449, 100.2048],
+            "PERLIS": [6.4449, 100.2048],
         # Sabah & Sarawak regions
-        "SABAH": [5.9788, 116.0753],
+            "SABAH": [5.9788, 116.0753],
         
-        "SARAWAK": [1.5533, 110.3592],
+            "SARAWAK": [1.5533, 110.3592],
         # Labuan
-        "W.P. LABUAN": [5.2831, 115.2308]
+            "LABUAN": [5.2831, 115.2308]
     }
 
     # Match exactly by dataset name
-    geo_df['Coords'] = geo_df['State'].map(state_coords)
+        geo_df['Coords'] = geo_df['State'].map(state_coords)
 
     # Drop regions with no coordinates (to avoid map crash)
-    missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
-    if len(missing_coords) > 0:
-        st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
+        missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
+        if len(missing_coords) > 0:
+            st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
 
-    geo_df = geo_df.dropna(subset=['Coords'])
+        geo_df = geo_df.dropna(subset=['Coords'])
 
     # Create Folium map centered on Malaysia
-    m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
 
     # Add markers for each region
-    for _, row in geo_df.iterrows():
-        folium.CircleMarker(
+        for _, row in geo_df.iterrows():
+            folium.CircleMarker(
             location=row['Coords'],
             radius=8,
             color='blue',
