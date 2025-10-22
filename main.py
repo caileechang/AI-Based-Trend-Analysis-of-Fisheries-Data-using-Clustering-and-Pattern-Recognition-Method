@@ -48,7 +48,7 @@ def main():
     if uploaded_file:
         try:
             user_df = pd.read_csv(uploaded_file)
-            st.subheader("📈 User Uploaded Yearly Data Preview")
+            st.subheader("User Uploaded Yearly Data Preview")
             st.dataframe(user_df.head())
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
@@ -103,11 +103,37 @@ def main():
         st.pyplot(fig)
 
     elif plot_option == "Yearly Fish Landing Summary":
-        st.subheader("Total Yearly Fish Landing by State")
+        st.subheader("📊 Total Yearly Fish Landing by State")
         yearly_summary = merged_df.groupby('Year','State')[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
         st.dataframe(yearly_summary)
 
-        
+   
+
+    # Group by both Year and State
+        yearly_summary = (
+        merged_df
+        .groupby(['Year', 'State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']]
+        .sum()
+        .reset_index()
+    )
+
+    # Display complete table
+        st.dataframe(yearly_summary)
+
+    # Allow filtering by year
+        selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
+        filtered = yearly_summary[yearly_summary['Year'] == selected_year]
+        st.write(f"### Fish Landing by State for {selected_year}")
+        st.dataframe(filtered)
+
+    # Optional bar chart
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.barplot(data=filtered, x='State', y='Total Fish Landing (Tonnes)', ax=ax)
+        ax.set_title(f"Total Fish Landing by State - {selected_year}")
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
+
+
 
     elif plot_option == "Yearly KMeans Cluster Trends":
         features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
@@ -252,6 +278,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
 
