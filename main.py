@@ -285,7 +285,7 @@ def main():
         
             "SARAWAK": [1.5533, 110.3592],
         # Labuan
-            "LABUAN": [5.2831, 115.2308]
+            "w.P. LABUAN": [5.2831, 115.2308]
     }
 
     # Match exactly by dataset name
