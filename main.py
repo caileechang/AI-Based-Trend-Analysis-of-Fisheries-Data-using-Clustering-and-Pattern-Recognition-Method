@@ -38,7 +38,7 @@ def load_data():
 
 def main():
     st.set_page_config(layout='wide')
-    st.title("🌊 Fisheries Clustering & Pattern Recognition Dashboard")
+    st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
     df_land, df_vess = load_data()
 
@@ -103,8 +103,8 @@ def main():
         st.pyplot(fig)
 
     elif plot_option == "Yearly Fish Landing Summary":
-        st.subheader("📊 Total Yearly Fish Landing by State")
-        yearly_summary = merged_df.groupby('Year','State')[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
+        st.subheader("Total Yearly Fish Landing by State")
+        yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
         st.dataframe(yearly_summary)
 
    
