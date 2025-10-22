@@ -257,8 +257,8 @@ def main():
     # ✅ Manually define coordinates for each region (including subregions)
     state_coords = {
         # Johor regions
-        "JOHOR TIMUR / EAST JOHORE": [2.0, 104.1],
-        "JOHOR BARAT / WEST JOHORE": [1.9, 103.3],
+        "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+        "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
         "JOHOR": [1.4854, 103.7618],
         # Melaka
         "MELAKA": [2.1896, 102.2501],
@@ -285,7 +285,7 @@ def main():
         
         "SARAWAK": [1.5533, 110.3592],
         # Labuan
-        "LABUAN": [5.2831, 115.2308]
+        "W.P. LABUAN": [5.2831, 115.2308]
     }
 
     # Match exactly by dataset name
