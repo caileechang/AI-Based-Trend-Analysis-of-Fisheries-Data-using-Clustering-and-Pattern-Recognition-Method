@@ -304,16 +304,16 @@ def main():
     # Add markers for each region
         for _, row in geo_df.iterrows():
             folium.CircleMarker(
-            location=row['Coords'],
-            radius=8,
-            color='blue',
-            fill=True,
-            fill_color='cyan',
-            popup=f"<b>{row['State']}</b><br>"
-                  f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                  f"Vessels: {row['Total number of fishing vessels']:.0f}",
-            tooltip=row['State']
-        ).add_to(m)
+                location=row['Coords'],
+                radius=8,
+                color='blue',
+                fill=True,
+                fill_color='cyan',
+                popup=f"<b>{row['State']}</b><br>"
+                      f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                      f"Vessels: {row['Total number of fishing vessels']:.0f}",
+                tooltip=row['State']
+            ).add_to(m)
 
     # Display map
     st_folium(m, width=800, height=500)
