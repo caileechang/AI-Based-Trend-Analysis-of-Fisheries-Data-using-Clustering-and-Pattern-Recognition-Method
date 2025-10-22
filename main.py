@@ -135,7 +135,7 @@ def main():
 
 
 
-    elif plot_option == "Yearly KMeans Cluster Trends":
+    elif plot_option == "Yearly K-Means Cluster Trends":
         features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
         scaled = StandardScaler().fit_transform(features)
         merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
