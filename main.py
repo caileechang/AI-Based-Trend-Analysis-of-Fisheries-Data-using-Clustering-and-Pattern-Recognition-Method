@@ -7,6 +7,9 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import silhouette_score
+import folium
+from streamlit_folium import st_folium
+
 
 @st.cache_data
 def load_data():
@@ -245,8 +248,6 @@ def main():
     elif plot_option == "Geospatial Map":
         st.subheader("Geospatial Distribution of Fish Landings")
 
-        from streamlit_folium import st_folium
-        import folium
 
         
     # --- Prepare dataset ---
