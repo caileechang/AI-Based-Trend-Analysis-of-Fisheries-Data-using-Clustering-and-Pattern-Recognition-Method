@@ -107,18 +107,6 @@ def main():
         yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
         st.dataframe(yearly_summary)
 
-   
-
-    # Group by both Year and State
-        yearly_summary = (
-        merged_df
-        .groupby(['Year', 'State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']]
-        .sum()
-        .reset_index()
-    )
-
-    # Display complete table
-        st.dataframe(yearly_summary)
 
     # Allow filtering by year
         selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
