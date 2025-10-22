@@ -257,7 +257,7 @@ def main():
     # Manually define coordinates for each region (including subregions)
         state_coords = {
         # Johor regions
-            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+            "JOHOR TIMUR/ EAST JOHORE": [2.0, 104.1],
             "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
             "JOHOR": [1.4854, 103.7618],
         # Melaka
