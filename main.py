@@ -254,7 +254,7 @@ def main():
     # Filter dataset by selected year
         geo_df = merged_df[merged_df['Year'] == selected_year].copy()
 
-    # ✅ Manually define coordinates for each region (including subregions)
+    # Manually define coordinates for each region (including subregions)
         state_coords = {
         # Johor regions
             "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
@@ -288,8 +288,26 @@ def main():
             "W.P. LABUAN": [5.2831, 115.2308]
     }
 
-    # Match exactly by dataset name
-        geo_df['Coords'] = geo_df['State'].map(state_coords)
+ 
+
+        # Clean state names in dataset (remove spaces and unify slashes)
+        geo_df['State_Clean'] = (
+            geo_df['State']
+            .astype(str)
+            .str.upper()
+            .str.replace(r'\s*/\s*', '/', regex=True)  # Normalize " / " to "/"
+            .str.replace(r'\s+', ' ', regex=True)      # Remove multiple spaces
+            .str.strip()
+        )
+
+# Also clean the dictionary keys the same way
+        clean_coords = {
+            k.upper().replace(" / ", "/").replace("  ", " ").strip(): v
+            for k, v in state_coords.items()
+        }
+
+# Now safely map using the cleaned version
+        geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
 
     # Drop regions with no coordinates (to avoid map crash)
         missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
