@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import silhouette_score
 import folium
 from streamlit_folium import st_folium
-
+import re
 
 @st.cache_data
 def load_data():
@@ -300,12 +300,13 @@ def main():
             .str.strip()
         )
 
-# Also clean the dictionary keys the same way
+
+        
+        # Clean coordinate dictionary keys the same way
         clean_coords = {
-            k.upper().replace(" / ", "/").replace("  ", " ").strip(): v
+            re.sub(r'\s*/\s*', '/', k.upper().strip()): v
             for k, v in state_coords.items()
         }
-
 # Now safely map using the cleaned version
         geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
 
