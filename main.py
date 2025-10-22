@@ -38,7 +38,7 @@ def load_data():
 
 def main():
     st.set_page_config(layout='wide')
-    st.title("🌊 Fisheries Clustering & Pattern Recognition Dashboard")
+    st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
     df_land, df_vess = load_data()
 
@@ -62,7 +62,8 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
         "DBSCAN Anomaly Detection",
-        "Nested Relationship"
+        "Nested Relationship",
+        "Geospatial Maps"
     ])
 
     def prepare_yearly(df_land, df_vess):
@@ -196,6 +197,57 @@ def main():
 
         # Optionally add more nested or multi-variable plots here
 
+    elif plot_option == "Geospatial Map":
+        st.subheader("🗺️ Geospatial Distribution of Fish Landings")
+
+        from streamlit_folium import st_folium
+        import folium
+
+        # Prepare data
+        geo_df = merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]].mean().reset_index()
+
+        # Optional: approximate coordinates for each Malaysian state
+        state_coords = {
+            "JOHOR": [1.4854, 103.7618],
+            "MELAKA": [2.1896, 102.2501],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "SELANGOR": [3.0738, 101.5183],
+            "PAHANG": [3.8126, 103.3256],
+            "TERENGGANU": [5.3302, 103.1408],
+            "KELANTAN": [6.1254, 102.2381],
+            "PERAK": [4.5921, 101.0901],
+            "PULAU PINANG": [5.4164, 100.3327],
+            "KEDAH": [6.1184, 100.3685],
+            "PERLIS": [6.4449, 100.2048],
+            "SABAH": [5.9788, 116.0753],
+            "SARAWAK": [1.5533, 110.3592],
+            "LABUAN": [5.2831, 115.2308]
+        }
+
+        # Merge coordinates
+        geo_df["Coords"] = geo_df["State"].map(state_coords)
+        geo_df = geo_df.dropna(subset=["Coords"])
+
+        # Create map centered on Malaysia
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+
+        # Add circle markers
+        for _, row in geo_df.iterrows():
+            folium.CircleMarker(
+                location=row["Coords"],
+                radius=8,
+                color="blue",
+                fill=True,
+                fill_color="cyan",
+                popup=f"<b>{row['State']}</b><br>"
+                      f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                      f"Vessels: {row['Total number of fishing vessels']:.0f}",
+                tooltip=row["State"]
+            ).add_to(m)
+
+        # Display map in Streamlit
+        st_data = st_folium(m, width=800, height=500)
 
 if __name__ == "__main__":
     main()
+
