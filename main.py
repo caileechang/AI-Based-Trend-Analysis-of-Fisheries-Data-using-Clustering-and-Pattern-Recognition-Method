@@ -46,12 +46,12 @@ def main():
     df_land, df_vess = load_data()
 
     # Upload additional yearly CSV
-    st.sidebar.markdown("### 📤 Upload Your Yearly CSV")
+    st.sidebar.markdown("###Upload Your Yearly CSV")
     uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
     if uploaded_file:
         try:
             user_df = pd.read_csv(uploaded_file)
-            st.subheader("📈 User Uploaded Yearly Data Preview")
+            st.subheader("User Uploaded Yearly Data Preview")
             st.dataframe(user_df.head())
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
