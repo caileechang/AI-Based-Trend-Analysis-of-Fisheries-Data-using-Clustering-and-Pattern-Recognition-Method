@@ -63,7 +63,7 @@ def main():
         "3D KMeans Clustering",
         "DBSCAN Anomaly Detection",
         "Nested Relationship",
-        "Geospatial Maps"
+        "Geospatial Map"
     ])
 
     def prepare_yearly(df_land, df_vess):
