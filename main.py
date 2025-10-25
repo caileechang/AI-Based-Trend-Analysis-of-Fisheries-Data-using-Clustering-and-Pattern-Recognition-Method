@@ -67,7 +67,7 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
         "DBSCAN Anomaly Detection",
-         "DBSCAN",
+         "Automatic DBSCAN",
         "Nested Relationship",
         "Geospatial Map"
     ])
@@ -219,7 +219,7 @@ def main():
         st.pyplot(fig)
 
     elif plot_option == "DBSCAN Anomaly Detection":
-        eps = st.sidebar.slider("DBSCAN eps", 0.1, 1.0, 0.5, 0.05)
+        eps = st.sidebar.slider("DBSCAN eps", 0.1, 1.0, 0.1, 0.05)
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
         labels = DBSCAN(eps=eps, min_samples=5).fit_predict(scaled)
@@ -236,61 +236,76 @@ def main():
 
 
       
-    elif plot_option == "DBSCAN":
-        st.subheader("Automatic DBSCAN Clustering & Anomaly Detection")
+    elif plot_option == "Automatic DBSCAN":
+        st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
 
-        # Select features
+        from sklearn.neighbors import NearestNeighbors
+        from kneed import KneeLocator
+
+        # --- Step 1: Select features ---
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
 
-        # === Auto-tune epsilon using k-distance plot ===
-        min_samples = 5  # you can also estimate this later
-        neigh = NearestNeighbors(n_neighbors=min_samples)
+        # --- Step 2: Automatically choose min_samples ---
+        n_features = scaled.shape[1]
+        min_samples_auto = max(3, int(np.log(len(scaled))) + n_features)
+
+        # --- Step 3: Compute k-distances for knee detection ---
+        neigh = NearestNeighbors(n_neighbors=min_samples_auto)
         nbrs = neigh.fit(scaled)
         distances, indices = nbrs.kneighbors(scaled)
+        distances = np.sort(distances[:, min_samples_auto - 1])  # k-distance
 
-        # Take the distance to the k-th nearest neighbor (sorted)
-        distances = np.sort(distances[:, min_samples - 1])
-
-        # Find the "knee" (elbow) point
+        # --- Step 4: Detect knee point (best epsilon) ---
         kneedle = KneeLocator(range(len(distances)), distances, curve='convex', direction='increasing')
         eps_auto = distances[kneedle.knee] if kneedle.knee else np.percentile(distances, 90)
 
         st.markdown(f"**Automatically estimated ε (epsilon):** `{eps_auto:.3f}`")
-
-        # === Optionally auto-adjust min_samples ===
-        # You can make min_samples proportional to log of dataset size
-        min_samples_auto = max(3, int(np.log(len(scaled))))
         st.markdown(f"**Automatically chosen min_samples:** `{min_samples_auto}`")
 
-        # Run DBSCAN with automatically tuned values
-        labels = DBSCAN(eps=eps_auto, min_samples=min_samples_auto).fit_predict(scaled)
+        # --- Step 5: Run DBSCAN ---
+        db = DBSCAN(eps=eps_auto, min_samples=min_samples_auto)
+        labels = db.fit_predict(scaled)
         merged_df['DBSCAN_Label'] = labels
 
-        # Visualize results
+        # --- Step 6: Visualize clustering ---
         fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(x=scaled[:, 1], y=scaled[:, 0], hue=labels, palette='tab10', ax=ax)
-        ax.set_title(f"Automatic DBSCAN Clustering (ε={eps_auto:.3f}, min_samples={min_samples_auto})")
+        sns.scatterplot(
+            x=scaled[:, 1],
+            y=scaled[:, 0],
+            hue=labels,
+            palette='tab10',
+            s=70,
+            ax=ax
+        )
+        ax.set_title(f"Automatic DBSCAN (ε={eps_auto:.3f}, min_samples={min_samples_auto})")
         ax.set_xlabel("Vessels (scaled)")
         ax.set_ylabel("Landings (scaled)")
         st.pyplot(fig)
 
-        # Display outlier count
+        # --- Step 7: Identify and display outliers ---
         n_outliers = (labels == -1).sum()
         st.success(f"Detected {n_outliers} outliers (noise points)")
 
+        if n_outliers > 0:
+            outlier_details = merged_df[merged_df['DBSCAN_Label'] == -1][
+                ['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels']
+            ]
+            st.markdown("### Outlier Details")
+            st.dataframe(outlier_details)
+
 
     elif plot_option == "Nested Relationship":
-        st.subheader("Nested Relationship between Fish Landing, Vessels & States")
+            st.subheader("Nested Relationship between Fish Landing, Vessels & States")
 
-        # Example: Boxplot of fish landing by state
-        fig, ax = plt.subplots(figsize=(12, 6))
-        sns.boxplot(data=merged_df, x='State', y='Total Fish Landing (Tonnes)', hue='Year', ax=ax)
-        ax.set_title("Distribution of Fish Landing by State and Year")
-        ax.set_xlabel("State")
-        ax.set_ylabel("Total Fish Landing (Tonnes)")
-        plt.xticks(rotation=45)
-        st.pyplot(fig)
+            # Example: Boxplot of fish landing by state
+            fig, ax = plt.subplots(figsize=(12, 6))
+            sns.boxplot(data=merged_df, x='State', y='Total Fish Landing (Tonnes)', hue='Year', ax=ax)
+            ax.set_title("Distribution of Fish Landing by State and Year")
+            ax.set_xlabel("State")
+            ax.set_ylabel("Total Fish Landing (Tonnes)")
+            plt.xticks(rotation=45)
+            st.pyplot(fig)
 
 
     elif plot_option == "Geospatial Map":
