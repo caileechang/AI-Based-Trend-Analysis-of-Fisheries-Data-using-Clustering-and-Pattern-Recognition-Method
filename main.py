@@ -291,6 +291,24 @@ def main():
             outlier_details = merged_df[merged_df['DBSCAN_Label'] == -1][
                 ['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels']
             ]
+
+             # --- Step 8: Automatically generate 'Why Flagged' explanation ---
+            avg_landing = merged_df['Total Fish Landing (Tonnes)'].mean()
+            avg_vessels = merged_df['Total number of fishing vessels'].mean()
+
+            def explain_outlier(row):
+                if row['Total Fish Landing (Tonnes)'] > avg_landing and row['Total number of fishing vessels'] < avg_vessels:
+                    return "High landing but few vessels — possible overperformance or data anomaly."
+                elif row['Total Fish Landing (Tonnes)'] < avg_landing and row['Total number of fishing vessels'] > avg_vessels:
+                    return "Low catch per vessel — possible overfishing or resource decline."
+                elif row['Total Fish Landing (Tonnes)'] < avg_landing and row['Total number of fishing vessels'] < avg_vessels:
+                    return "Low overall activity — possibly small fleet or seasonal downtime."
+                elif row['Total Fish Landing (Tonnes)'] > avg_landing and row['Total number of fishing vessels'] > avg_vessels:
+                    return "Unusually high scale — large operations or exceptional yield."
+                else:
+                    return "Atypical pattern compared to national average."
+
+            outlier_details['Why Flagged'] = outlier_details.apply(explain_outlier, axis=1)
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
 
