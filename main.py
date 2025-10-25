@@ -68,8 +68,7 @@ def main():
 
         except Exception as e:
                 st.error(f"Error reading uploaded file: {e}")
-        else:
-            df_land, df_vess = load_data()
+     
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
