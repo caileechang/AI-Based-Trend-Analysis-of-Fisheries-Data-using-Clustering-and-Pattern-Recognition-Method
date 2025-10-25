@@ -52,7 +52,7 @@ def main():
     uploaded_file = st.sidebar.file_uploader("Upload xlsx file only", type=["xlsx"])
     if uploaded_file:
         try:
-            user_df = pd.read_csv(uploaded_file)
+            user_df = pd.read_excel(uploaded_file)
             st.subheader("New dataset uploaded and merged with existing records")
             st.dataframe(user_df.head())
 
