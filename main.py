@@ -58,18 +58,54 @@ def main():
             user_df = pd.read_excel(uploaded_file)
             st.subheader("New dataset uploaded")
             st.dataframe(user_df.head())
+              # --- 🧹 Clean and standardize uploaded dataset ---
+            user_df.columns = user_df.columns.str.strip().str.title()  # Normalize column names
+    
+            # Ensure Month column uses title case
+            user_df['Month'] = user_df['Month'].astype(str).str.strip().str.title()
+    
+            # Convert month names to numbers
+            month_map = {
+                'January': 1, 'Jan': 1,
+                'February': 2, 'Feb': 2,
+                'March': 3, 'Mar': 3,
+                'April': 4, 'Apr': 4,
+                'May': 5,
+                'June': 6, 'Jun': 6,
+                'July': 7, 'Jul': 7,
+                'August': 8, 'Aug': 8,
+                'September': 9, 'Sep': 9, 'Sept': 9,
+                'October': 10, 'Oct': 10,
+                'November': 11, 'Nov': 11,
+                'December': 12, 'Dec': 12
+            }
+            user_df['Month'] = user_df['Month'].map(month_map).fillna(user_df['Month'])
+    
+            # Convert to numeric
+            user_df['Month'] = pd.to_numeric(user_df['Month'], errors='coerce')
+            user_df['Year'] = pd.to_numeric(user_df['Year'], errors='coerce')
+            user_df['Fish Landing (Tonnes)'] = (
+                user_df['Fish Landing (Tonnes)']
+                .astype(str)
+                .str.replace(r'[^\d.]', '', regex=True)
+                .replace('', np.nan)
+                .astype(float)
+            )
+    
+            user_df.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
+    
+            # ✅ Combine (append) with existing data
+            df_land = pd.concat([df_land, user_df], ignore_index=True)
+            df_land.drop_duplicates(subset=['State', 'Year', 'Month'], inplace=True)
+    
+            st.success("✅ Uploaded data successfully merged with existing dataset.")
+    
+        except Exception as e:
+            st.error(f"Error reading uploaded file: {e}")
 
 
              
 
-            # Combine (append) user data with existing
-            df_land = pd.concat([df_land, user_df], ignore_index=True)
-
-            # remove duplicates (based on key columns)
-            df_land.drop_duplicates(subset=['State', 'Year', 'Month'], inplace=True)
-
-        except Exception as e:
-                st.error(f"Error reading uploaded file: {e}")
      
     
     st.sidebar.header("Select Visualization")
