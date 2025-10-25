@@ -49,7 +49,7 @@ def main():
 
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
-    uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv","xlsx"])
+    uploaded_file = st.sidebar.file_uploader("Upload CSV file only", type=["csv"])
     if uploaded_file:
         try:
             user_df = pd.read_csv(uploaded_file)
