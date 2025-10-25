@@ -52,12 +52,25 @@ def main():
     uploaded_file = st.sidebar.file_uploader("Upload CSV file only", type=["csv"])
     if uploaded_file:
         try:
-            user_df = pd.read_csv(uploaded_file)
-            st.subheader("User Uploaded Yearly Data Preview")
+            user_df = pd.read_csv(uploaded_file,encoding='utf-8')
+            st.subheader("New dataset uploaded and merged with existing records")
             st.dataframe(user_df.head())
-        except Exception as e:
-            st.error(f"Error reading uploaded file: {e}")
 
+
+              # Load existing dataset
+            df_land, df_vess = load_data()
+
+            # Combine (append) user data with existing
+            df_land = pd.concat([df_land, user_df], ignore_index=True)
+
+            # remove duplicates (based on key columns)
+            df_land.drop_duplicates(subset=['State', 'Year', 'Month'], inplace=True)
+
+        except Exception as e:
+                st.error(f"Error reading uploaded file: {e}")
+        else:
+            df_land, df_vess = load_data()
+    
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster",
@@ -292,7 +305,7 @@ def main():
                 ['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels']
             ]
 
-             # --- Step 8: Automatically generate 'Why Flagged' explanation ---
+            # --- Step 8: Automatically generate 'Why Flagged' explanation ---
             avg_landing = merged_df['Total Fish Landing (Tonnes)'].mean()
             avg_vessels = merged_df['Total number of fishing vessels'].mean()
 
