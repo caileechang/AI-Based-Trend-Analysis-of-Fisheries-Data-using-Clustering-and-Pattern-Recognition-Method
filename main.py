@@ -48,8 +48,8 @@ def main():
     df_land, df_vess = load_data()
 
     # Upload additional yearly CSV
-    st.sidebar.markdown("### Upload Your Yearly CSV")
-    uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv"])
+    st.sidebar.markdown("### Upload Your Yearly Dataset")
+    uploaded_file = st.sidebar.file_uploader("Upload CSV file", type=["csv","xlsx"])
     if uploaded_file:
         try:
             user_df = pd.read_csv(uploaded_file)
