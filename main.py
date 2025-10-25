@@ -49,16 +49,18 @@ def main():
 
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
-    uploaded_file = st.sidebar.file_uploader("Upload xlsx file only", type=["xlsx"])
+    uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
+     # Load existing dataset
+    df_land, df_vess = load_data()
+
     if uploaded_file:
         try:
             user_df = pd.read_excel(uploaded_file)
-            st.subheader("New dataset uploaded and merged with existing records")
+            st.subheader("New dataset uploaded")
             st.dataframe(user_df.head())
 
 
-              # Load existing dataset
-            df_land, df_vess = load_data()
+             
 
             # Combine (append) user data with existing
             df_land = pd.concat([df_land, user_df], ignore_index=True)
