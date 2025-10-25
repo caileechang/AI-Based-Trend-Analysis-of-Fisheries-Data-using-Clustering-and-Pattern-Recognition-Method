@@ -232,7 +232,7 @@ def main():
         ax.set_ylabel("Landings (scaled)")
         st.pyplot(fig)
 
-        st.markdown(f"**Outliers Detected:** {(labels == 'Outlier').sum()}")
+        st.markdown(f"**Outliers Detected:** {(labels == -1).sum()}")
 
 
       
