@@ -159,7 +159,6 @@ def main():
         st.pyplot(fig)
 
 
-    merged_df = prepare_yearly(df_land, df_vess)
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
         yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
