@@ -40,6 +40,7 @@ def load_data():
     df_vess['Year'] = df_vess['Year'].astype(int)
 
     return df_land, df_vess
+    
  def prepare_yearly(df_land, df_vess):
         land = df_land.copy()
         land['State'] = (
@@ -67,7 +68,7 @@ def load_data():
         #merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
         #return merged
 
-    merged_df = prepare_yearly(df_land, df_vess)
+
 
 def main():
     st.set_page_config(layout='wide')
@@ -133,7 +134,7 @@ def main():
 
    
 
- 
+    merged_df = prepare_yearly(df_land, df_vess)
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
