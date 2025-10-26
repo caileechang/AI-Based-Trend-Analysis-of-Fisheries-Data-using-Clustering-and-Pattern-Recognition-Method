@@ -40,6 +40,34 @@ def load_data():
     df_vess['Year'] = df_vess['Year'].astype(int)
 
     return df_land, df_vess
+ def prepare_yearly(df_land, df_vess):
+        land = df_land.copy()
+        land['State'] = (
+            land['State'].astype(str).str.upper()
+            .str.replace(r'\s*/\s*', '/', regex=True)
+            .str.replace(r'\s+', ' ', regex=True)
+            .str.strip()
+        )
+        aliases = {'JOHOR/JOHORE': 'JOHOR', 'MELAKA/MALACCA': 'MELAKA', 'PULAU PINANG/PENANG': 'PULAU PINANG'}
+        land['State'] = land['State'].replace(aliases)
+        land = land[~land['State'].isin(['', 'NAN', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)'])]
+
+        grouped = land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)'].sum().reset_index()
+        pivot = grouped.pivot_table(index=['State', 'Year'], columns='Type of Fish', values='Fish Landing (Tonnes)', aggfunc='sum').reset_index().fillna(0)
+        pivot.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
+
+        merged = pd.merge(pivot, df_vess[['State', 'Year', 'Total number of fishing vessels']], on=['State', 'Year'], how='outer')
+          # ✅ Fill missing vessel counts and landing values
+        merged['Total number of fishing vessels'] = merged['Total number of fishing vessels'].fillna(0)
+        merged['Freshwater (Tonnes)'] = merged['Freshwater (Tonnes)'].fillna(0)
+        merged['Marine (Tonnes)'] = merged['Marine (Tonnes)'].fillna(0)
+        merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
+
+        return merged
+        #merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
+        #return merged
+
+    merged_df = prepare_yearly(df_land, df_vess)
 
 def main():
     st.set_page_config(layout='wide')
@@ -121,35 +149,7 @@ def main():
         "Geospatial Map"
     ])
 
-    def prepare_yearly(df_land, df_vess):
-        land = df_land.copy()
-        land['State'] = (
-            land['State'].astype(str).str.upper()
-            .str.replace(r'\s*/\s*', '/', regex=True)
-            .str.replace(r'\s+', ' ', regex=True)
-            .str.strip()
-        )
-        aliases = {'JOHOR/JOHORE': 'JOHOR', 'MELAKA/MALACCA': 'MELAKA', 'PULAU PINANG/PENANG': 'PULAU PINANG'}
-        land['State'] = land['State'].replace(aliases)
-        land = land[~land['State'].isin(['', 'NAN', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)'])]
-
-        grouped = land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)'].sum().reset_index()
-        pivot = grouped.pivot_table(index=['State', 'Year'], columns='Type of Fish', values='Fish Landing (Tonnes)', aggfunc='sum').reset_index().fillna(0)
-        pivot.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
-
-        merged = pd.merge(pivot, df_vess[['State', 'Year', 'Total number of fishing vessels']], on=['State', 'Year'], how='outer')
-          # ✅ Fill missing vessel counts and landing values
-        merged['Total number of fishing vessels'] = merged['Total number of fishing vessels'].fillna(0)
-        merged['Freshwater (Tonnes)'] = merged['Freshwater (Tonnes)'].fillna(0)
-        merged['Marine (Tonnes)'] = merged['Marine (Tonnes)'].fillna(0)
-        merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
-
-        return merged
-        #merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
-        #return merged
-
-    merged_df = prepare_yearly(df_land, df_vess)
-
+   
     if plot_option == "Monthly Trends by Cluster":
         monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
         monthly['MonthYear'] = pd.to_datetime(monthly['Year'].astype(str) + '-' + monthly['Month'].astype(str).str.zfill(2))
