@@ -94,11 +94,11 @@ def main():
     
             user_df.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
     
-            # ✅ Combine (append) with existing data
+            # Combine (append) with existing data
             df_land = pd.concat([df_land, user_df], ignore_index=True)
             df_land.drop_duplicates(subset=['State', 'Year', 'Month'], inplace=True)
     
-            st.success("✅ Uploaded data successfully merged with existing dataset.")
+            st.success("Uploaded data successfully merged with existing dataset.")
     
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
