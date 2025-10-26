@@ -105,8 +105,7 @@ def main():
 
    
 
-       # --- Recalculate merged dataset AFTER upload ---
-    merged_df = prepare_yearly(df_land, df_vess)
+ 
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
