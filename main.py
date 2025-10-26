@@ -103,7 +103,7 @@ def main():
             st.error(f"Error reading uploaded file: {e}")
 
 
-    merged_df = prepare_yearly(df_land, df_vess)
+   
 
    
     
@@ -157,6 +157,7 @@ def main():
         plt.xticks(rotation=45)
         st.pyplot(fig)
 
+    merged_df = prepare_yearly(df_land, df_vess)
 
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
