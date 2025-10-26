@@ -104,7 +104,8 @@ def main():
             st.error(f"Error reading uploaded file: {e}")
 
 
-             
+    # === Prepare merged yearly dataset AFTER merging ===
+merged_df = prepare_yearly(df_land, df_vess)         
 
      
     
