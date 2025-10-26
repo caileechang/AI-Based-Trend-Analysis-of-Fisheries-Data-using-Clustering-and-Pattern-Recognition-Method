@@ -138,8 +138,15 @@ def main():
         pivot.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
 
         merged = pd.merge(pivot, df_vess[['State', 'Year', 'Total number of fishing vessels']], on=['State', 'Year'], how='outer')
+          # ✅ Fill missing vessel counts and landing values
+        merged['Total number of fishing vessels'] = merged['Total number of fishing vessels'].fillna(0)
+        merged['Freshwater (Tonnes)'] = merged['Freshwater (Tonnes)'].fillna(0)
+        merged['Marine (Tonnes)'] = merged['Marine (Tonnes)'].fillna(0)
         merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
+
         return merged
+        #merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
+        #return merged
 
     merged_df = prepare_yearly(df_land, df_vess)
 
