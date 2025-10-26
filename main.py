@@ -58,7 +58,7 @@ def main():
             user_df = pd.read_excel(uploaded_file)
             st.subheader("New dataset uploaded")
             st.dataframe(user_df, use_container_width=True, height=500)
-              # --- 🧹 Clean and standardize uploaded dataset ---
+              # ---  Clean and standardize uploaded dataset ---
             user_df.columns = user_df.columns.str.strip().str.title()  # Normalize column names
     
             # Ensure Month column uses title case
@@ -104,10 +104,9 @@ def main():
             st.error(f"Error reading uploaded file: {e}")
 
 
-    # === Prepare merged yearly dataset AFTER merging ===
-    merged_df = prepare_yearly(df_land, df_vess)         
+   
 
-     
+   
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
@@ -159,6 +158,8 @@ def main():
         plt.xticks(rotation=45)
         st.pyplot(fig)
 
+
+    merged_df = prepare_yearly(df_land, df_vess)
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
         yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
