@@ -57,7 +57,7 @@ def main():
         try:
             user_df = pd.read_excel(uploaded_file)
             st.subheader("New dataset uploaded")
-            st.dataframe(user_df.head())
+            st.dataframe(user_df, use_container_width=True, height=500)
               # --- 🧹 Clean and standardize uploaded dataset ---
             user_df.columns = user_df.columns.str.strip().str.title()  # Normalize column names
     
