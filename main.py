@@ -41,7 +41,7 @@ def load_data():
 
     return df_land, df_vess
     
- def prepare_yearly(df_land, df_vess):
+def prepare_yearly(df_land, df_vess):
         land = df_land.copy()
         land['State'] = (
             land['State'].astype(str).str.upper()
