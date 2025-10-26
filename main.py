@@ -170,15 +170,15 @@ def main():
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
         yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
-        st.dataframe(yearly_summary)
+        st.dataframe(yearly_summary, use_container_width=True, height=400)
 
    
 
     # Allow filtering by year
         selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
         filtered = yearly_summary[yearly_summary['Year'] == selected_year]
-        st.write(f"### Fish Landing by State for {selected_year}")
-        st.dataframe(filtered)
+        
+        st.dataframe(filtered, use_container_width=True, height=300)
 
     
 
