@@ -141,7 +141,7 @@ def main():
         merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
         return merged
 
-    #===merged_df = prepare_yearly(df_land, df_vess)===
+    merged_df = prepare_yearly(df_land, df_vess)
 
     if plot_option == "Monthly Trends by Cluster":
         monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
