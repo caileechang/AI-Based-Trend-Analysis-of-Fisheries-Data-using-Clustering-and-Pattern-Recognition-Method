@@ -105,7 +105,7 @@ def main():
 
 
     # === Prepare merged yearly dataset AFTER merging ===
-merged_df = prepare_yearly(df_land, df_vess)         
+    merged_df = prepare_yearly(df_land, df_vess)         
 
      
     
