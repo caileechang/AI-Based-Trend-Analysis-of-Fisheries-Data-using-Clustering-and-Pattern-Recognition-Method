@@ -12,6 +12,7 @@ from streamlit_folium import st_folium
 import re
 from sklearn.neighbors import NearestNeighbors
 from kneed import KneeLocator
+from difflib import get_close_matches
 
 @st.cache_data
 def load_data():
@@ -42,9 +43,7 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
-    import pandas as pd
-    import numpy as np
-    from difflib import get_close_matches
+    
 
     # --- Define valid state names ---
     valid_states = [
@@ -90,17 +89,7 @@ def prepare_yearly(df_land, df_vess):
     # Keep only recognized states
     land = land[land['State'].isin(valid_states)]
 
-    # --- Detect and clean "Type of Fish" column ---
-    type_col = None
-    for col in land.columns:
-        if col.strip().lower() in ['type of fish', 'fish type', 'typeoffish']:
-            type_col = col
-            break
-
-    if type_col is None:
-        raise ValueError("The dataset must contain a 'Type of Fish' column.")
-
-    land[type_col] = land[type_col].astype(str).str.strip().str.title()
+   
 
     # --- Group by and pivot ---
     grouped = land.groupby(['Year', 'State', type_col])['Fish Landing (Tonnes)'].sum().reset_index()
