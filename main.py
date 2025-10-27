@@ -72,23 +72,21 @@ def prepare_yearly(df_land, df_vess):
     land = land[land['State'].isin(valid_states)]
 
      # Handle Fish Type
-    if 'Type of Fish' in land.columns:
-        land['Freshwater (Tonnes)'] = np.where(
-            land['Type of Fish'].str.lower() == 'freshwater',
-            land['Fish Landing (Tonnes)'], 0
-        )
-        land['Marine (Tonnes)'] = np.where(
-            land['Type of Fish'].str.lower() == 'marine',
-            land['Fish Landing (Tonnes)'], 0
-        )
-    else:
-
-        # normalize type column
+   if 'Type of Fish' in land.columns:
+    # normalize type column
     land['Type of Fish'] = land['Type of Fish'].astype(str).str.lower().str.strip()
     
     # assign Freshwater / Marine using contains (works even with extra words/spaces)
-    land['Freshwater (Tonnes)'] = np.where(land['Type of Fish'].str.contains('fresh'), land['Fish Landing (Tonnes)'], 0)
-    land['Marine (Tonnes)'] = np.where(land['Type of Fish'].str.contains('marine|sea|salt'), land['Fish Landing (Tonnes)'], 0)
+    land['Freshwater (Tonnes)'] = np.where(
+        land['Type of Fish'].str.contains('fresh'), land['Fish Landing (Tonnes)'], 0
+    )
+    land['Marine (Tonnes)'] = np.where(
+        land['Type of Fish'].str.contains('marine|sea|salt'), land['Fish Landing (Tonnes)'], 0
+    )
+else:
+    # For older dataset with separate columns
+    land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
+    land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
 
 
     # Aggregate yearly by State
