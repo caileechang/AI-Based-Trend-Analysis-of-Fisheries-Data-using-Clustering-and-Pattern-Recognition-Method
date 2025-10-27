@@ -61,8 +61,7 @@ def prepare_yearly(df_land, df_vess):
         ~land['State'].isin(['', 'NAN', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)', 'JUMLAH'])
     ]
 
-    # --- Normalize column names ---
-    land.columns = [c.strip().title() for c in land.columns]
+ 
 
     # --- Normalize “Type Of Fish” values ---
     land['Type Of Fish'] = land['Type Of Fish'].str.strip().str.title()
@@ -91,10 +90,6 @@ def prepare_yearly(df_land, df_vess):
         .fillna(0)
     )
 
-    pivot.rename(
-        columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'},
-        inplace=True
-    )
 
     # --- Merge with vessels ---
     df_vess['State'] = df_vess['State'].astype(str).str.upper().str.strip()
