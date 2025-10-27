@@ -71,8 +71,8 @@ def prepare_yearly(df_land, df_vess):
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-         # Handle Fish Type
-       if 'Type of Fish' in land.columns:
+     # Handle Fish Type
+    if 'Type of Fish' in land.columns:
         # normalize type column
         land['Type of Fish'] = land['Type of Fish'].astype(str).str.lower().str.strip()
         
@@ -563,5 +563,6 @@ def main():
    
 if __name__ == "__main__":
     main()
+
 
 
