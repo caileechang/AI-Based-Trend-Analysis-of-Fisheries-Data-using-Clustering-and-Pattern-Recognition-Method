@@ -42,13 +42,7 @@ def load_data():
 
     return df_land, df_vess
     
-import pandas as pd
-import numpy as np
-from difflib import get_close_matches
-import calendar
-import re
-
- def prepare_yearly(df_land, df_vess):
+def prepare_yearly(df_land, df_vess):
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -79,18 +73,21 @@ import re
 
      # Handle Fish Type
     if 'Type of Fish' in land.columns:
+        # normalize type column
+        land['Type of Fish'] = land['Type of Fish'].astype(str).str.lower().str.strip()
+        
+        # assign Freshwater / Marine using contains (works even with extra words/spaces)
         land['Freshwater (Tonnes)'] = np.where(
-            land['Type of Fish'].str.lower() == 'freshwater',
-            land['Fish Landing (Tonnes)'], 0
+            land['Type of Fish'].str.contains('fresh'), land['Fish Landing (Tonnes)'], 0
         )
         land['Marine (Tonnes)'] = np.where(
-            land['Type of Fish'].str.lower() == 'marine',
-            land['Fish Landing (Tonnes)'], 0
+            land['Type of Fish'].str.contains('marine|sea|salt'), land['Fish Landing (Tonnes)'], 0
         )
     else:
         # For older dataset with separate columns
         land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
         land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
+
 
     # Aggregate yearly by State
     grouped = land.groupby(['Year', 'State']).agg({
@@ -102,6 +99,7 @@ import re
     grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
     return grouped
 
+    
 def main():
     st.set_page_config(layout='wide')
     st.title("Fisheries Clustering & Pattern Recognition Dashboard")
@@ -165,7 +163,7 @@ def main():
               
 
                 # Merge with base data
-                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month', 'Type of Fish'])
+                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
                 df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
 
                 
