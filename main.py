@@ -20,6 +20,7 @@ def load_data():
     df_land = pd.read_excel(url, sheet_name='Fish Landing')
     df_vess = pd.read_excel(url, sheet_name='Fish Vessels')
 
+    #clean numeric column
     df_land['Fish Landing (Tonnes)'] = (
         df_land['Fish Landing (Tonnes)']
         .astype(str)
@@ -28,6 +29,7 @@ def load_data():
         .astype(float)
     )
     df_land = df_land.dropna(subset=['Fish Landing (Tonnes)']).reset_index(drop=True)
+    # Convert month names to numbers
     df_land['Month'] = df_land['Month'].apply(
         lambda x: list(calendar.month_name).index(x.strip().title()) if isinstance(x, str) else x
     )
@@ -41,6 +43,9 @@ def load_data():
     df_vess['Year'] = df_vess['Year'].astype(int)
 
     return df_land, df_vess
+
+
+
     
 def prepare_yearly(df_land, df_vess):
     valid_states = [
@@ -50,56 +55,45 @@ def prepare_yearly(df_land, df_vess):
         "SARAWAK", "W.P. LABUAN"
     ]
    
-    # --- Clean and standardize base dataframe ---
+    # --- Clean and standardize dataframe ---
     land = df_land.copy()
-    land['State'] = (
-        land['State']
-        .astype(str)
-        .str.upper()
-        .str.replace(r'\s*/\s*', '/', regex=True)
-        .str.replace(r'\s+', ' ', regex=True)
-        .str.strip()
-    )
+    land.columns = land.columns.str.strip().str.title()
+    land['State'] = land['State'].astype(str).str.upper().str.strip()
 
      # --- Fuzzy match states ---
     def match_state(state_name):
         if not isinstance(state_name, str) or state_name.strip() == "":
             return np.nan
-        matches = get_close_matches(state_name.upper(), valid_states, n=1, cutoff=0.6)
+        matches = get_close_matches(state_name.upper(), valid_states, n=1, cutoff=0.5)
         return matches[0] if matches else np.nan
 
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
      # Handle Fish Type
-    if 'Type of Fish' in land.columns:
-        # normalize type column
-        land['Type of Fish'] = land['Type of Fish'].astype(str).str.lower().str.strip()
-        
-        # assign Freshwater / Marine using contains (works even with extra words/spaces)
+    if 'Type Of Fish' in land.columns:
+        land['Type Of Fish'] = land['Type Of Fish'].astype(str).str.lower().str.strip()
         land['Freshwater (Tonnes)'] = np.where(
-            land['Type of Fish'].str.contains('fresh', case=False, regex=True), 
+            land['Type Of Fish'].str.contains('fresh', case=False, regex=True),
             land['Fish Landing (Tonnes)'], 0
         )
         land['Marine (Tonnes)'] = np.where(
-            land['Type of Fish'].str.contains('marine|sea|salt', case=False, regex=True), 
+            land['Type Of Fish'].str.contains('marine|sea|salt', case=False, regex=True),
             land['Fish Landing (Tonnes)'], 0
         )
-
     else:
-        # For older dataset with separate columns
+        # For older datasets
         land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
         land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
 
-
-    # Aggregate yearly by State
-    grouped = land.groupby(['Year', 'State']).agg({
-        'Freshwater (Tonnes)': 'sum',
-        'Marine (Tonnes)': 'sum'
-    }).reset_index()
-
+     # --- Group by Year and State ---
+    grouped = (
+        land.groupby(['Year', 'State'])
+        .agg({'Freshwater (Tonnes)': 'sum', 'Marine (Tonnes)': 'sum'})
+        .reset_index()
+    )
     grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
-    grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
+
     return grouped
 
     
@@ -120,74 +114,55 @@ def main():
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
   
-    
-
     if uploaded_file:
         try:
             # Try to read both sheets safely
             excel_data = pd.ExcelFile(uploaded_file)
             sheet_names = [s.lower() for s in excel_data.sheet_names]
     
-            # Check for both expected sheets
             if "fish landing" in sheet_names and "fish vessels" in sheet_names:
                 user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
                 user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
-            else:
-                st.warning("The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
-                user_land, user_vess = None, None
     
-            if user_land is not None:
-                st.subheader("New dataset uploaded")
-                st.dataframe(user_land, use_container_width=True, height=400)
-    
-                # --- Clean uploaded data ---
+                    # Normalize and clean uploaded data
                 user_land.columns = user_land.columns.str.strip().str.title()
+                user_land['State'] = user_land['State'].astype(str).str.upper().str.strip()
+                user_land['Type Of Fish'] = user_land['Type Of Fish'].astype(str).str.lower().str.strip()
                 user_land['Month'] = user_land['Month'].astype(str).str.strip().str.title()
     
-                # Convert month names to numbers
-                month_map = {
-                    'January': 1, 'Jan': 1, 'February': 2, 'Feb': 2, 'March': 3, 'Mar': 3,
-                    'April': 4, 'Apr': 4, 'May': 5, 'June': 6, 'Jun': 6, 'July': 7, 'Jul': 7,
-                    'August': 8, 'Aug': 8, 'September': 9, 'Sep': 9, 'October': 10, 'Oct': 10,
-                    'November': 11, 'Nov': 11, 'December': 12, 'Dec': 12
-                }
+                    # Convert month names to numbers
+                month_map = {month: i for i, month in enumerate(calendar.month_name) if month}
                 user_land['Month'] = user_land['Month'].map(month_map).fillna(user_land['Month'])
                 user_land['Month'] = pd.to_numeric(user_land['Month'], errors='coerce')
                 user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
-                user_land['Fish Landing (Tonnes)'] = (
-                    user_land['Fish Landing (Tonnes)']
-                    .astype(str)
-                    .str.replace(r'[^\d.]', '', regex=True)
-                    .replace('', np.nan)
-                    .astype(float)
-                )
+    
+                 user_land['Fish Landing (Tonnes)'] = (
+                            user_land['Fish Landing (Tonnes)']
+                            .astype(str)
+                            .str.replace(',', '.', regex=False)
+                            .str.replace(r'[^\d.]', '', regex=True)
+                            .replace('', np.nan)
+                            .astype(float)
+                        )
+    
                 user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
-
-              
-
-                # Merge with base data
+    
+                    # Merge datasets
                 df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
                 df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
-
-                
-                # Combine vessel data (from upload if available)
-                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
+    
                 st.success("Uploaded data successfully merged with existing dataset.")
                 st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
-    
+            else:
+                st.warning("The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
-    
-
-   
- 
+        
     merged_df = prepare_yearly(df_land, df_vess)
     st.write("Merged Yearly Fish Landing Data")
-    st.dataframe(merged_df, use_container_width=True, height=300)
+    st.dataframe(merged_df, use_container_width=True, height=350)
 
  
-
-    
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster",
@@ -201,7 +176,6 @@ def main():
         "Nested Relationship",
         "Geospatial Map"
     ])
-
    
     if plot_option == "Monthly Trends by Cluster":
         monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
