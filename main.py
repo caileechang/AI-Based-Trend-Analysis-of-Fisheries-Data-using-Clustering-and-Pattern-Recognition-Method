@@ -148,8 +148,9 @@ def main():
         
     merged_df = prepare_yearly(df_land, df_vess)
 
-    # --- Debug ---
-    st.sidebar.write("📅 Years Available:",[int(y) for y in sorted(merged_df['Year'].unique())])
+    st.sidebar.write("Years found in merged_df:", sorted(merged_df['Year'].dropna().unique()))
+    st.sidebar.write("Sample merged_df tail:", merged_df.tail())
+
 
     
     st.sidebar.header("Select Visualization")
