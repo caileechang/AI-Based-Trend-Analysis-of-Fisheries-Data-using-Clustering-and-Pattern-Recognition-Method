@@ -42,7 +42,7 @@ def load_data():
 
     return df_land, df_vess
     
-def prepare_yearly(df_land, df_vess):
+def prepare_yearly(df_land, df_vess, type_col):
     
 
     # --- Define valid state names ---
@@ -89,7 +89,12 @@ def prepare_yearly(df_land, df_vess):
     # Keep only recognized states
     land = land[land['State'].isin(valid_states)]
 
-   
+   # --- Clean type_col if it exists ---
+    if type_col in land.columns:
+        land[type_col] = land[type_col].astype(str).str.strip().str.title()
+    else:
+        raise ValueError(f"Column '{type_col}' not found in df_land")
+
 
     # --- Group by and pivot ---
     grouped = land.groupby(['Year', 'State', type_col])['Fish Landing (Tonnes)'].sum().reset_index()
