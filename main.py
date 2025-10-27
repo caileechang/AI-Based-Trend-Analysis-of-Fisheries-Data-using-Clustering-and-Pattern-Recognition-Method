@@ -42,7 +42,7 @@ def load_data():
 
     return df_land, df_vess
     
-def prepare_yearly(df_land, df_vess, type_col):
+def prepare_yearly(df_land, df_vess):
     
 
     # --- Define valid state names ---
@@ -181,7 +181,7 @@ def main():
 
    
  
-    merged_df = prepare_yearly(df_land, df_vess,type_col='Type of Fish')
+    merged_df = prepare_yearly(df_land, df_vess)
 
  
 
