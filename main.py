@@ -51,7 +51,20 @@ def prepare_yearly(df_land, df_vess):
         )
         aliases = {'JOHOR/JOHORE': 'JOHOR', 'MELAKA/MALACCA': 'MELAKA', 'PULAU PINANG/PENANG': 'PULAU PINANG'}
         land['State'] = land['State'].replace(aliases)
-        land = land[~land['State'].isin(['', 'NAN', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)'])]
+        land = land[~land['State'].isin(['', 'NAN', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)','JUMLAH'])]
+
+
+        # --- Normalize column names ---
+        land.columns = [c.strip().title() for c in land.columns]
+    
+        # --- Normalize “Type Of Fish” values ---
+        land['Type Of Fish'] = land['Type Of Fish'].str.strip().str.title()
+        land['Type Of Fish'] = land['Type Of Fish'].replace({
+            'Fresh Water': 'Freshwater',
+            'Fresh Water Fish': 'Freshwater',
+            'Marine Fish': 'Marine',
+            'Sea Fish': 'Marine'
+        })
 
         grouped = land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)'].sum().reset_index()
         pivot = grouped.pivot_table(index=['State', 'Year'], columns='Type of Fish', values='Fish Landing (Tonnes)', aggfunc='sum').reset_index().fillna(0)
