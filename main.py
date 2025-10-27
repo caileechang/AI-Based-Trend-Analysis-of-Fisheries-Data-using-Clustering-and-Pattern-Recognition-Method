@@ -54,12 +54,19 @@ def prepare_yearly(df_land, df_vess):
         land = land[~land['State'].isin(['', 'NAN', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)','JUMLAH'])]
 
 
-        # --- Normalize column names ---
-        land.columns = [c.strip().title() for c in land.columns]
+             # --- Detect the correct fish type column name ---
+        fish_col = None
+        for possible in ['Type Of Fish', 'Type of Fish', 'Type_of_Fish']:
+            if possible in land.columns:
+                fish_col = possible
+                break
+        if not fish_col:
+            st.error("❌ The uploaded data must contain a column like 'Type of Fish'.")
+            st.stop()
     
-        # --- Normalize “Type Of Fish” values ---
-        land['Type of Fish'] = land['Type of Fish'].str.strip().str.title()
-        land['Type of Fish'] = land['Type of Fish'].replace({
+        # --- Normalize values in the fish type column ---
+        land[fish_col] = land[fish_col].astype(str).str.strip().str.title()
+        land[fish_col] = land[fish_col].replace({
             'Fresh Water': 'Freshwater',
             'Fresh Water Fish': 'Freshwater',
             'Marine Fish': 'Marine',
