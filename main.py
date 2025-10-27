@@ -58,7 +58,7 @@ def prepare_yearly(df_land, df_vess):
         pivot.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
 
         merged = pd.merge(pivot, df_vess[['State', 'Year', 'Total number of fishing vessels']], on=['State', 'Year'], how='outer')
-          # ✅ Fill missing vessel counts and landing values
+          # Fill missing vessel counts and landing values
         merged['Total number of fishing vessels'] = merged['Total number of fishing vessels'].fillna(0)
         merged['Freshwater (Tonnes)'] = merged['Freshwater (Tonnes)'].fillna(0)
         merged['Marine (Tonnes)'] = merged['Marine (Tonnes)'].fillna(0)
@@ -132,7 +132,9 @@ def main():
             # Combine (append) with existing data
             df_land = pd.concat([df_land, user_df], ignore_index=True)
             df_land.drop_duplicates(subset=['State', 'Year', 'Month'], inplace=True)
-    
+           
+        #  Save merged dataset in session_state
+            st.session_state.merged_land = df_land
             st.success("Uploaded data successfully merged with existing dataset.")
     
         except Exception as e:
