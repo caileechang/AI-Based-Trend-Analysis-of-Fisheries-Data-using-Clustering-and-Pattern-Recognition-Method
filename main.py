@@ -87,8 +87,8 @@ def prepare_yearly(df_land, df_vess):
     land = land[land['State'].isin(valid_states)]
 
     # --- Ensure numeric columns ---
-    land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
-    land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
+    for col in ['Freshwater', 'Marine']:
+    land[col] = pd.to_numeric(land.get(col, 0), errors='coerce').fillna(0)
 
     # --- Aggregate by State and Year ---
     grouped = land.groupby(['Year', 'State']).agg({
