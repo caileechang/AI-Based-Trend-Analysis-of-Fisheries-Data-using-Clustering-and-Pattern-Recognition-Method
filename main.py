@@ -88,80 +88,60 @@ def main():
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
   
     
-    if uploaded_file:
-        try:
-            xls = pd.ExcelFile(uploaded_file)
-            if "Fish Landing" in xls.sheet_names:
-                user_land = pd.read_excel(xls, sheet_name="Fish Landing")
-            else:
-                st.warning("⚠️ No 'Fish Landing' sheet found.")
-                user_land = pd.DataFrame()
-    
-            if "Fish Vessels" in xls.sheet_names:
-                user_vess = pd.read_excel(xls, sheet_name="Fish Vessels")
-            else:
-                st.warning("⚠️ No 'Fish Vessels' sheet found.")
-                user_vess = pd.DataFrame()
+    # --- Upload additional yearly Excel file ---
+st.sidebar.markdown("### Upload Your Yearly Dataset")
+uploaded_file = st.sidebar.file_uploader("Upload Excel file (.xlsx) with both sheets", type=["xlsx"])
 
-            st.subheader("New dataset uploaded successfully ✅")
-            st.write("**Sheets detected:**", xls.sheet_names)
-            st.dataframe(user_land.head(), use_container_width=True, height=250)
-            
-                # --- Clean uploaded fish landing data ---
+if uploaded_file:
+    try:
+        # ✅ Try to read both sheets safely
+        excel_data = pd.ExcelFile(uploaded_file)
+        sheet_names = [s.lower() for s in excel_data.sheet_names]
+
+        # Check for both expected sheets
+        if "fish landing" in sheet_names and "fish vessels" in sheet_names:
+            user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
+            user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
+        else:
+            st.warning("The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
+            user_land, user_vess = None, None
+
+        if user_land is not None:
+            st.subheader("✅ New dataset uploaded")
+            st.dataframe(user_land.head(), use_container_width=True, height=400)
+
+            # --- Clean uploaded data ---
             user_land.columns = user_land.columns.str.strip().str.title()
             user_land['Month'] = user_land['Month'].astype(str).str.strip().str.title()
-       
+
             # Convert month names to numbers
             month_map = {
-                'January': 1, 'Jan': 1,
-                'February': 2, 'Feb': 2,
-                'March': 3, 'Mar': 3,
-                'April': 4, 'Apr': 4,
-                'May': 5,
-                'June': 6, 'Jun': 6,
-                'July': 7, 'Jul': 7,
-                'August': 8, 'Aug': 8,
-                'September': 9, 'Sep': 9, 'Sept': 9,
-                'October': 10, 'Oct': 10,
-                'November': 11, 'Nov': 11,
-                'December': 12, 'Dec': 12
+                'January': 1, 'Jan': 1, 'February': 2, 'Feb': 2, 'March': 3, 'Mar': 3,
+                'April': 4, 'Apr': 4, 'May': 5, 'June': 6, 'Jun': 6, 'July': 7, 'Jul': 7,
+                'August': 8, 'Aug': 8, 'September': 9, 'Sep': 9, 'October': 10, 'Oct': 10,
+                'November': 11, 'Nov': 11, 'December': 12, 'Dec': 12
             }
-            user_df['Month'] = user_df['Month'].map(month_map).fillna(user_df['Month'])
-            # Convert to numeric
-            user_df['Month'] = pd.to_numeric(user_df['Month'], errors='coerce')
-            user_df['Year'] = pd.to_numeric(user_df['Year'], errors='coerce')
-            user_df['Fish Landing (Tonnes)'] = (
-                user_df['Fish Landing (Tonnes)']
+            user_land['Month'] = user_land['Month'].map(month_map).fillna(user_land['Month'])
+            user_land['Month'] = pd.to_numeric(user_land['Month'], errors='coerce')
+            user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
+            user_land['Fish Landing (Tonnes)'] = (
+                user_land['Fish Landing (Tonnes)']
                 .astype(str)
                 .str.replace(r'[^\d.]', '', regex=True)
                 .replace('', np.nan)
                 .astype(float)
             )
-            user_df.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
+            user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
 
-              # --- Clean uploaded vessels data (if available) ---
-            if not user_vess.empty:
-                for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
-                    user_vess[col] = pd.to_numeric(user_vess[col], errors='coerce').fillna(0)
-                user_vess['Total number of fishing vessels'] = (
-                    user_vess['Inboard Powered'] + user_vess['Outboard Powered'] + user_vess['Non-Powered']
-                )
-                user_vess['State'] = user_vess['State'].str.upper().str.strip()
-                user_vess['Year'] = user_vess['Year'].astype(int, errors='ignore')
-                
-            # Combine (append) with existing data
-            df_land = pd.concat([df_land, user_df], ignore_index=True)
-            df_land.drop_duplicates(subset=['State', 'Year', 'Month'], inplace=True)
-           
-            if not user_vess.empty:
-                df_vess = pd.concat([df_vess, user_vess], ignore_index=True)
-                df_vess.drop_duplicates(subset=['State', 'Year'], inplace=True)
+            # ✅ Merge with base data
+            df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
+            df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
 
-            st.success("✅ Uploaded Fish Landing and Vessels data merged successfully.")
+            st.success("✅ Uploaded data successfully merged with existing dataset.")
             st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
-                
-        except Exception as e:
-            st.error(f"Error reading uploaded file: {e}")
+
+    except Exception as e:
+        st.error(f"Error reading uploaded file: {e}")
 
 
    
