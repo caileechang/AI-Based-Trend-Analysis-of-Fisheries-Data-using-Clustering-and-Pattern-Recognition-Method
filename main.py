@@ -42,71 +42,94 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
-    import streamlit as st
+    import pandas as pd
+    import numpy as np
+    from difflib import get_close_matches
 
-    # --- Copy input ---
+    # --- Define valid state names ---
+    valid_states = [
+        "JOHOR TIMUR/EAST JOHORE",
+        "JOHOR BARAT/WEST JOHORE",
+        "JOHOR",
+        "MELAKA",
+        "NEGERI SEMBILAN",
+        "SELANGOR",
+        "PAHANG",
+        "TERENGGANU",
+        "KELANTAN",
+        "PERAK",
+        "PULAU PINANG",
+        "KEDAH",
+        "PERLIS",
+        "SABAH",
+        "SARAWAK",
+        "W.P. LABUAN"
+    ]
+
+    # --- Clean and standardize base dataframe ---
     land = df_land.copy()
-
-    # --- Debugging helper ---
-    st.write("🔍 Columns detected in uploaded Fish Landing data:", list(land.columns))
-
-    # --- Clean and normalize state names ---
     land['State'] = (
-        land['State'].astype(str).str.upper()
+        land['State']
+        .astype(str)
+        .str.upper()
         .str.replace(r'\s*/\s*', '/', regex=True)
         .str.replace(r'\s+', ' ', regex=True)
         .str.strip()
     )
 
-    aliases = {
-        'JOHOR/JOHORE': 'JOHOR',
-        'MELAKA/MALACCA': 'MELAKA',
-        'PULAU PINANG/PENANG': 'PULAU PINANG'
-    }
-    land['State'] = land['State'].replace(aliases)
-    land = land[~land['State'].isin(['', 'NAN', 'JUMLAH',
-                                     'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)'])]
+    # --- Smart fuzzy matching for states ---
+    def match_state(state_name):
+        if not isinstance(state_name, str) or state_name.strip() == "":
+            return np.nan
+        matches = get_close_matches(state_name.upper(), valid_states, n=1, cutoff=0.6)
+        return matches[0] if matches else np.nan
 
-    # --- Try to detect 'Type of Fish' column dynamically ---
-    type_col_candidates = [c for c in land.columns if 'type' in c.lower() and 'fish' in c.lower()]
-    if type_col_candidates:
-        type_col = type_col_candidates[0]
-        st.info(f"✅ Using column '{type_col}' as Type of Fish column.")
-    else:
-        st.error(f"❌ Could not find any 'Type of Fish'-like column. Columns available: {list(land.columns)}")
-        return pd.DataFrame()  # Exit gracefully, empty df
+    # Apply smart matching
+    land['State'] = land['State'].apply(match_state)
 
-    # --- Clean the 'Type of Fish' column ---
-    try:
-        land[type_col] = land[type_col].astype(str).str.strip().str.title()
-    except Exception as e:
-        st.error(f"⚠️ Error cleaning column '{type_col}': {e}")
-        return pd.DataFrame()
+    # Keep only recognized states
+    land = land[land['State'].isin(valid_states)]
 
-    # --- Normalize known naming variations ---
-    land[type_col] = land[type_col].replace({
-        'Fresh Water': 'Freshwater',
-        'Fresh Water Fish': 'Freshwater',
-        'Marine Fish': 'Marine',
-        'Sea Fish': 'Marine'
-    })
+    # --- Detect and clean "Type of Fish" column ---
+    type_col = None
+    for col in land.columns:
+        if col.strip().lower() in ['type of fish', 'fish type', 'typeoffish']:
+            type_col = col
+            break
 
-    # --- Group and pivot ---
+    if type_col is None:
+        raise ValueError("The dataset must contain a 'Type of Fish' column.")
+
+    land[type_col] = land[type_col].astype(str).str.strip().str.title()
+
+    # --- Group by and pivot ---
     grouped = land.groupby(['Year', 'State', type_col])['Fish Landing (Tonnes)'].sum().reset_index()
     pivot = (
-        grouped.pivot_table(index=['State', 'Year'], columns=type_col,
-                            values='Fish Landing (Tonnes)', aggfunc='sum')
+        grouped.pivot_table(
+            index=['State', 'Year'],
+            columns=type_col,
+            values='Fish Landing (Tonnes)',
+            aggfunc='sum'
+        )
         .reset_index()
         .fillna(0)
     )
 
-    # --- Rename columns ---
-    pivot.rename(columns={
-        'Freshwater': 'Freshwater (Tonnes)',
-        'Marine': 'Marine (Tonnes)'
-    }, inplace=True)
+    # --- Rename columns for consistency ---
+    pivot.columns.name = None
+    pivot.rename(
+        columns={
+            'Freshwater': 'Freshwater (Tonnes)',
+            'Marine': 'Marine (Tonnes)'
+        },
+        inplace=True
+    )
 
-    # --- Merge with vessel dataset ---
+    # --- Merge with vessel data ---
+    df_vess = df_vess.copy()
+    df_vess['State'] = df_vess['State'].astype(str).str.upper().str.strip()
+    df_vess['Year'] = pd.to_numeric(df_vess['Year'], errors='coerce')
+
     merged = pd.merge(
         pivot,
         df_vess[['State', 'Year', 'Total number of fishing vessels']],
@@ -114,16 +137,15 @@ def prepare_yearly(df_land, df_vess):
         how='outer'
     )
 
-    # --- Fill missing data and compute totals ---
+    # --- Fill missing and calculate totals ---
     merged['Total number of fishing vessels'] = merged['Total number of fishing vessels'].fillna(0)
     merged['Freshwater (Tonnes)'] = merged.get('Freshwater (Tonnes)', 0)
     merged['Marine (Tonnes)'] = merged.get('Marine (Tonnes)', 0)
-    merged['Total Fish Landing (Tonnes)'] = merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
+    merged['Total Fish Landing (Tonnes)'] = (
+        merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
+    )
 
-    # --- Final Debug Info ---
-    st.success("✅ Yearly data successfully prepared.")
-    st.write("📅 Years found:", sorted(merged['Year'].dropna().unique().tolist()))
-
+    merged = merged.sort_values(['Year', 'State']).reset_index(drop=True)
     return merged
 
 
