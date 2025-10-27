@@ -148,9 +148,7 @@ def main():
         
     merged_df = prepare_yearly(df_land, df_vess)
 
-    st.sidebar.write("Years found in merged_df:", sorted(merged_df['Year'].dropna().unique()))
-    st.sidebar.write("Sample merged_df tail:", merged_df.tail())
-
+ 
 
     
     st.sidebar.header("Select Visualization")
@@ -186,28 +184,79 @@ def main():
 
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
-        yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
+
+        # If user uploaded a new dataset, re-prepare merged_df dynamically
+        if uploaded_file:
+            merged_df = prepare_yearly(df_land, df_vess)
+
+        # --- Summarize yearly totals ---
+        yearly_summary = (
+            merged_df.groupby(['Year', 'State'])[
+                ['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']
+            ]
+            .sum()
+            .reset_index()
+            .sort_values(['Year', 'State'])
+        )
+        #yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
         st.dataframe(yearly_summary, use_container_width=True, height=400)
 
-   
+         # Display summary table
+        st.dataframe(yearly_summary, use_container_width=True, height=400)
+
+    # Dynamically include newly uploaded years in dropdown
+        available_years = sorted([int(y) for y in yearly_summary['Year'].unique()])
+        selected_year = st.selectbox("Select a year to view state-level details:", available_years, index=len(available_years) - 1)
+    
+        # --- Filter and show selected year ---
+        filtered = yearly_summary[yearly_summary['Year'] == selected_year]
+        st.write(f"### Fish Landing by State for {selected_year}")
+        st.dataframe(filtered, use_container_width=True, height=300)
+    
+        # --- Visualize as bar chart ---
+        filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
+        fig, ax = plt.subplots(figsize=(14, 6))
+        sns.barplot(
+            data=filtered_sorted,
+            x='State',
+            y='Total Fish Landing (Tonnes)',
+            order=filtered_sorted['State'],
+            palette='Blues_d',
+            ax=ax
+        )
+    
+        # Labels & design
+        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=15)
+        ax.set_xlabel("State", fontsize=12)
+        ax.set_ylabel("Total Fish Landing (Tonnes)", fontsize=12)
+        plt.xticks(rotation=45, ha='center')
+        plt.tight_layout()
+    
+        # Display bar chart
+        st.pyplot(fig)
+    
+        # Debugging (optional): check available years
+        st.sidebar.write("📅 Years currently in dataset:", available_years)
+       
 
     # Allow filtering by year
-        selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
-        filtered = yearly_summary[yearly_summary['Year'] == selected_year]
+        #selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
+       # filtered = yearly_summary[yearly_summary['Year'] == selected_year]
         
-        st.dataframe(filtered, use_container_width=True, height=300)
+        #st.dataframe(filtered, use_container_width=True, height=300)
 
     
 
      
 # Sort states by total landing for better visual clarity
-        filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
+        #filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
 
 # Make the figure a bit wider to prevent label overlap
-        fig, ax = plt.subplots(figsize=(14, 6))
+       # fig, ax = plt.subplots(figsize=(14, 6))
 
 # Plot the bars
-        sns.barplot(
+"""
+    sns.barplot(
         data=filtered_sorted,
         x='State',
         y='Total Fish Landing (Tonnes)',
@@ -228,7 +277,8 @@ def main():
         plt.tight_layout()
 
 # Display in Streamlit
-        st.pyplot(fig)
+        st.pyplot(fig) 
+"""
 
 
 
