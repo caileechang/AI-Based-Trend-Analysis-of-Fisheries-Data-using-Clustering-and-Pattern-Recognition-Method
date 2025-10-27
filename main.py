@@ -130,12 +130,7 @@ def main():
                 )
                 user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
 
-                         # --- 🔹 Aggregate to yearly totals before merging ---
-                yearly_user = (
-                    user_land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
-                    .sum()
-                    .reset_index()
-                )
+              
 
                 # Merge with base data
                 df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
