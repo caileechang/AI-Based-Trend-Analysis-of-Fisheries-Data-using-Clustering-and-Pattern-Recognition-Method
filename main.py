@@ -74,7 +74,14 @@ def main():
     st.set_page_config(layout='wide')
     st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
-    df_land, df_vess = load_data()
+    #df_land, df_vess = load_data()
+     # --- Load base data only once ---
+    if "base_land" not in st.session_state:
+        st.session_state.base_land, st.session_state.base_vess = load_data()
+
+    df_land = st.session_state.base_land.copy()
+    df_vess = st.session_state.base_vess.copy()
+
 
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
@@ -133,11 +140,14 @@ def main():
 
 
    
-
+     # --- Choose which dataset to use ---
+    if "merged_land" in st.session_state:
+        df_land = st.session_state.merged_land
+        
     merged_df = prepare_yearly(df_land, df_vess)
 
     # --- Debug ---
-    st.sidebar.write("📅 Years Available:", sorted(merged_df['Year'].unique()))
+    st.sidebar.write("Years Available:", sorted(merged_df['Year'].unique()))
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
