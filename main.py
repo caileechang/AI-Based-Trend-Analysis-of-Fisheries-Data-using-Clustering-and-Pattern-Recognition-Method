@@ -124,11 +124,11 @@ def main():
 
     if uploaded_file:
         try:
-            # Read both sheets
+            # Try to read both sheets safely
             excel_data = pd.ExcelFile(uploaded_file)
             sheet_names = [s.lower() for s in excel_data.sheet_names]
     
-            # Ensure both sheets exist
+            # Check for both expected sheets
             if "fish landing" in sheet_names and "fish vessels" in sheet_names:
                 user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
                 user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
@@ -137,63 +137,46 @@ def main():
                 user_land, user_vess = None, None
     
             if user_land is not None:
-                st.subheader("New Dataset Uploaded")
-                st.dataframe(user_land, width="stretch", height=400)
+                st.subheader("New dataset uploaded")
+                st.dataframe(user_land, use_container_width=True, height=400)
     
-                # --- Standardize columns for matching prepare_yearly ---
-                user_land.columns = user_land.columns.str.strip().str.lower()
+                # --- Clean uploaded data ---
+                user_land.columns = user_land.columns.str.strip().str.title()
+                user_land['Month'] = user_land['Month'].astype(str).str.strip().str.title()
     
-                # Normalize key columns
-                user_land['state'] = user_land['state'].astype(str).str.upper().str.strip()
-                if 'type of fish' in user_land.columns:
-                    user_land['type of fish'] = user_land['type of fish'].astype(str).str.lower().str.strip()
-    
-                # Convert month names to numeric values
+                # Convert month names to numbers
                 month_map = {
-                    'january': 1, 'jan': 1, 'february': 2, 'feb': 2, 'march': 3, 'mar': 3,
-                    'april': 4, 'apr': 4, 'may': 5, 'june': 6, 'jun': 6, 'july': 7, 'jul': 7,
-                    'august': 8, 'aug': 8, 'september': 9, 'sep': 9, 'october': 10, 'oct': 10,
-                    'november': 11, 'nov': 11, 'december': 12, 'dec': 12
+                    'January': 1, 'Jan': 1, 'February': 2, 'Feb': 2, 'March': 3, 'Mar': 3,
+                    'April': 4, 'Apr': 4, 'May': 5, 'June': 6, 'Jun': 6, 'July': 7, 'Jul': 7,
+                    'August': 8, 'Aug': 8, 'September': 9, 'Sep': 9, 'October': 10, 'Oct': 10,
+                    'November': 11, 'Nov': 11, 'December': 12, 'Dec': 12
                 }
-                if 'month' in user_land.columns:
-                    user_land['month'] = (
-                        user_land['month']
-                        .astype(str)
-                        .str.strip()
-                        .str.lower()
-                        .map(month_map)
-                        .fillna(user_land['month'])
-                    )
-                    user_land['month'] = pd.to_numeric(user_land['month'], errors='coerce')
-    
-                # Ensure Year column is numeric
-                if 'year' in user_land.columns:
-                    user_land['year'] = pd.to_numeric(user_land['year'], errors='coerce')
-    
-                # Clean numeric Fish Landing column
-                if 'fish landing (tonnes)' in user_land.columns:
-                    user_land['fish landing (tonnes)'] = (
-                        user_land['fish landing (tonnes)']
-                        .astype(str)
-                        .str.replace(',', '.', regex=False)
-                        .str.replace(r'[^\d.\-]', '', regex=True)
-                        .astype(float)
-                        .fillna(0)
-                    )
-    
-                # Drop incomplete rows
-                user_land = user_land.dropna(subset=['year', 'state', 'fish landing (tonnes)'])
-    
-                # Merge with base dataset
-                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['state', 'year', 'month'])
-                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['state', 'year'])
-    
-                st.success("Uploaded data standardized and merged successfully.")
-                st.info(f"Detected uploaded years: {sorted(user_land['year'].dropna().unique().astype(int).tolist())}")
+                user_land['Month'] = user_land['Month'].map(month_map).fillna(user_land['Month'])
+                user_land['Month'] = pd.to_numeric(user_land['Month'], errors='coerce')
+                user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
+                user_land['Fish Landing (Tonnes)'] = (
+                    user_land['Fish Landing (Tonnes)']
+                    .astype(str)
+                    .str.replace(r'[^\d.]', '', regex=True)
+                    .replace('', np.nan)
+                    .astype(float)
+                )
+                user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
+
+              
+
+                # Merge with base data
+                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
+                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
+
+                
+                # Combine vessel data (from upload if available)
+                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
+                st.success("Uploaded data successfully merged with existing dataset.")
+                st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
     
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
-
     
 
    
@@ -579,6 +562,10 @@ def main():
             st_folium(m, width=800, height=500)
 
         # Optionally add more nested or multi-variable plots here
+
+   
+if __name__ == "__main__":
+    main()
 
    
 if __name__ == "__main__":
