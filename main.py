@@ -265,21 +265,6 @@ def main():
         ax=ax
     )
 
-# Title and labels
-        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=15)
-        ax.set_xlabel("State", fontsize=12)
-        ax.set_ylabel("Total Fish Landing (Tonnes)", fontsize=12)
-
-# Rotate and align labels properly
-        plt.xticks(rotation=45, ha='center')  # ha='center' keeps each label under its bar
-
-# Add some spacing at bottom for labels
-        plt.tight_layout()
-
-# Display in Streamlit
-        st.pyplot(fig) 
-"""
-
 
 
 
