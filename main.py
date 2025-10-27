@@ -54,12 +54,9 @@ def prepare_yearly(df_land, df_vess):
     ]
 
     land = df_land.copy()
-
-    # ---------- 1. Normalize column names ----------
-    def norm(s):
-        return re.sub(r'\s+', ' ', str(s).strip().lower())
-
-    land.columns = [norm(c) for c in land.columns]
+     # --- Normalize column names to lowercase for consistency ---
+    land.columns = [re.sub(r'\s+', ' ', str(c).strip().lower()) for c in land.columns]
+  
 
     # ---------- 2. Identify important columns ----------
     def find_col(candidates):
@@ -87,16 +84,10 @@ def prepare_yearly(df_land, df_vess):
             "Year","State","Freshwater (Tonnes)","Marine (Tonnes)","Total Fish Landing (Tonnes)"
         ])
 
+    # --- Clean state names ---
+    land[col_state] = land[col_state].astype(str).str.upper().str.strip()
     # ---------- 4. Clean State Names ----------
-    land[col_state] = (
-        land[col_state]
-        .astype(str)
-        .str.upper()
-        .str.replace(r'\s*/\s*', '/', regex=True)
-        .str.replace(r'\s+', ' ', regex=True)
-        .str.strip()
-    )
-
+    
     def match_state(s):
         if not isinstance(s, str) or not s.strip():
             return np.nan
