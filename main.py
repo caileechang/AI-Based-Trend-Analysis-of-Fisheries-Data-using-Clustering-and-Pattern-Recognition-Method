@@ -203,9 +203,7 @@ def main():
         #yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
         st.dataframe(yearly_summary, use_container_width=True, height=400)
 
-         # Display summary table
-        st.dataframe(yearly_summary, use_container_width=True, height=400)
-
+       
     # Dynamically include newly uploaded years in dropdown
         available_years = sorted([int(y) for y in yearly_summary['Year'].unique()])
         selected_year = st.selectbox("Select a year to view state-level details:", available_years, index=len(available_years) - 1)
