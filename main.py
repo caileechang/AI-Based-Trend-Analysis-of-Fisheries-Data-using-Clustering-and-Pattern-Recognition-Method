@@ -71,23 +71,24 @@ def prepare_yearly(df_land, df_vess):
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-     # Handle Fish Type
-    if 'Type of Fish' in land.columns:
-        land['Freshwater (Tonnes)'] = np.where(
-            land['Type of Fish'].str.lower() == 'freshwater',
-            land['Fish Landing (Tonnes)'], 0
-        )
-        land['Marine (Tonnes)'] = np.where(
-            land['Type of Fish'].str.lower() == 'marine',
-            land['Fish Landing (Tonnes)'], 0
-        )
-    else:
-        # For older dataset with separate columns
-        land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
-        land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
+     # Normalize Fish Type
+    type_map = {
+        'freshwater': 'Freshwater',
+        'fresh water': 'Freshwater',
+        'fresh-water': 'Freshwater',
+        'marine': 'Marine',
+        'sea': 'Marine',
+        'saltwater': 'Marine'
+    }
+
+    land['type_norm'] = land.get('Type of Fish', '').astype(str).str.lower().str.strip()
+    land['type_cat'] = land['type_norm'].map(type_map)
+    land['Fish Landing (Tonnes)'] = pd.to_numeric(land.get('Fish Landing (Tonnes)', 0), errors='coerce').fillna(0)
+    land['Freshwater (Tonnes)'] = np.where(land['type_cat']=='Freshwater', land['Fish Landing (Tonnes)'], 0)
+    land['Marine (Tonnes)']     = np.where(land['type_cat']=='Marine', land['Fish Landing (Tonnes)'], 0)
 
     # Aggregate yearly by State
-    grouped = land.groupby(['Year', 'State']).agg({
+    grouped = land.groupby(['Year', 'State'], dropna=False).agg({
         'Freshwater (Tonnes)': 'sum',
         'Marine (Tonnes)': 'sum'
     }).reset_index()
@@ -95,7 +96,6 @@ def prepare_yearly(df_land, df_vess):
     grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
     grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
     return grouped
-
     
 def main():
     st.set_page_config(layout='wide')
