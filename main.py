@@ -43,28 +43,13 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
-    
-
-    # --- Define valid state names ---
     valid_states = [
-        "JOHOR TIMUR/EAST JOHORE",
-        "JOHOR BARAT/WEST JOHORE",
-        "JOHOR",
-        "MELAKA",
-        "NEGERI SEMBILAN",
-        "SELANGOR",
-        "PAHANG",
-        "TERENGGANU",
-        "KELANTAN",
-        "PERAK",
-        "PULAU PINANG",
-        "KEDAH",
-        "PERLIS",
-        "SABAH",
-        "SARAWAK",
-        "W.P. LABUAN"
+        "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+        "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS", "SABAH",
+        "SARAWAK", "W.P. LABUAN"
     ]
-
+   
     # --- Clean and standardize base dataframe ---
     land = df_land.copy()
     land['State'] = (
@@ -86,9 +71,9 @@ def prepare_yearly(df_land, df_vess):
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-    # --- Ensure numeric columns ---
-    for col in ['Freshwater', 'Marine']:
-    land[col] = pd.to_numeric(land.get(col, 0), errors='coerce').fillna(0)
+          # Ensure numeric columns exist
+    land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
+    land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
 
     # --- Aggregate by State and Year ---
     grouped = land.groupby(['Year', 'State']).agg({
@@ -98,8 +83,6 @@ def prepare_yearly(df_land, df_vess):
 
     # --- Calculate total ---
     grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
-
-    # --- Sort nicely ---
     grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
     return grouped
 
@@ -182,6 +165,8 @@ def main():
    
  
     merged_df = prepare_yearly(df_land, df_vess)
+    st.write("Merged Yearly Fish Landing Data")
+    st.dataframe(merged_df, use_container_width=True, height=300)
 
  
 
