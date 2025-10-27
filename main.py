@@ -136,7 +136,7 @@ def main():
                 user_land['Month'] = pd.to_numeric(user_land['Month'], errors='coerce')
                 user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
     
-                 user_land['Fish Landing (Tonnes)'] = (
+                user_land['Fish Landing (Tonnes)'] = (
                             user_land['Fish Landing (Tonnes)']
                             .astype(str)
                             .str.replace(',', '.', regex=False)
@@ -537,6 +537,9 @@ def main():
 
         # Optionally add more nested or multi-variable plots here
 
+   
+if __name__ == "__main__":
+    main()
    
 if __name__ == "__main__":
     main()
