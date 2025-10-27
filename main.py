@@ -71,28 +71,31 @@ def prepare_yearly(df_land, df_vess):
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-    if 'Freshwater' in land.columns:
-        land['Freshwater (Tonnes)'] = pd.to_numeric(land['Freshwater'], errors='coerce').fillna(0)
+     # Handle Fish Type
+    if 'Type of Fish' in land.columns:
+        land['Freshwater (Tonnes)'] = np.where(
+            land['Type of Fish'].str.lower() == 'freshwater',
+            land['Fish Landing (Tonnes)'], 0
+        )
+        land['Marine (Tonnes)'] = np.where(
+            land['Type of Fish'].str.lower() == 'marine',
+            land['Fish Landing (Tonnes)'], 0
+        )
     else:
-        land['Freshwater (Tonnes)'] = 0
+        # For older dataset with separate columns
+        land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
+        land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
 
-    if 'Marine' in land.columns:
-        land['Marine (Tonnes)'] = pd.to_numeric(land['Marine'], errors='coerce').fillna(0)
-    else:
-        land['Marine (Tonnes)'] = 0
-
- 
-    # --- Aggregate by State and Year ---
+    # Aggregate yearly by State
     grouped = land.groupby(['Year', 'State']).agg({
         'Freshwater (Tonnes)': 'sum',
         'Marine (Tonnes)': 'sum'
     }).reset_index()
 
-    # --- Calculate total ---
     grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
     grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
     return grouped
-
+    
 def main():
     st.set_page_config(layout='wide')
     st.title("Fisheries Clustering & Pattern Recognition Dashboard")
