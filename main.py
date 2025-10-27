@@ -46,61 +46,53 @@ def prepare_yearly(df_land, df_vess):
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
-        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS", "SABAH",
-        "SARAWAK", "W.P. LABUAN"
+        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+        "SABAH", "SARAWAK", "W.P. LABUAN"
     ]
-   
-    # --- Clean and standardize base dataframe ---
-    land = df_land.copy()
-    land['State'] = (
-        land['State']
-        .astype(str)
-        .str.upper()
-        .str.replace(r'\s*/\s*', '/', regex=True)
-        .str.replace(r'\s+', ' ', regex=True)
-        .str.strip()
-    )
 
-     # --- Fuzzy match states ---
+    land = df_land.copy()
+    # Normalize column names to lowercase for consistency
+    land.columns = land.columns.str.strip().str.lower()
+    land['state'] = land['state'].astype(str).str.upper().str.strip()
+
+    # Fuzzy match states
+    from difflib import get_close_matches
     def match_state(state_name):
         if not isinstance(state_name, str) or state_name.strip() == "":
             return np.nan
         matches = get_close_matches(state_name.upper(), valid_states, n=1, cutoff=0.5)
         return matches[0] if matches else np.nan
 
-    #land['State'] = land['State'].apply(match_state)
-    #land = land[land['State'].isin(valid_states)]
-    land['State'] = land['State'].astype(str).str.upper().str.strip()
+    land['state'] = land['state'].apply(match_state)
+    land = land[land['state'].isin(valid_states)]
 
-     # Handle Fish Type
-    if 'Type of Fish' in land.columns:
-        # normalize type column
-        land['Type of Fish'] = land['Type of Fish'].astype(str).str.lower().str.strip()
-        
-        # assign Freshwater / Marine using contains (works even with extra words/spaces)
+    # Handle fish type column dynamically
+    if 'type of fish' in land.columns:
+        land['type of fish'] = land['type of fish'].astype(str).str.lower().str.strip()
+
         land['Freshwater (Tonnes)'] = np.where(
-            land['Type of Fish'].str.contains('fresh', case=False, regex=True), 
-            land['Fish Landing (Tonnes)'], 0
+            land['type of fish'].str.contains('fresh', case=False, regex=True),
+            land['fish landing (tonnes)'], 0
         )
         land['Marine (Tonnes)'] = np.where(
-            land['Type of Fish'].str.contains('marine|sea|salt', case=False, regex=True), 
-            land['Fish Landing (Tonnes)'], 0
+            land['type of fish'].str.contains('marine|sea|salt', case=False, regex=True),
+            land['fish landing (tonnes)'], 0
         )
-
     else:
-        # For older dataset with separate columns
-        land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
-        land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
+        land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('freshwater', 0), errors='coerce').fillna(0)
+        land['Marine (Tonnes)'] = pd.to_numeric(land.get('marine', 0), errors='coerce').fillna(0)
 
+    # Sum monthly to yearly per state
+    grouped = (
+        land.groupby(['year', 'state'])
+        .agg({'Freshwater (Tonnes)': 'sum', 'Marine (Tonnes)': 'sum'})
+        .reset_index()
+    )
 
-    # Aggregate yearly by State
-    grouped = land.groupby(['Year', 'State']).agg({
-        'Freshwater (Tonnes)': 'sum',
-        'Marine (Tonnes)': 'sum'
-    }).reset_index()
+    grouped['Total Fish Landing (Tonnes)'] = (
+        grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
+    )
 
-    grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
-    grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
     return grouped
 
     
