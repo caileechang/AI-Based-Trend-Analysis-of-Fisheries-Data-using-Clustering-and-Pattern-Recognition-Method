@@ -76,72 +76,32 @@ def prepare_yearly(df_land, df_vess, type_col):
         .str.strip()
     )
 
-    # --- Smart fuzzy matching for states ---
+     # --- Fuzzy match states ---
     def match_state(state_name):
         if not isinstance(state_name, str) or state_name.strip() == "":
             return np.nan
         matches = get_close_matches(state_name.upper(), valid_states, n=1, cutoff=0.6)
         return matches[0] if matches else np.nan
 
-    # Apply smart matching
     land['State'] = land['State'].apply(match_state)
-
-    # Keep only recognized states
     land = land[land['State'].isin(valid_states)]
 
-   # --- Clean type_col if it exists ---
-    if type_col in land.columns:
-        land[type_col] = land[type_col].astype(str).str.strip().str.title()
-    else:
-        raise ValueError(f"Column '{type_col}' not found in df_land")
+    # --- Ensure numeric columns ---
+    land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
+    land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
 
+    # --- Aggregate by State and Year ---
+    grouped = land.groupby(['Year', 'State']).agg({
+        'Freshwater (Tonnes)': 'sum',
+        'Marine (Tonnes)': 'sum'
+    }).reset_index()
 
-    # --- Group by and pivot ---
-    grouped = land.groupby(['Year', 'State', type_col])['Fish Landing (Tonnes)'].sum().reset_index()
-    pivot = (
-        grouped.pivot_table(
-            index=['State', 'Year'],
-            columns=type_col,
-            values='Fish Landing (Tonnes)',
-            aggfunc='sum'
-        )
-        .reset_index()
-        .fillna(0)
-    )
+    # --- Calculate total ---
+    grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
 
-    # --- Rename columns for consistency ---
-    pivot.columns.name = None
-    pivot.rename(
-        columns={
-            'Freshwater': 'Freshwater (Tonnes)',
-            'Marine': 'Marine (Tonnes)'
-        },
-        inplace=True
-    )
-
-    # --- Merge with vessel data ---
-    df_vess = df_vess.copy()
-    df_vess['State'] = df_vess['State'].astype(str).str.upper().str.strip()
-    df_vess['Year'] = pd.to_numeric(df_vess['Year'], errors='coerce')
-
-    merged = pd.merge(
-        pivot,
-        df_vess[['State', 'Year', 'Total number of fishing vessels']],
-        on=['State', 'Year'],
-        how='outer'
-    )
-
-    # --- Fill missing and calculate totals ---
-    merged['Total number of fishing vessels'] = merged['Total number of fishing vessels'].fillna(0)
-    merged['Freshwater (Tonnes)'] = merged.get('Freshwater (Tonnes)', 0)
-    merged['Marine (Tonnes)'] = merged.get('Marine (Tonnes)', 0)
-    merged['Total Fish Landing (Tonnes)'] = (
-        merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
-    )
-
-    merged = merged.sort_values(['Year', 'State']).reset_index(drop=True)
-    return merged
-
+    # --- Sort nicely ---
+    grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
+    return grouped
 
 def main():
     st.set_page_config(layout='wide')
