@@ -221,7 +221,7 @@ def main():
 
    
  
-    merged_df = prepare_yearly(df_land, df_vess)
+    merged_df = prepare_yearly(df_land, df_vess,type_col='Type of Fish')
 
  
 
