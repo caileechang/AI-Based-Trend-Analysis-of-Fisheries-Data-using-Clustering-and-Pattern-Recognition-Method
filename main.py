@@ -42,26 +42,27 @@ def load_data():
 
     return df_land, df_vess
     
-def prepare_yearly(df_land, df_vess):
+def prepare_yearly(df_land):
+    # --- Valid states for fuzzy matching ---
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
         "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS", "SABAH",
         "SARAWAK", "W.P. LABUAN"
     ]
-   
-    # --- Clean and standardize base dataframe ---
+
     land = df_land.copy()
+
+    # --- Normalize state names ---
     land['State'] = (
-        land['State']
-        .astype(str)
+        land['State'].astype(str)
         .str.upper()
         .str.replace(r'\s*/\s*', '/', regex=True)
         .str.replace(r'\s+', ' ', regex=True)
         .str.strip()
     )
 
-     # --- Fuzzy match states ---
+    # --- Fuzzy match state names ---
     def match_state(state_name):
         if not isinstance(state_name, str) or state_name.strip() == "":
             return np.nan
@@ -71,29 +72,26 @@ def prepare_yearly(df_land, df_vess):
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-     # Normalize Fish Type
-    type_map = {
-        'freshwater': 'Freshwater',
-        'fresh water': 'Freshwater',
-        'fresh-water': 'Freshwater',
-        'marine': 'Marine',
-        'sea': 'Marine',
-        'saltwater': 'Marine'
-    }
-
-    land['type_norm'] = land.get('Type of Fish', '').astype(str).str.lower().str.strip()
-    land['type_cat'] = land['type_norm'].map(type_map)
+    # --- Normalize Fish Landing column ---
     land['Fish Landing (Tonnes)'] = pd.to_numeric(land.get('Fish Landing (Tonnes)', 0), errors='coerce').fillna(0)
-    land['Freshwater (Tonnes)'] = np.where(land['type_cat']=='Freshwater', land['Fish Landing (Tonnes)'], 0)
-    land['Marine (Tonnes)']     = np.where(land['type_cat']=='Marine', land['Fish Landing (Tonnes)'], 0)
 
-    # Aggregate yearly by State
+    # --- Robust handling of Type of Fish ---
+    land['Type of Fish'] = land.get('Type of Fish', '').astype(str).str.lower().str.strip()
+
+    # If Type of Fish contains "fresh" -> Freshwater
+    land['Freshwater (Tonnes)'] = np.where(land['Type of Fish'].str.contains(r'fresh', regex=True), land['Fish Landing (Tonnes)'], 0)
+
+    # If Type of Fish contains "marine", "sea", or "salt" -> Marine
+    land['Marine (Tonnes)'] = np.where(land['Type of Fish'].str.contains(r'marine|sea|salt', regex=True), land['Fish Landing (Tonnes)'], 0)
+
+    # --- Aggregate yearly by State ---
     grouped = land.groupby(['Year', 'State'], dropna=False).agg({
         'Freshwater (Tonnes)': 'sum',
         'Marine (Tonnes)': 'sum'
     }).reset_index()
 
     grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
+
     grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
     return grouped
     
