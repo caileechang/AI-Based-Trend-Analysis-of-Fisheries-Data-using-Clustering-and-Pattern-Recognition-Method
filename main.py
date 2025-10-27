@@ -43,6 +43,9 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
+    import re
+    from difflib import get_close_matches
+
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -51,48 +54,78 @@ def prepare_yearly(df_land, df_vess):
     ]
 
     land = df_land.copy()
-    # Normalize column names to lowercase for consistency
-    land.columns = land.columns.str.strip().str.lower()
-    land['state'] = land['state'].astype(str).str.upper().str.strip()
 
-    # Fuzzy match states
-    from difflib import get_close_matches
-    def match_state(state_name):
-        if not isinstance(state_name, str) or state_name.strip() == "":
+    # --- Normalize column names (lowercase, single spaces) ---
+    def norm(s): return re.sub(r'\s+', ' ', str(s).strip().lower())
+    land.columns = [norm(c) for c in land.columns]
+
+    # --- Helper: find a column by any of several aliases ---
+    def find_col(candidates):
+        for c in land.columns:
+            for want in candidates:
+                if norm(c) == norm(want):
+                    return c
+        return None
+
+    col_year   = find_col(["year"])
+    col_state  = find_col(["state"])
+    col_month  = find_col(["month"])
+    col_type   = find_col(["type of fish", "fish type", "type"])
+    col_weight = find_col(["fish landing (tonnes)", "fish landing", "landing (tonnes)", "tonnes"])
+
+    if col_year is None or col_state is None or col_weight is None:
+        # Minimal required columns not present
+        return pd.DataFrame(columns=[
+            "Year","State","Freshwater (Tonnes)","Marine (Tonnes)","Total Fish Landing (Tonnes)"
+        ])
+
+    # --- Clean state & numbers ---
+    land[col_state] = land[col_state].astype(str).str.upper().str.strip()
+    land[col_weight] = (
+        land[col_weight].astype(str)
+        .str.replace(',', '.', regex=False)      # 27,68 -> 27.68
+        .str.replace(r'[^\d.\-]', '', regex=True)
+    )
+    land[col_weight] = pd.to_numeric(land[col_weight], errors='coerce').fillna(0.0)
+
+    # --- Fuzzy match states to the valid list ---
+    def match_state(s):
+        if not isinstance(s, str) or not s.strip():
             return np.nan
-        matches = get_close_matches(state_name.upper(), valid_states, n=1, cutoff=0.5)
-        return matches[0] if matches else np.nan
+        m = get_close_matches(s.upper(), valid_states, n=1, cutoff=0.5)
+        return m[0] if m else np.nan
 
-    land['state'] = land['state'].apply(match_state)
-    land = land[land['state'].isin(valid_states)]
+    land[col_state] = land[col_state].apply(match_state)
+    land = land[land[col_state].isin(valid_states)]
 
-    # Handle fish type column dynamically
-    if 'type of fish' in land.columns:
-        land['type of fish'] = land['type of fish'].astype(str).str.lower().str.strip()
-
-        land['Freshwater (Tonnes)'] = np.where(
-            land['type of fish'].str.contains('fresh', case=False, regex=True),
-            land['fish landing (tonnes)'], 0
-        )
-        land['Marine (Tonnes)'] = np.where(
-            land['type of fish'].str.contains('marine|sea|salt', case=False, regex=True),
-            land['fish landing (tonnes)'], 0
-        )
+    # --- Build freshwater/marine columns ---
+    if col_type is not None:
+        # Normalize the type text and split into freshwater/marine buckets
+        t = land[col_type].astype(str).str.lower().str.strip()
+        land['Freshwater (Tonnes)'] = np.where(t.str.contains(r'fresh', regex=True), land[col_weight], 0.0)
+        land['Marine (Tonnes)']     = np.where(t.str.contains(r'marine|sea|salt', regex=True), land[col_weight], 0.0)
     else:
-        land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('freshwater', 0), errors='coerce').fillna(0)
-        land['Marine (Tonnes)'] = pd.to_numeric(land.get('marine', 0), errors='coerce').fillna(0)
+        # Old-format fallback: try existing columns if present
+        fw = find_col(["freshwater", "freshwater (tonnes)"])
+        ma = find_col(["marine", "marine (tonnes)"])
+        land['Freshwater (Tonnes)'] = pd.to_numeric(land[fw], errors='coerce').fillna(0.0) if fw else 0.0
+        land['Marine (Tonnes)']     = pd.to_numeric(land[ma], errors='coerce').fillna(0.0) if ma else 0.0
+        # If still neither found, assume everything in col_weight is untyped; keep totals but zero split
+        if fw is None and ma is None:
+            land['Freshwater (Tonnes)'] = 0.0
+            land['Marine (Tonnes)']     = 0.0
 
-    # Sum monthly to yearly per state
+    # --- Aggregate to yearly totals per state (summing Jan–Dec) ---
     grouped = (
-        land.groupby(['year', 'state'])
-        .agg({'Freshwater (Tonnes)': 'sum', 'Marine (Tonnes)': 'sum'})
+        land.groupby([col_year, col_state], dropna=False)[
+            ['Freshwater (Tonnes)', 'Marine (Tonnes)']
+        ].sum()
         .reset_index()
+        .rename(columns={col_year: 'Year', col_state: 'State'})
+        .sort_values(['Year','State'], kind='stable')
+        .reset_index(drop=True)
     )
-
-    grouped['Total Fish Landing (Tonnes)'] = (
-        grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
-    )
-
+    grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
     return grouped
 
     
