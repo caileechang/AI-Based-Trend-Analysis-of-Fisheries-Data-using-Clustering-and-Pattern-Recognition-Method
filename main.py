@@ -88,9 +88,6 @@ def main():
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
   
     
-    # --- Upload additional yearly Excel file ---
-st.sidebar.markdown("### Upload Your Yearly Dataset")
-uploaded_file = st.sidebar.file_uploader("Upload Excel file (.xlsx) with both sheets", type=["xlsx"])
 
 if uploaded_file:
     try:
