@@ -91,7 +91,7 @@ def main():
 
     if uploaded_file:
         try:
-            # ✅ Try to read both sheets safely
+            # Try to read both sheets safely
             excel_data = pd.ExcelFile(uploaded_file)
             sheet_names = [s.lower() for s in excel_data.sheet_names]
     
@@ -104,8 +104,8 @@ def main():
                 user_land, user_vess = None, None
     
             if user_land is not None:
-                st.subheader("✅ New dataset uploaded")
-                st.dataframe(user_land.head(), use_container_width=True, height=400)
+                st.subheader("New dataset uploaded")
+                st.dataframe(user_land, use_container_width=True, height=400)
     
                 # --- Clean uploaded data ---
                 user_land.columns = user_land.columns.str.strip().str.title()
@@ -129,12 +129,22 @@ def main():
                     .astype(float)
                 )
                 user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
-    
-                # ✅ Merge with base data
+
+                         # --- 🔹 Aggregate to yearly totals before merging ---
+                yearly_user = (
+                    user_land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
+                    .sum()
+                    .reset_index()
+                )
+
+                # Merge with base data
                 df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
                 df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
-    
-                st.success("✅ Uploaded data successfully merged with existing dataset.")
+
+                
+                # Combine vessel data (from upload if available)
+                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
+                st.success("Uploaded data successfully merged with existing dataset.")
                 st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
     
         except Exception as e:
