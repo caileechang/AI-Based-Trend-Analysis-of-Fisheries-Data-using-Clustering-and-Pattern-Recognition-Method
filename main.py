@@ -141,8 +141,15 @@ def main():
                 st.dataframe(user_land, use_container_width=True, height=400)
     
                 # --- Clean uploaded data ---
-                user_land.columns = user_land.columns.str.strip().str.title()
-                user_land['Month'] = user_land['Month'].astype(str).str.strip().str.title()
+                  # --- Standardize column names ---
+                user_land.columns = user_land.columns.str.strip().str.lower()
+
+             # Normalize key columns
+                if 'state' in user_land.columns:
+                    user_land['state'] = user_land['state'].astype(str).str.upper().str.strip()
+                if 'type of fish' in user_land.columns:
+                    user_land['type of fish'] = user_land['type of fish'].astype(str).str.lower().str.strip()
+
     
                 # Convert month names to numbers
                 month_map = {
@@ -151,30 +158,34 @@ def main():
                     'August': 8, 'Aug': 8, 'September': 9, 'Sep': 9, 'October': 10, 'Oct': 10,
                     'November': 11, 'Nov': 11, 'December': 12, 'Dec': 12
                 }
-                user_land['Month'] = user_land['Month'].map(month_map).fillna(user_land['Month'])
-                user_land['Month'] = pd.to_numeric(user_land['Month'], errors='coerce')
-                user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
-                user_land['Fish Landing (Tonnes)'] = (
-                    user_land['Fish Landing (Tonnes)']
-                    .astype(str)
-                    .str.replace(r'[^\d.]', '', regex=True)
-                    .replace('', np.nan)
-                    .astype(float)
-                )
-                user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
-
-              
-
-                # Merge with base data
-                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
-                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
-
-                
-                # Combine vessel data (from upload if available)
-                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
-                st.success("Uploaded data successfully merged with existing dataset.")
-                st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
-    
+                if 'month' in user_land.columns:
+                    user_land['month'] = user_land['month'].astype(str).str.strip().str.lower().map(month_map)
+                    user_land['month'] = pd.to_numeric(user_land['month'], errors='coerce')
+            
+                   
+                # Convert year to int
+                if 'year' in user_land.columns:
+                    user_land['year'] = pd.to_numeric(user_land['year'], errors='coerce').fillna(0).astype(int)
+            
+                # Clean Fish Landing values
+                if 'fish landing (tonnes)' in user_land.columns:
+                    user_land['fish landing (tonnes)'] = (
+                        user_land['fish landing (tonnes)']
+                        .astype(str)
+                        .str.replace(',', '.', regex=False)
+                        .str.replace(r'[^\d.\-]', '', regex=True)
+                        .astype(float)
+                        .fillna(0)
+                    )
+            
+                # Drop invalid rows
+                user_land = user_land.dropna(subset=['year', 'state', 'fish landing (tonnes)'])
+            
+                # ✅ Merge clean data
+                df_land = pd.concat([df_land, user_land], ignore_index=True)
+                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['state', 'year'])
+                st.success("✅ Uploaded data standardized and merged successfully.")
+               
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
     
