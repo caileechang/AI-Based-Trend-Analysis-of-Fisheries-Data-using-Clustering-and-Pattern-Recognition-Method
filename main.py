@@ -255,16 +255,6 @@ def main():
        # fig, ax = plt.subplots(figsize=(14, 6))
 
 # Plot the bars
-"""
-    sns.barplot(
-        data=filtered_sorted,
-        x='State',
-        y='Total Fish Landing (Tonnes)',
-        order=filtered_sorted['State'],  # ensures labels align with bars
-        palette='Blues_d',
-        ax=ax
-    )
-
 
 
 
@@ -541,3 +531,4 @@ def main():
    
 if __name__ == "__main__":
     main()
+
