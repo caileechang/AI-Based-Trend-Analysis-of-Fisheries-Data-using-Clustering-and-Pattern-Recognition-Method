@@ -147,7 +147,8 @@ def main():
     merged_df = prepare_yearly(df_land, df_vess)
 
     # --- Debug ---
-    st.sidebar.write("Years Available:", sorted(merged_df['Year'].unique()))
+    st.sidebar.write("📅 Years Available:",[int(y) for y in sorted(merged_df['Year'].unique())])
+
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
