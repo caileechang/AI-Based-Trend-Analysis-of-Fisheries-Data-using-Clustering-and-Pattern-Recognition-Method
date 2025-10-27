@@ -58,8 +58,8 @@ def prepare_yearly(df_land, df_vess):
         land.columns = [c.strip().title() for c in land.columns]
     
         # --- Normalize “Type Of Fish” values ---
-        land['Type Of Fish'] = land['Type Of Fish'].str.strip().str.title()
-        land['Type Of Fish'] = land['Type Of Fish'].replace({
+        land['Type of Fish'] = land['Type of Fish'].str.strip().str.title()
+        land['Type of Fish'] = land['Type of Fish'].replace({
             'Fresh Water': 'Freshwater',
             'Fresh Water Fish': 'Freshwater',
             'Marine Fish': 'Marine',
