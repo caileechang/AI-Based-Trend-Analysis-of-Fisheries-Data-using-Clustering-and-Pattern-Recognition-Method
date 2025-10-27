@@ -44,50 +44,29 @@ def load_data():
 def prepare_yearly(df_land, df_vess):
     land = df_land.copy()
 
-    # --- Normalize column names (remove spaces & fix casing) ---
-    land.columns = [c.strip().title() for c in land.columns]
-    df_vess.columns = [c.strip().title() for c in df_vess.columns]
-
-    # Debug: show available columns
-    st.write("🧩 Columns detected in uploaded Fish Landing data:", list(land.columns))
-
-    # --- Try to find 'Type of Fish' column dynamically ---
-    type_col = None
-    for col in land.columns:
-        if "type" in col.lower() and "fish" in col.lower():
-            type_col = col
-            break
-
-    if not type_col:
-        st.error("❌ Could not find the 'Type of Fish' column in uploaded dataset. Please ensure it exists.")
-        st.stop()  # stop execution safely to avoid crashing
-
-    # --- Clean state names ---
+    # --- Standardize State names ---
     land['State'] = (
         land['State'].astype(str).str.upper()
         .str.replace(r'\s*/\s*', '/', regex=True)
         .str.replace(r'\s+', ' ', regex=True)
         .str.strip()
     )
-    df_vess['State'] = df_vess['State'].astype(str).str.upper().str.strip()
-
-    # Standardize known aliases
     aliases = {
         'JOHOR/JOHORE': 'JOHOR',
         'MELAKA/MALACCA': 'MELAKA',
         'PULAU PINANG/PENANG': 'PULAU PINANG'
     }
     land['State'] = land['State'].replace(aliases)
-    df_vess['State'] = df_vess['State'].replace(aliases)
-
-    # Drop invalid rows
     land = land[
-        ~land['State'].isin(['', 'NAN', 'JUMLAH', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)'])
+        ~land['State'].isin(['', 'NAN', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)', 'JUMLAH'])
     ]
 
-    # --- Normalize 'Type of Fish' values ---
-    land[type_col] = land[type_col].astype(str).str.strip().str.title()
-    land[type_col] = land[type_col].replace({
+    # --- Normalize column names ---
+    land.columns = [c.strip().title() for c in land.columns]
+
+    # --- Normalize “Type Of Fish” values ---
+    land['Type Of Fish'] = land['Type Of Fish'].str.strip().str.title()
+    land['Type Of Fish'] = land['Type Of Fish'].replace({
         'Fresh Water': 'Freshwater',
         'Fresh Water Fish': 'Freshwater',
         'Marine Fish': 'Marine',
@@ -96,19 +75,15 @@ def prepare_yearly(df_land, df_vess):
 
     # --- Group and pivot ---
     grouped = (
-        land.groupby(['Year', 'State', type_col])['Fish Landing (Tonnes)']
+        land.groupby(['Year', 'State', 'Type Of Fish'])['Fish Landing (Tonnes)']
         .sum()
         .reset_index()
     )
 
-    if grouped.empty:
-        st.warning("⚠️ No grouped data found — check 'Year', 'State', or 'Type of Fish' columns.")
-        return pd.DataFrame()
-
     pivot = (
         grouped.pivot_table(
             index=['State', 'Year'],
-            columns=type_col,
+            columns='Type Of Fish',
             values='Fish Landing (Tonnes)',
             aggfunc='sum'
         )
@@ -116,33 +91,29 @@ def prepare_yearly(df_land, df_vess):
         .fillna(0)
     )
 
-    pivot.rename(columns={
-        'Freshwater': 'Freshwater (Tonnes)',
-        'Marine': 'Marine (Tonnes)'
-    }, inplace=True)
+    pivot.rename(
+        columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'},
+        inplace=True
+    )
 
-    for col in ['Freshwater (Tonnes)', 'Marine (Tonnes)']:
-        if col not in pivot.columns:
-            pivot[col] = 0
-
-    # --- Merge with vessel data ---
+    # --- Merge with vessels ---
+    df_vess['State'] = df_vess['State'].astype(str).str.upper().str.strip()
     merged = pd.merge(
         pivot,
-        df_vess[['State', 'Year', 'Total Number Of Fishing Vessels']],
+        df_vess[['State', 'Year', 'Total number of fishing vessels']],
         on=['State', 'Year'],
         how='outer'
     )
 
-    merged['Total Number Of Fishing Vessels'] = merged['Total Number Of Fishing Vessels'].fillna(0)
-    merged['Freshwater (Tonnes)'] = merged['Freshwater (Tonnes)'].fillna(0)
-    merged['Marine (Tonnes)'] = merged['Marine (Tonnes)'].fillna(0)
+    # --- Fill missing ---
+    merged['Freshwater (Tonnes)'] = merged.get('Freshwater (Tonnes)', 0).fillna(0)
+    merged['Marine (Tonnes)'] = merged.get('Marine (Tonnes)', 0).fillna(0)
     merged['Total Fish Landing (Tonnes)'] = (
         merged['Freshwater (Tonnes)'] + merged['Marine (Tonnes)']
     )
+    merged['Total number of fishing vessels'] = merged['Total number of fishing vessels'].fillna(0)
 
-    st.success("Yearly data prepared successfully.")
-    return merged.sort_values(['Year', 'State']).reset_index(drop=True)
-
+    return merged
 
 def main():
     st.set_page_config(layout='wide')
