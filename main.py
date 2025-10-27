@@ -78,7 +78,7 @@ def prepare_yearly(df_land, df_vess):
         
         # assign Freshwater / Marine using contains (works even with extra words/spaces)
         land['Freshwater (Tonnes)'] = np.where(
-            land['Type of Fish'].str.contains('fresh'), land['Fish Landing (Tonnes)'], 0
+            land['Type of Fish'].str.contains('fresh|fresh water'), land['Fish Landing (Tonnes)'], 0
         )
         land['Marine (Tonnes)'] = np.where(
             land['Type of Fish'].str.contains('marine|sea|salt'), land['Fish Landing (Tonnes)'], 0
