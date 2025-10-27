@@ -71,40 +71,31 @@ def prepare_yearly(df_land, df_vess):
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-    # Handle Fish Type robustly
+     # Handle Fish Type
     if 'Type of Fish' in land.columns:
-        # Strip and lowercase
-        land['Type of Fish'] = land['Type of Fish'].astype(str).str.strip().str.lower()
-        
-        # Map variations
-        type_map = {
-            'freshwater': 'freshwater',
-            'fresh water': 'freshwater',
-            'fw': 'freshwater',
-            'marine': 'marine',
-            'sea': 'marine',
-            'marine fish': 'marine'
-        }
-        land['Type of Fish'] = land['Type of Fish'].map(lambda x: type_map.get(x, 'unknown'))
-    
-        # Assign landings
-        land['Freshwater (Tonnes)'] = np.where(land['Type of Fish'] == 'freshwater',
-                                               land['Fish Landing (Tonnes)'], 0)
-        land['Marine (Tonnes)'] = np.where(land['Type of Fish'] == 'marine',
-                                           land['Fish Landing (Tonnes)'], 0)
+        land['Freshwater (Tonnes)'] = np.where(
+            land['Type of Fish'].str.lower() == 'freshwater',
+            land['Fish Landing (Tonnes)'], 0
+        )
+        land['Marine (Tonnes)'] = np.where(
+            land['Type of Fish'].str.lower() == 'marine',
+            land['Fish Landing (Tonnes)'], 0
+        )
     else:
         # For older dataset with separate columns
         land['Freshwater (Tonnes)'] = pd.to_numeric(land.get('Freshwater', 0), errors='coerce').fillna(0)
         land['Marine (Tonnes)'] = pd.to_numeric(land.get('Marine', 0), errors='coerce').fillna(0)
-        # Aggregate yearly by State
-        grouped = land.groupby(['Year', 'State']).agg({
-            'Freshwater (Tonnes)': 'sum',
-            'Marine (Tonnes)': 'sum'
-        }).reset_index()
-    
-        grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
-        grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
-        return grouped
+
+    # Aggregate yearly by State
+    grouped = land.groupby(['Year', 'State']).agg({
+        'Freshwater (Tonnes)': 'sum',
+        'Marine (Tonnes)': 'sum'
+    }).reset_index()
+
+    grouped['Total Fish Landing (Tonnes)'] = grouped['Freshwater (Tonnes)'] + grouped['Marine (Tonnes)']
+    grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
+    return grouped
+
     
 def main():
     st.set_page_config(layout='wide')
