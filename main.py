@@ -66,9 +66,7 @@ def prepare_yearly(df_land, df_vess):
     df_vess['State'] = df_vess['State'].replace(aliases)
 
     # Drop unwanted or total rows
-    land = land[
-        ~land['State'].isin(['', 'NAN', 'JUMLAH', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)'])
-    ]
+    land = land[~land['State'].isin(['', 'NAN', 'JUMLAH', 'MALAYSIA:SEMENANJUNG MALAYSIA(PENINSULAR MALAYSIA)'])]
 
     # --- Normalize 'Type of Fish' labels ---
     land['Type of Fish'] = land['Type of Fish'].astype(str).str.strip().str.title()
