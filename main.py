@@ -87,18 +87,30 @@ def main():
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
   
-
+    
     if uploaded_file:
         try:
-            user_df = pd.read_excel(uploaded_file)
-            st.subheader("New dataset uploaded")
-            st.dataframe(user_df, use_container_width=True, height=500)
-              # ---  Clean and standardize uploaded dataset ---
-            user_df.columns = user_df.columns.str.strip().str.title()  # Normalize column names
+            xls = pd.ExcelFile(uploaded_file)
+            if "Fish Landing" in xls.sheet_names:
+                user_land = pd.read_excel(xls, sheet_name="Fish Landing")
+            else:
+                st.warning("⚠️ No 'Fish Landing' sheet found.")
+                user_land = pd.DataFrame()
     
-            # Ensure Month column uses title case
-            user_df['Month'] = user_df['Month'].astype(str).str.strip().str.title()
-    
+            if "Fish Vessels" in xls.sheet_names:
+                user_vess = pd.read_excel(xls, sheet_name="Fish Vessels")
+            else:
+                st.warning("⚠️ No 'Fish Vessels' sheet found.")
+                user_vess = pd.DataFrame()
+
+            st.subheader("New dataset uploaded successfully ✅")
+            st.write("**Sheets detected:**", xls.sheet_names)
+            st.dataframe(user_land.head(), use_container_width=True, height=250)
+            
+                # --- Clean uploaded fish landing data ---
+            user_land.columns = user_land.columns.str.strip().str.title()
+            user_land['Month'] = user_land['Month'].astype(str).str.strip().str.title()
+       
             # Convert month names to numbers
             month_map = {
                 'January': 1, 'Jan': 1,
@@ -115,7 +127,6 @@ def main():
                 'December': 12, 'Dec': 12
             }
             user_df['Month'] = user_df['Month'].map(month_map).fillna(user_df['Month'])
-    
             # Convert to numeric
             user_df['Month'] = pd.to_numeric(user_df['Month'], errors='coerce')
             user_df['Year'] = pd.to_numeric(user_df['Year'], errors='coerce')
@@ -126,26 +137,35 @@ def main():
                 .replace('', np.nan)
                 .astype(float)
             )
-    
             user_df.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
-    
+
+              # --- Clean uploaded vessels data (if available) ---
+            if not user_vess.empty:
+                for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
+                    user_vess[col] = pd.to_numeric(user_vess[col], errors='coerce').fillna(0)
+                user_vess['Total number of fishing vessels'] = (
+                    user_vess['Inboard Powered'] + user_vess['Outboard Powered'] + user_vess['Non-Powered']
+                )
+                user_vess['State'] = user_vess['State'].str.upper().str.strip()
+                user_vess['Year'] = user_vess['Year'].astype(int, errors='ignore')
+                
             # Combine (append) with existing data
             df_land = pd.concat([df_land, user_df], ignore_index=True)
             df_land.drop_duplicates(subset=['State', 'Year', 'Month'], inplace=True)
            
-        #  Save merged dataset in session_state
-            st.session_state.merged_land = df_land
-            st.success("Uploaded data successfully merged with existing dataset.")
-    
+            if not user_vess.empty:
+                df_vess = pd.concat([df_vess, user_vess], ignore_index=True)
+                df_vess.drop_duplicates(subset=['State', 'Year'], inplace=True)
+
+            st.success("✅ Uploaded Fish Landing and Vessels data merged successfully.")
+            st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
+                
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
 
 
    
-     # --- Choose which dataset to use ---
-    if "merged_land" in st.session_state:
-        df_land = st.session_state.merged_land
-        
+ 
     merged_df = prepare_yearly(df_land, df_vess)
 
  
