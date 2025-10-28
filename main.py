@@ -141,7 +141,7 @@ def main():
   
     
 
-       if uploaded_file:
+    if uploaded_file:
             try:
                 excel_data = pd.ExcelFile(uploaded_file)
                 sheet_names = [s.lower() for s in excel_data.sheet_names]
@@ -191,7 +191,7 @@ def main():
         
             except Exception as e:
                 st.error(f"Error reading uploaded file: {e}")
-    
+
 
     
     st.sidebar.header("Select Visualization")
