@@ -270,8 +270,14 @@ def main():
        
     # Dynamically include newly uploaded years in dropdown
         available_years = sorted([int(y) for y in yearly_summary['Year'].unique()])
-        selected_year = st.selectbox("Select a year to view state-level details:", available_years, index=len(available_years) - 1)
-    
+        #selected_year = st.selectbox("Select a year to view state-level details:", available_years, index=len(available_years) - 1)
+        selected_year = st.selectbox(
+            "Select a year to view state-level details:",
+            available_years,
+            index=len(available_years) - 1,
+            key="yearly_summary_selectbox"
+        )
+
         # --- Filter and show selected year ---
         filtered = yearly_summary[yearly_summary['Year'] == selected_year]
         st.write(f"### Fish Landing by State for {selected_year}")
