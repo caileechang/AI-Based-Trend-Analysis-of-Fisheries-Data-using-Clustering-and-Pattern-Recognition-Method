@@ -132,18 +132,18 @@ def main():
 
     if uploaded_file:
         try:
-            # Try to read both sheets safely
+            # --- Read uploaded Excel ---
             excel_data = pd.ExcelFile(uploaded_file)
             sheet_names = [s.lower() for s in excel_data.sheet_names]
     
-            # Check for both expected sheets
             if "fish landing" in sheet_names and "fish vessels" in sheet_names:
                 user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
                 user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
             else:
-                st.warning("The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
+                st.warning("⚠️ The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
                 user_land, user_vess = None, None
     
+            # --- Process uploaded data ---
             if user_land is not None:
                 st.subheader("New dataset uploaded")
                 st.dataframe(user_land, use_container_width=True, height=400)
@@ -170,30 +170,57 @@ def main():
                     .astype(float)
                 )
                 user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
-
-              
-
-                # Merge with base data
+    
+                # --- Merge with base data ---
                 df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
                 df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
-
-                
-                # Combine vessel data (from upload if available)
-                df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
-                st.success("Uploaded data successfully merged with existing dataset.")
+    
+                st.success("✅ Uploaded data successfully merged with existing dataset.")
                 st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
+    
+                # --- 🟩 Now prepare and show merged yearly summary ---
+                merged_df = prepare_yearly(df_land, df_vess)
+                st.write("Merged Yearly Fish Landing Data")
+                st.dataframe(merged_df, use_container_width=True, height=300)
+    
+                # --- Visualization section ---
+                years = sorted(merged_df['Year'].unique())
+                selected_year = st.selectbox("Select a year to view state-level details:", years)
+    
+                filtered_year = merged_df[merged_df['Year'] == selected_year]
+                st.subheader(f"Fish Landing by State for {selected_year}")
+                st.dataframe(filtered_year, use_container_width=True)
+    
+                # Bar chart
+                st.bar_chart(
+                    data=filtered_year,
+                    x="State",
+                    y="Total Fish Landing (Tonnes)",
+                    use_container_width=True
+                )
     
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
     
-
-   
- 
-    merged_df = prepare_yearly(df_land, df_vess)
-    st.write("Merged Yearly Fish Landing Data")
-    st.dataframe(merged_df, use_container_width=True, height=300)
-
- 
+    else:
+        # --- Default: Base dataset display ---
+        yearly_summary = prepare_yearly(df_land, df_vess)
+        st.write("Base Yearly Fish Landing Data")
+        st.dataframe(yearly_summary, use_container_width=True, height=300)
+    
+        years = sorted(yearly_summary['Year'].unique())
+        selected_year = st.selectbox("Select a year to view state-level details:", years)
+    
+        filtered_year = yearly_summary[yearly_summary['Year'] == selected_year]
+        st.subheader(f"Fish Landing by State for {selected_year}")
+        st.dataframe(filtered_year, use_container_width=True)
+    
+        st.bar_chart(
+            data=filtered_year,
+            x="State",
+            y="Total Fish Landing (Tonnes)",
+            use_container_width=True
+        )
 
     
     st.sidebar.header("Select Visualization")
