@@ -43,68 +43,58 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
+    from difflib import get_close_matches
+    import numpy as np
+    import pandas as pd
+
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
-        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS", "SABAH",
-        "SARAWAK", "W.P. LABUAN"
+        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+        "SABAH", "SARAWAK", "W.P. LABUAN"
     ]
 
-    # --- Clean and standardize base dataframe ---
+    # Clean state names
     land = df_land.copy()
     land['State'] = (
-        land['State']
-        .astype(str)
-        .str.upper()
-        .str.replace(r'\s*/\s*', '/', regex=True)
-        .str.replace(r'\s+', ' ', regex=True)
-        .str.strip()
+        land['State'].astype(str)
+        .str.upper().str.replace(r'\s*/\s*', '/', regex=True)
+        .str.replace(r'\s+', ' ', regex=True).str.strip()
     )
 
-    # --- Fuzzy match states ---
-    def match_state(state_name):
-        if not isinstance(state_name, str) or state_name.strip() == "":
+    # Fuzzy match states
+    def match_state(name):
+        if not isinstance(name, str) or name.strip() == "":
             return np.nan
-        matches = get_close_matches(state_name.upper(), valid_states, n=1, cutoff=0.6)
+        matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.6)
         return matches[0] if matches else np.nan
 
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-    # --- Handle Fish Type (pivot directly, no keyword matching) ---
-    if {'Year', 'State', 'Type of Fish', 'Fish Landing (Tonnes)'} <= set(land.columns):
-        yearly_state_totals = (
-            land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
-            .sum()
-            .reset_index()
-        )
+    # --- Direct pivot from Type of Fish ---
+    yearly = (
+        land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
+        .sum().reset_index()
+    )
+    yearly = yearly.pivot_table(
+        index=['Year', 'State'],
+        columns='Type of Fish',
+        values='Fish Landing (Tonnes)',
+        aggfunc='sum'
+    ).reset_index().fillna(0)
 
-        # Pivot to get Freshwater/Marine as columns automatically
-        pivoted = yearly_state_totals.pivot_table(
-            index=['Year', 'State'],
-            columns='Type of Fish',
-            values='Fish Landing (Tonnes)',
-            aggfunc='sum'
-        ).reset_index().fillna(0)
+    yearly.columns.name = None
+    yearly.rename(columns={
+        'Freshwater': 'Freshwater (Tonnes)',
+        'Marine': 'Marine (Tonnes)'
+    }, inplace=True)
 
-        # Clean up column names
-        pivoted.columns.name = None
-        pivoted.rename(columns={
-            'Freshwater': 'Freshwater (Tonnes)',
-            'Marine': 'Marine (Tonnes)'
-        }, inplace=True)
+    yearly['Total Fish Landing (Tonnes)'] = (
+        yearly.get('Freshwater (Tonnes)', 0) + yearly.get('Marine (Tonnes)', 0)
+    )
 
-        # Add total column
-        pivoted['Total Fish Landing (Tonnes)'] = (
-            pivoted.get('Freshwater (Tonnes)', 0) + pivoted.get('Marine (Tonnes)', 0)
-        )
-
-        grouped = pivoted.copy()
-    else:
-        st.warning("'Type of Fish' column not found or invalid format.")
-        return pd.DataFrame()
-
-    # --- Merge with vessel data ---
+    # Merge with vessels
     for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
         df_vess[col] = pd.to_numeric(df_vess[col], errors='coerce').fillna(0)
     df_vess['Total number of fishing vessels'] = (
@@ -113,15 +103,13 @@ def prepare_yearly(df_land, df_vess):
     df_vess['State'] = df_vess['State'].str.upper().str.strip()
     df_vess['Year'] = df_vess['Year'].astype(int)
 
-    grouped = grouped.merge(
+    merged = yearly.merge(
         df_vess[['State', 'Year', 'Total number of fishing vessels']],
-        on=['State', 'Year'],
-        how='left'
+        on=['State', 'Year'], how='left'
     ).fillna(0)
 
-    # --- Sort and return ---
-    grouped = grouped.sort_values(['Year', 'State']).reset_index(drop=True)
-    return grouped
+    return merged.sort_values(['Year', 'State']).reset_index(drop=True)
+
     
 def main():
     st.set_page_config(layout='wide')
