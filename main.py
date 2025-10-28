@@ -43,9 +43,9 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
-    from difflib import get_close_matches
-    import numpy as np
     import pandas as pd
+    import numpy as np
+    from difflib import get_close_matches
 
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
@@ -54,7 +54,7 @@ def prepare_yearly(df_land, df_vess):
         "SABAH", "SARAWAK", "W.P. LABUAN"
     ]
 
-    # Clean state names
+    # --- Standardize state names ---
     land = df_land.copy()
     land['State'] = (
         land['State'].astype(str)
@@ -62,7 +62,6 @@ def prepare_yearly(df_land, df_vess):
         .str.replace(r'\s+', ' ', regex=True).str.strip()
     )
 
-    # Fuzzy match states
     def match_state(name):
         if not isinstance(name, str) or name.strip() == "":
             return np.nan
@@ -72,38 +71,40 @@ def prepare_yearly(df_land, df_vess):
     land['State'] = land['State'].apply(match_state)
     land = land[land['State'].isin(valid_states)]
 
-    # --- Direct pivot from Type of Fish ---
-    yearly = (
-        land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
-        .sum().reset_index()
-    )
-    yearly = yearly.pivot_table(
-        index=['Year', 'State'],
+    # --- Group & Pivot like your notebook ---
+    yearly_state_totals = land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)'].sum().reset_index()
+
+    yearly_state_pivot = yearly_state_totals.pivot_table(
+        index=['State', 'Year'],
         columns='Type of Fish',
         values='Fish Landing (Tonnes)',
         aggfunc='sum'
     ).reset_index().fillna(0)
 
-    yearly.columns.name = None
-    yearly.rename(columns={
+    yearly_state_pivot.columns.name = None
+    yearly_state_pivot.rename(columns={
         'Freshwater': 'Freshwater (Tonnes)',
         'Marine': 'Marine (Tonnes)'
     }, inplace=True)
 
-    yearly['Total Fish Landing (Tonnes)'] = (
-        yearly.get('Freshwater (Tonnes)', 0) + yearly.get('Marine (Tonnes)', 0)
+    # --- Always compute Total ---
+    yearly_state_pivot['Total Fish Landing (Tonnes)'] = (
+        yearly_state_pivot.get('Freshwater (Tonnes)', 0) +
+        yearly_state_pivot.get('Marine (Tonnes)', 0)
     )
 
-    # Merge with vessels
+    # --- Merge with vessel data ---
     for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
         df_vess[col] = pd.to_numeric(df_vess[col], errors='coerce').fillna(0)
     df_vess['Total number of fishing vessels'] = (
-        df_vess['Inboard Powered'] + df_vess['Outboard Powered'] + df_vess['Non-Powered']
+        df_vess['Inboard Powered'] +
+        df_vess['Outboard Powered'] +
+        df_vess['Non-Powered']
     )
     df_vess['State'] = df_vess['State'].str.upper().str.strip()
     df_vess['Year'] = df_vess['Year'].astype(int)
 
-    merged = yearly.merge(
+    merged = yearly_state_pivot.merge(
         df_vess[['State', 'Year', 'Total number of fishing vessels']],
         on=['State', 'Year'], how='left'
     ).fillna(0)
