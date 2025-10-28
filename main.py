@@ -141,7 +141,7 @@ def main():
   
     
 
-    if uploaded_file:
+   if uploaded_file:
         try:
             excel_data = pd.ExcelFile(uploaded_file)
             sheet_names = [s.lower() for s in excel_data.sheet_names]
@@ -157,46 +157,32 @@ def main():
                 st.subheader("New dataset uploaded")
                 st.dataframe(user_land, use_container_width=True, height=400)
     
-                # --- 🔧 Apply same cleaning as historical process ---
+                # --- Clean uploaded data to match base format ---
                 user_land.columns = user_land.columns.str.strip().str.title()
-                user_land = user_land[['Year', 'State', 'Type Of Fish', 'Fish Landing (Tonnes)']]
+                user_land['State'] = user_land['State'].astype(str).str.upper().str.strip()
+                user_land['Type Of Fish'] = user_land['Type Of Fish'].astype(str).str.title().str.strip()
                 user_land.rename(columns={'Type Of Fish': 'Type of Fish'}, inplace=True)
     
-                # Ensure numeric values
+                # Ensure numeric types
                 user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
                 user_land['Fish Landing (Tonnes)'] = pd.to_numeric(user_land['Fish Landing (Tonnes)'], errors='coerce')
+                user_land.dropna(subset=['Year', 'Fish Landing (Tonnes)', 'State', 'Type of Fish'], inplace=True)
     
-                # --- 🔧 Match historical pivoting logic ---
-                yearly_state_totals = user_land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)'].sum().reset_index()
-                user_land = yearly_state_totals.pivot_table(
-                    index=['State', 'Year'],
-                    columns='Type of Fish',
-                    values='Fish Landing (Tonnes)',
-                    aggfunc='sum'
-                ).reset_index().fillna(0)
-                user_land.columns.name = None
-                user_land.rename(columns={
-                    'Freshwater': 'Freshwater (Tonnes)',
-                    'Marine': 'Marine (Tonnes)'
-                }, inplace=True)
-                user_land['Total Fish Landing (Tonnes)'] = (
-                    user_land.get('Freshwater (Tonnes)', 0) + user_land.get('Marine (Tonnes)', 0)
-                )
-    
-                # --- Now merge like before ---
-                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
+                # --- Merge uploaded data with base historical data (SAME structure) ---
+                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Type of Fish'])
                 df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
     
                 st.success("✅ Uploaded data successfully merged with existing dataset.")
                 st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
     
-                # --- Analyze merged dataset ---
+                # --- Now analyze both datasets together ---
                 merged_df = prepare_yearly(df_land, df_vess)
+    
                 st.write("Merged Yearly Fish Landing Data")
                 st.dataframe(merged_df, use_container_width=True, height=300)
     
                 years = sorted(merged_df['Year'].unique())
-                selected_year = st.selectbox("Select a year to view state-level details:", years)
+                selected_year = st.selectbox("Select a year to view state-level details:", years, index=len(years)-1)
                 filtered_year = merged_df[merged_df['Year'] == selected_year]
     
                 st.subheader(f"Fish Landing by State for {selected_year}")
