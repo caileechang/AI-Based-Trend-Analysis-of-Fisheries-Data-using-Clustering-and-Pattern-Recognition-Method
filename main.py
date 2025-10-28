@@ -157,56 +157,51 @@ def main():
                 st.subheader("New dataset uploaded")
                 st.dataframe(user_land, use_container_width=True, height=400)
     
-                # --- Clean uploaded data ---
+                # --- 🔧 Apply same cleaning as historical process ---
                 user_land.columns = user_land.columns.str.strip().str.title()
-                user_land['Month'] = user_land['Month'].astype(str).str.strip().str.title()
+                user_land = user_land[['Year', 'State', 'Type Of Fish', 'Fish Landing (Tonnes)']]
+                user_land.rename(columns={'Type Of Fish': 'Type of Fish'}, inplace=True)
     
-                month_map = {
-                    'January': 1, 'Jan': 1, 'February': 2, 'Feb': 2, 'March': 3, 'Mar': 3,
-                    'April': 4, 'Apr': 4, 'May': 5, 'June': 6, 'Jun': 6, 'July': 7, 'Jul': 7,
-                    'August': 8, 'Aug': 8, 'September': 9, 'Sep': 9, 'October': 10, 'Oct': 10,
-                    'November': 11, 'Nov': 11, 'December': 12, 'Dec': 12
-                }
-                user_land['Month'] = user_land['Month'].map(month_map).fillna(user_land['Month'])
-                user_land['Month'] = pd.to_numeric(user_land['Month'], errors='coerce')
+                # Ensure numeric values
                 user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
-                user_land['Fish Landing (Tonnes)'] = (
-                    user_land['Fish Landing (Tonnes)']
-                    .astype(str)
-                    .str.replace(r'[^\d.]', '', regex=True)
-                    .replace('', np.nan)
-                    .astype(float)
-                )
-                user_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)'], inplace=True)
+                user_land['Fish Landing (Tonnes)'] = pd.to_numeric(user_land['Fish Landing (Tonnes)'], errors='coerce')
     
-                # --- ✅ Merge after cleaning ---
-                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month'])
+                # --- 🔧 Match historical pivoting logic ---
+                yearly_state_totals = user_land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)'].sum().reset_index()
+                user_land = yearly_state_totals.pivot_table(
+                    index=['State', 'Year'],
+                    columns='Type of Fish',
+                    values='Fish Landing (Tonnes)',
+                    aggfunc='sum'
+                ).reset_index().fillna(0)
+                user_land.columns.name = None
+                user_land.rename(columns={
+                    'Freshwater': 'Freshwater (Tonnes)',
+                    'Marine': 'Marine (Tonnes)'
+                }, inplace=True)
+                user_land['Total Fish Landing (Tonnes)'] = (
+                    user_land.get('Freshwater (Tonnes)', 0) + user_land.get('Marine (Tonnes)', 0)
+                )
+    
+                # --- Now merge like before ---
+                df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
                 df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
     
                 st.success("✅ Uploaded data successfully merged with existing dataset.")
                 st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
     
-                # --- ✅ Now call prepare_yearly AFTER merging ---
+                # --- Analyze merged dataset ---
                 merged_df = prepare_yearly(df_land, df_vess)
-    
-                # --- Display Merged Summary ---
                 st.write("Merged Yearly Fish Landing Data")
                 st.dataframe(merged_df, use_container_width=True, height=300)
     
-                # --- Dropdown with all available years (old + new) ---
                 years = sorted(merged_df['Year'].unique())
                 selected_year = st.selectbox("Select a year to view state-level details:", years)
-    
                 filtered_year = merged_df[merged_df['Year'] == selected_year]
+    
                 st.subheader(f"Fish Landing by State for {selected_year}")
                 st.dataframe(filtered_year, use_container_width=True)
-    
-                st.bar_chart(
-                    data=filtered_year,
-                    x="State",
-                    y="Total Fish Landing (Tonnes)",
-                    use_container_width=True
-                )
+                st.bar_chart(filtered_year, x="State", y="Total Fish Landing (Tonnes)", use_container_width=True)
     
         except Exception as e:
             st.error(f"Error reading uploaded file: {e}")
