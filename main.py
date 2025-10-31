@@ -186,11 +186,32 @@ def main():
                     user_land.dropna(subset=['Year', 'Fish Landing (Tonnes)', 'State', 'Type of Fish'], inplace=True)
         
                     # --- Merge uploaded data with base historical data (SAME structure) ---
-                    df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Type of Fish'])
-                    df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
-        
+                    df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month', 'Type of Fish'])
+                   
                     st.success(" Uploaded data successfully merged with existing dataset.")
                     st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
+                    
+                    # --- Clean uploaded vessel data to match base format ---
+                    user_vess.columns = user_vess.columns.str.strip().str.title()
+                    user_vess['State'] = user_vess['State'].astype(str).str.upper().str.strip()
+                    
+                    for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
+                        user_vess[col] = pd.to_numeric(user_vess[col], errors='coerce').fillna(0)
+                    
+                    user_vess['Total number of fishing vessels'] = (
+                        user_vess['Inboard Powered'] +
+                        user_vess['Outboard Powered'] +
+                        user_vess['Non-Powered']
+                    )
+                    
+                    user_vess['Year'] = pd.to_numeric(user_vess['Year'], errors='coerce')
+                    user_vess = user_vess.dropna(subset=['Year'])
+                    user_vess['Year'] = user_vess['Year'].astype(int)
+
+                    df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
+
+        
+                  
         
                     # --- Now analyze both datasets together ---
                    # merged_df = prepare_yearly(df_land, df_vess)
