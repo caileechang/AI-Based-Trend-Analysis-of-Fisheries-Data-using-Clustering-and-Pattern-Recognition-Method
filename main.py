@@ -193,18 +193,18 @@ def main():
                     st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
         
                     # --- Now analyze both datasets together ---
-                    merged_df = prepare_yearly(df_land, df_vess)
+                   # merged_df = prepare_yearly(df_land, df_vess)
         
-                    st.write("Merged Yearly Fish Landing Data")
-                    st.dataframe(merged_df, use_container_width=True, height=300)
+                   # st.write("Merged Yearly Fish Landing Data")
+                   # st.dataframe(merged_df, use_container_width=True, height=300)
         
-                    years = sorted(merged_df['Year'].unique())
-                    selected_year = st.selectbox("Select a year to view state-level details:", years, index=len(years)-1)
-                    filtered_year = merged_df[merged_df['Year'] == selected_year]
+                  #  years = sorted(merged_df['Year'].unique())
+                    #selected_year = st.selectbox("Select a year to view state-level details:", years, index=len(years)-1)
+                 #   filtered_year = merged_df[merged_df['Year'] == selected_year]
         
-                    st.subheader(f"Fish Landing by State for {selected_year}")
-                    st.dataframe(filtered_year, use_container_width=True)
-                    st.bar_chart(filtered_year, x="State", y="Total Fish Landing (Tonnes)", use_container_width=True)
+                   # st.subheader(f"Fish Landing by State for {selected_year}")
+                   # st.dataframe(filtered_year, use_container_width=True)
+                    #st.bar_chart(filtered_year, x="State", y="Total Fish Landing (Tonnes)", use_container_width=True)
         
             except Exception as e:
                 st.error(f"Error reading uploaded file: {e}")
