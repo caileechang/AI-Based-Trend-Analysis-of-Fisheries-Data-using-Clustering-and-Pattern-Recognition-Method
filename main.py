@@ -119,10 +119,13 @@ def prepare_yearly(df_land, df_vess):
 
 
     # --- Merge fish landing with vessel data ---
-    merged = yearly_pivot.merge(
+    merged = pd.merge(
+        yearly_pivot,
         df_vess[['State', 'Year', 'Total number of fishing vessels']],
-        on=['State', 'Year'], how='left'
+        on=['State', 'Year'],
+        how='outer'   # full outer join — keep all states
     ).fillna(0)
+
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
