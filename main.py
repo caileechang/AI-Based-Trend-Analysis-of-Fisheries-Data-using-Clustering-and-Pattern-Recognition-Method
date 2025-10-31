@@ -110,7 +110,13 @@ def prepare_yearly(df_land, df_vess):
         + df_vess['Non-Powered']
     )
     df_vess['State'] = df_vess['State'].str.upper().str.strip()
+    #df_vess['Year'] = df_vess['Year'].astype(int)
+    # Convert to numeric safely first
+    df_vess['Year'] = pd.to_numeric(df_vess['Year'], errors='coerce')
+    # Drop rows where Year is missing (NaN) to avoid casting error
+    df_vess = df_vess.dropna(subset=['Year'])
     df_vess['Year'] = df_vess['Year'].astype(int)
+
 
     # --- Merge fish landing with vessel data ---
     merged = yearly_pivot.merge(
