@@ -150,7 +150,7 @@ def main():
                     user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
                     user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
                 else:
-                    st.warning("⚠️ The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
+                    st.warning(" The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
                     user_land, user_vess = None, None
         
                 if user_land is not None:
@@ -183,7 +183,7 @@ def main():
                     df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Type of Fish'])
                     df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
         
-                    st.success("✅ Uploaded data successfully merged with existing dataset.")
+                    st.success(" Uploaded data successfully merged with existing dataset.")
                     st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
         
                     # --- Now analyze both datasets together ---
@@ -202,6 +202,8 @@ def main():
         
             except Exception as e:
                 st.error(f"Error reading uploaded file: {e}")
+
+         merged_df = prepare_yearly(df_land, df_vess)
 
 
     
