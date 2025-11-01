@@ -439,7 +439,7 @@ def main():
 
 
       
-   elif plot_option == "Automatic DBSCAN":
+    elif plot_option == "Automatic DBSCAN":
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
     
         from sklearn.preprocessing import StandardScaler
