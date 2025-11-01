@@ -439,39 +439,74 @@ def main():
 
 
       
-    elif plot_option == "Automatic DBSCAN":
+   elif plot_option == "Automatic DBSCAN":
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
-
+    
+        from sklearn.preprocessing import StandardScaler
         from sklearn.neighbors import NearestNeighbors
+        from sklearn.cluster import DBSCAN
+        from sklearn.metrics import silhouette_score
         from kneed import KneeLocator
-
-        # --- Step 1: Select features ---
+        import hdbscan
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+    
+        # --- Step 1: Keep only valid states ---
+        valid_states = [
+            "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+            "SABAH", "SARAWAK", "W.P. LABUAN"
+        ]
+        merged_df = merged_df[merged_df['State'].isin(valid_states)].reset_index(drop=True)
+    
+        # --- Step 2: Select features ---
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
-
-        # --- Step 2: Automatically choose min_samples ---
+    
+        # --- Step 3: Automatically choose min_samples ---
         n_features = scaled.shape[1]
         min_samples_auto = max(3, int(np.log(len(scaled))) + n_features)
-
-        # --- Step 3: Compute k-distances for knee detection ---
+    
+        # --- Step 4: Compute k-distances for knee detection ---
         neigh = NearestNeighbors(n_neighbors=min_samples_auto)
         nbrs = neigh.fit(scaled)
         distances, indices = nbrs.kneighbors(scaled)
         distances = np.sort(distances[:, min_samples_auto - 1])  # k-distance
-
-        # --- Step 4: Detect knee point (best epsilon) ---
+    
+        # --- Step 5: Detect knee point (best epsilon) ---
         kneedle = KneeLocator(range(len(distances)), distances, curve='convex', direction='increasing')
         eps_auto = distances[kneedle.knee] if kneedle.knee else np.percentile(distances, 90)
-
+    
         st.markdown(f"**Automatically estimated ε (epsilon):** `{eps_auto:.3f}`")
         st.markdown(f"**Automatically chosen min_samples:** `{min_samples_auto}`")
-
-        # --- Step 5: Run DBSCAN ---
+    
+        # --- Step 6: Plot k-distance graph to justify epsilon ---
+        fig_k, ax_k = plt.subplots(figsize=(8, 5))
+        ax_k.plot(distances, label='Sorted k-distance curve')
+        if kneedle.knee is not None:
+            ax_k.axvline(x=kneedle.knee, color='red', linestyle='--', label=f'Elbow index = {kneedle.knee}')
+            ax_k.axhline(y=eps_auto, color='green', linestyle='--', label=f'Epsilon = {eps_auto:.3f}')
+        ax_k.set_title("Sorted k-distance Graph (Elbow Method for ε Selection)")
+        ax_k.set_xlabel("Data points sorted by distance")
+        ax_k.set_ylabel("k-distance")
+        ax_k.legend()
+        st.pyplot(fig_k)
+    
+        # --- Step 7: Run DBSCAN ---
         db = DBSCAN(eps=eps_auto, min_samples=min_samples_auto)
         labels = db.fit_predict(scaled)
         merged_df['DBSCAN_Label'] = labels
-
-        # --- Step 6: Visualize clustering ---
+    
+        # --- Step 8: Compute silhouette score for cluster quality ---
+        if len(set(labels)) > 1 and np.any(labels != -1):
+            sil_score = silhouette_score(scaled[labels != -1], labels[labels != -1])
+            st.info(f"Silhouette Score (excluding noise): `{sil_score:.3f}`")
+        else:
+            st.warning("Silhouette score unavailable (all points are noise or only one cluster).")
+    
+        # --- Step 9: Visualize clustering ---
         fig, ax = plt.subplots(figsize=(10, 6))
         sns.scatterplot(
             x=scaled[:, 1],
@@ -485,20 +520,20 @@ def main():
         ax.set_xlabel("Vessels (scaled)")
         ax.set_ylabel("Landings (scaled)")
         st.pyplot(fig)
-
-        # --- Step 7: Identify and display outliers ---
+    
+        # --- Step 10: Identify and display outliers ---
         n_outliers = (labels == -1).sum()
         st.success(f"Detected {n_outliers} outliers (noise points)")
-
+    
         if n_outliers > 0:
             outlier_details = merged_df[merged_df['DBSCAN_Label'] == -1][
                 ['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels']
             ]
-
-            # --- Step 8: Automatically generate 'Why Flagged' explanation ---
+    
+            # --- Step 11: Automatically generate 'Why Flagged' explanation ---
             avg_landing = merged_df['Total Fish Landing (Tonnes)'].mean()
             avg_vessels = merged_df['Total number of fishing vessels'].mean()
-
+    
             def explain_outlier(row):
                 if row['Total Fish Landing (Tonnes)'] > avg_landing and row['Total number of fishing vessels'] < avg_vessels:
                     return "High landing but few vessels — possible overperformance or data anomaly."
@@ -510,10 +545,34 @@ def main():
                     return "Unusually high scale — large operations or exceptional yield."
                 else:
                     return "Atypical pattern compared to national average."
-
+    
             outlier_details['Why Flagged'] = outlier_details.apply(explain_outlier, axis=1)
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
+    
+        # --- Step 12: Optional: HDBSCAN for automatic hyperparameter tuning ---
+        with st.expander("Try HDBSCAN (auto-optimized density clustering)"):
+            clusterer = hdbscan.HDBSCAN(min_cluster_size=5)
+            hdb_labels = clusterer.fit_predict(scaled)
+            merged_df['HDBSCAN_Label'] = hdb_labels
+    
+            n_hdb_outliers = (hdb_labels == -1).sum()
+            st.write(f"Detected {n_hdb_outliers} outliers using HDBSCAN.")
+    
+            fig_h, ax_h = plt.subplots(figsize=(10, 6))
+            sns.scatterplot(
+                x=scaled[:, 1],
+                y=scaled[:, 0],
+                hue=hdb_labels,
+                palette='tab10',
+                s=70,
+                ax=ax_h
+            )
+            ax_h.set_title("HDBSCAN Clustering (automatic density-based)")
+            ax_h.set_xlabel("Vessels (scaled)")
+            ax_h.set_ylabel("Landings (scaled)")
+            st.pyplot(fig_h)
+
 
 
     elif plot_option == "Nested Relationship":
