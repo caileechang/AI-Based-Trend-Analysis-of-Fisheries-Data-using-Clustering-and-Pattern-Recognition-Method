@@ -437,6 +437,100 @@ def main():
 
         st.markdown(f"**Outliers Detected:** {(labels == -1).sum()}")
 
+    elif plot_option == "Automatic DBSCAN":
+        st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
+
+        # --- Step 1: Keep only valid Malaysian states ---
+        valid_states = [
+            "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+            "SABAH", "SARAWAK", "W.P. LABUAN"
+        ]
+        merged_df = merged_df[merged_df["State"].isin(valid_states)].reset_index(drop=True)
+        if merged_df.empty:
+            st.warning("No valid data rows remain after state filtering.")
+            st.stop()
+
+        # --- Step 2: Select and scale features ---
+        features = merged_df[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        scaled = StandardScaler().fit_transform(features)
+
+        # --- Step 3: Automatically choose min_samples ---
+        n_features = scaled.shape[1]
+        min_samples_auto = max(3, int(np.log(len(scaled))) + n_features)
+
+        # --- Step 4: Compute k-distances for knee detection ---
+        neigh = NearestNeighbors(n_neighbors=min_samples_auto)
+        distances, _ = neigh.fit(scaled).kneighbors(scaled)
+        distances = np.sort(distances[:, min_samples_auto - 1])
+
+        # --- Step 5: Detect knee point (best epsilon) ---
+        kneedle = KneeLocator(range(len(distances)), distances, curve="convex", direction="increasing")
+        eps_auto = distances[kneedle.knee] if kneedle.knee is not None else np.percentile(distances, 90)
+
+        # --- Step 6: Display auto parameters ---
+        st.markdown(f"**Automatically estimated ε (epsilon):** `{eps_auto:.3f}`")
+        st.markdown(f"**Automatically chosen min_samples:** `{min_samples_auto}`")
+
+        # --- Step 7: Plot sorted k-distance graph (justification) ---
+        fig_k, ax_k = plt.subplots(figsize=(8, 5))
+        ax_k.plot(distances, label="Sorted k-distance")
+        if kneedle.knee is not None:
+            ax_k.axvline(kneedle.knee, color="red", linestyle="--", label=f"Elbow index = {kneedle.knee}")
+            ax_k.axhline(eps_auto, color="green", linestyle="--", label=f"ε = {eps_auto:.3f}")
+        ax_k.set_title("Sorted k-distance Graph (Elbow Method for ε Selection)")
+        ax_k.set_xlabel("Points sorted by distance")
+        ax_k.set_ylabel("k-distance")
+        ax_k.legend()
+        st.pyplot(fig_k)
+
+        # --- Step 8: Run DBSCAN ---
+        db = DBSCAN(eps=eps_auto, min_samples=min_samples_auto)
+        labels = db.fit_predict(scaled)
+        merged_df["DBSCAN_Label"] = labels
+
+        # --- Step 9: Cluster quality metric (silhouette) ---
+        if len(set(labels)) > 1 and np.any(labels != -1):
+            sil = silhouette_score(scaled[labels != -1], labels[labels != -1])
+            st.info(f"Silhouette Score (excluding noise): `{sil:.3f}`")
+        else:
+            st.warning("Silhouette score unavailable (all points are noise or only one cluster).")
+
+        # --- Step 10: Visualize clustering results ---
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.scatterplot(x=scaled[:, 1], y=scaled[:, 0], hue=labels, palette="tab10", s=70, ax=ax)
+        ax.set_title(f"Automatic DBSCAN (ε={eps_auto:.3f}, min_samples={min_samples_auto})")
+        ax.set_xlabel("Vessels (scaled)")
+        ax.set_ylabel("Landings (scaled)")
+        st.pyplot(fig)
+
+        # --- Step 11: Identify and explain outliers ---
+        n_outliers = (labels == -1).sum()
+        st.success(f"Detected {n_outliers} outliers (noise points)")
+
+        if n_outliers > 0:
+            outlier_details = merged_df.loc[labels == -1, [
+                "State", "Year", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
+            ]].copy()
+
+            avg_land = merged_df["Total Fish Landing (Tonnes)"].mean()
+            avg_ves = merged_df["Total number of fishing vessels"].mean()
+
+            def explain(r):
+                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "High landing but few vessels – possible overperformance or data anomaly."
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
+                    return "Low catch per vessel – possible overfishing or resource decline."
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "Low overall activity – small fleet or seasonal downtime."
+                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] > avg_ves:
+                    return "Unusually high scale – large operations or exceptional yield."
+                return "Atypical pattern compared to national average."
+
+            outlier_details["Why Flagged"] = outlier_details.apply(explain, axis=1)
+            st.markdown("### Outlier Details")
+            st.dataframe(outlier_details)
 
       
  
