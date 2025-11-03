@@ -524,7 +524,7 @@ def main():
         merged_df['Cluster'] = final_model.fit_predict(scaled)
     
         # --- Step 4: 3D Plot ---
-        fig = plt.figure(figsize=(6, 5))
+        fig = plt.figure(figsize=(6, 4))
         ax = fig.add_subplot(111, projection='3d')
         ax.scatter(
             merged_df['Total number of fishing vessels'],
@@ -537,9 +537,9 @@ def main():
         ax.tick_params(labelsize=7)
         ax.set_xlabel('Vessels', fontsize=7)
         ax.set_ylabel('Landings', fontsize=7)
-        ax.set_zlabel('Year', fontsize=7, rotation=90)
+        ax.set_zlabel('Year', fontsize=7)
         ax.set_title(f'3D KMeans Clustering (k={best_k})')
-        plt.tight_layout(pad=2.0)
+        plt.tight_layout()
         st.pyplot(fig,clear_figure=True, use_container_width=True)
 
     elif plot_option == "DBSCAN Anomaly Detection":
