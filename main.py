@@ -374,8 +374,7 @@ def main():
         # Display bar chart
         st.pyplot(fig)
     
-        # Debugging (optional): check available years
-        st.sidebar.write("📅 Years currently in dataset:", available_years)
+       
        
 
     # Allow filtering by year
