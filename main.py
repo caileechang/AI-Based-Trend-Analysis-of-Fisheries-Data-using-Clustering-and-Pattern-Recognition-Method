@@ -529,11 +529,22 @@ def main():
         merged_df["DBSCAN_Label"] = labels
 
         # --- Step 9: Cluster quality metric (silhouette) ---
-        if len(set(labels)) > 1 and np.any(labels != -1):
-            sil = silhouette_score(scaled[labels != -1], labels[labels != -1])
-            st.info(f"Silhouette Score (excluding noise): `{sil:.3f}`")
+       #if len(set(labels)) > 1 and np.any(labels != -1):
+          #  sil = silhouette_score(scaled[labels != -1], labels[labels != -1])
+         #   st.info(f"Silhouette Score (excluding noise): `{sil:.3f}`")
+       # else:
+            #st.warning("Silhouette score unavailable (all points are noise or only one cluster).")
+        # --- Step 9: Cluster quality metric (silhouette) ---
+        unique_labels = set(labels) - {-1}  # remove noise label (-1)
+        if len(unique_labels) > 1:
+            try:
+                sil = silhouette_score(scaled[labels != -1], labels[labels != -1])
+                st.info(f"Silhouette Score (excluding noise): `{sil:.3f}`")
+            except Exception as e:
+                st.warning(f"Silhouette score could not be computed: {e}")
         else:
-            st.warning("Silhouette score unavailable (all points are noise or only one cluster).")
+            st.warning("Silhouette score unavailable — only one cluster or all points labeled as noise.")
+
 
         # --- Step 10: Visualize clustering results ---
         fig, ax = plt.subplots(figsize=(10, 6))
