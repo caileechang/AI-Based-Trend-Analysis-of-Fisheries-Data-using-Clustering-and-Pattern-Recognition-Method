@@ -545,7 +545,8 @@ def main():
         ax.set_ylabel('Landings', fontsize=8)
         ax.set_zlabel('Year', fontsize=8)
         ax.set_title(f'3D KMeans Clustering (k={best_k})', fontsize=9, pad=5)
-        plt.tight_layout(pad=0.5)
+          ax.view_init(elev=elev, azim=azim)
+        plt.tight_layout(pad=1.0)
         st.pyplot(fig, use_container_width=False)
     
        
