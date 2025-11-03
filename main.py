@@ -14,6 +14,8 @@ from sklearn.neighbors import NearestNeighbors
 from kneed import KneeLocator
 from difflib import get_close_matches
 import time
+import plotly.express as px
+
 
 @st.cache_data
 def load_data():
