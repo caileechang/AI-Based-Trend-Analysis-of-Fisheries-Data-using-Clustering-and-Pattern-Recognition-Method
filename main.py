@@ -432,7 +432,7 @@ def main():
         ax2.set_xlabel("k")
         ax2.set_ylabel("Score")
         st.pyplot(fig)
-
+'''
     elif plot_option == "2D KMeans Scatter":
         k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
@@ -457,6 +457,84 @@ def main():
         ax.set_ylabel('Landings')
         ax.set_zlabel('Year')
         ax.set_title('3D KMeans Clustering')
+        st.pyplot(fig)
+'''
+    elif plot_option == "2D KMeans Scatter":
+        st.subheader("Automatic 2D K-Means Clustering")
+    
+        # --- Step 1: Prepare data ---
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        scaled = StandardScaler().fit_transform(features)
+    
+        # --- Step 2: Automatically find best k using silhouette score ---
+        sil_scores = {}
+        for k in range(2, 11):  # Try k = 2 to 10
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            labels = kmeans.fit_predict(scaled)
+            sil = silhouette_score(scaled, labels)
+            sil_scores[k] = sil
+    
+        best_k = max(sil_scores, key=sil_scores.get)
+    
+        # --- Step 3: Fit final model using the best k ---
+        final_model = KMeans(n_clusters=best_k, random_state=42)
+        merged_df['Cluster'] = final_model.fit_predict(scaled)
+    
+        # --- Step 4: Display results ---
+        st.info(f"Automatically selected optimal number of clusters (k): **{best_k}**")
+        st.line_chart(pd.DataFrame(list(sil_scores.items()), columns=['k', 'Silhouette Score']).set_index('k'))
+    
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.scatterplot(
+            data=merged_df,
+            x='Total number of fishing vessels',
+            y='Total Fish Landing (Tonnes)',
+            hue='Cluster',
+            palette='viridis',
+            s=70,
+            ax=ax
+        )
+        ax.set_title(f"Automatic K-Means Clustering (k={best_k})")
+        st.pyplot(fig)
+
+
+    elif plot_option == "3D KMeans Clustering":
+        st.subheader("Automatic 3D K-Means Clustering")
+    
+        from mpl_toolkits.mplot3d import Axes3D
+    
+        # --- Step 1: Prepare data ---
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        scaled = StandardScaler().fit_transform(features)
+    
+        # --- Step 2: Automatically find best k (Silhouette) ---
+        sil_scores = {}
+        for k in range(2, 11):
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            labels = kmeans.fit_predict(scaled)
+            sil_scores[k] = silhouette_score(scaled, labels)
+    
+        best_k = max(sil_scores, key=sil_scores.get)
+    
+        # --- Step 3: Apply final model ---
+        final_model = KMeans(n_clusters=best_k, random_state=42)
+        merged_df['Cluster'] = final_model.fit_predict(scaled)
+    
+        # --- Step 4: 3D Plot ---
+        fig = plt.figure(figsize=(10, 6))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(
+            merged_df['Total number of fishing vessels'],
+            merged_df['Total Fish Landing (Tonnes)'],
+            merged_df['Year'],
+            c=merged_df['Cluster'],
+            cmap='viridis',
+            s=60
+        )
+        ax.set_xlabel('Vessels')
+        ax.set_ylabel('Landings')
+        ax.set_zlabel('Year')
+        ax.set_title(f'3D KMeans Clustering (k={best_k})')
         st.pyplot(fig)
 
     elif plot_option == "DBSCAN Anomaly Detection":
