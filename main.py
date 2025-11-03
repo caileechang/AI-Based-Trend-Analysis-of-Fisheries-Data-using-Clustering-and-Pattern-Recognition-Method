@@ -174,8 +174,10 @@ def main():
                     user_land, user_vess = None, None
         
                 if user_land is not None:
-                    st.subheader("New dataset uploaded")
-                    st.dataframe(user_land, use_container_width=True, height=400)
+                    #st.subheader("New dataset uploaded")
+                    #st.dataframe(user_land, use_container_width=True, height=400)
+                    msg2=st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
+                   
         
                     # --- Clean uploaded data to match base format ---
                     user_land.columns = user_land.columns.str.strip().str.title()
@@ -203,11 +205,7 @@ def main():
                     df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month', 'Type of Fish'])
                    
                     msg1=st.toast(" Uploaded data successfully merged with existing dataset.")
-                    msg2=st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
-                    import time
-                    time.sleep(4)
                     
-                    msg2.empty()
                     # --- Clean uploaded vessel data to match base format ---
                     user_vess.columns = user_vess.columns.str.strip().str.title()
                     user_vess['State'] = user_vess['State'].astype(str).str.upper().str.strip()
