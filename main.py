@@ -524,7 +524,7 @@ def main():
         merged_df['Cluster'] = final_model.fit_predict(scaled)
     
         # --- Step 4: 3D Plot ---
-        fig = plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(6, 4))
         ax = fig.add_subplot(111, projection='3d')
         ax.scatter(
             merged_df['Total number of fishing vessels'],
