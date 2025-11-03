@@ -535,9 +535,9 @@ def main():
             s=30, alpha=0.7,edgecolors='k'
         )
         ax.tick_params(labelsize=7)
-        ax.set_xlabel('Vessels', fontsize=8)
-        ax.set_ylabel('Landings', fontsize=8)
-        ax.set_zlabel('Year', labelpad=10)
+        ax.set_xlabel('Vessels', fontsize=7)
+        ax.set_ylabel('Landings', fontsize=7)
+        ax.set_zlabel('Year',fontsize=5)
         ax.set_title(f'3D KMeans Clustering (k={best_k})')
         plt.tight_layout()
         st.pyplot(fig,use_container_width=False)
