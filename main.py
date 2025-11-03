@@ -14,7 +14,7 @@ from sklearn.neighbors import NearestNeighbors
 from kneed import KneeLocator
 from difflib import get_close_matches
 import time
-import plotly.express as px
+
 
 
 @st.cache_data
@@ -551,6 +551,8 @@ def main():
         ax.view_init(elev=elev, azim=azim)
         plt.tight_layout(pad=1.0)
         st.pyplot(fig, use_container_width=False)
+
+    import plotly.express as px
 
     
     elif plot_option == "3--D KMeans Clustering":
