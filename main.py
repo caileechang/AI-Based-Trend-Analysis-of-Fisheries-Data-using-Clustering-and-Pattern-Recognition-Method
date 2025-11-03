@@ -228,7 +228,7 @@ def main():
                     st.session_state.base_vess = df_vess.copy()
                     st.session_state.data_updated = True  # mark that new data exists
                     st.cache_data.clear()
-                    st.sidebar.success("✅ New dataset merged. Visualizations will refresh automatically.")
+                    st.sidebar.success("New dataset merged. Visualizations will refresh automatically.")
 
 
                   
@@ -306,7 +306,9 @@ def main():
         monthly['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(X)
 
         fig, ax = plt.subplots(figsize=(12, 6))
-        sns.lineplot(data=monthly.sort_values('MonthYear'), x='MonthYear', y='Fish Landing (Tonnes)', hue='Cluster', marker='o', ax=ax)
+        sns.lineplot(data=monthly.sort_values('MonthYear'), x='MonthYear', y='Fish Landing (Tonnes)', hue='Cluster', marker='o', ax=ax, sort=False, linewidth=1.5, style='Cluster')
+
+        #sns.lineplot(data=monthly.sort_values('MonthYear'), x='MonthYear', y='Fish Landing (Tonnes)', hue='Cluster', marker='o', ax=ax)
         ax.set_title("Monthly Fish Landing Trends by Cluster")
         ax.set_xlabel("Month-Year")
         ax.set_ylabel("Fish Landing (Tonnes)")
