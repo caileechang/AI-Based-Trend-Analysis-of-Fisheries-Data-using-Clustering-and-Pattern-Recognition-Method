@@ -7,3 +7,4 @@ seaborn
 openpyxl
 folium
 streamlit-folium
+plotly
