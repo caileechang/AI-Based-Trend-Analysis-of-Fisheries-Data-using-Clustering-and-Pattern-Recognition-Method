@@ -522,6 +522,11 @@ def main():
         # --- Step 3: Apply final model ---
         final_model = KMeans(n_clusters=best_k, random_state=42)
         merged_df['Cluster'] = final_model.fit_predict(scaled)
+
+             # --- Step 4: Let user control camera angle ---
+        st.sidebar.markdown("### Adjust 3D View")
+        elev = st.sidebar.slider("Vertical tilt)", 0, 90, 30)
+        azim = st.sidebar.slider("Horizontal rotation)", 0, 360, 45)
     
         # --- Step 4: 3D Plot ---
         fig = plt.figure(figsize=(6, 4))
@@ -532,15 +537,20 @@ def main():
             merged_df['Year'],
             c=merged_df['Cluster'],
             cmap='viridis',
-            s=30, alpha=0.7,edgecolors='k'
+            s=35, alpha=0.7,edgecolors='k'
         )
-        ax.tick_params(labelsize=7)
-        ax.set_xlabel('Vessels', fontsize=7)
-        ax.set_ylabel('Landings', fontsize=7)
-        ax.set_zlabel('Year', fontsize=7)
+        ax.set_xlabel('Vessels', labelpad=8)
+        ax.set_ylabel('Landings', labelpad=8)
+        ax.set_zlabel('Year', labelpad=10)
         ax.set_title(f'3D KMeans Clustering (k={best_k})')
-        plt.tight_layout()
-        st.pyplot(fig,clear_figure=True, use_container_width=True)
+    
+        # --- Apply user-controlled view ---
+        ax.view_init(elev=elev, azim=azim)
+        plt.tight_layout(pad=2.0)
+    
+        st.pyplot(fig)
+        
+     
 
     elif plot_option == "DBSCAN Anomaly Detection":
         eps = st.sidebar.slider("DBSCAN eps", 0.1, 1.0, 0.1, 0.05)
