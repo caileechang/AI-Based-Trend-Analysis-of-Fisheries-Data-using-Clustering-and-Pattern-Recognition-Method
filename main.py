@@ -551,51 +551,51 @@ def main():
         st.pyplot(fig, use_container_width=False)
 
     
-elif plot_option == "3--D KMeans Clustering":
-    st.subheader("Interactive 3D K-Means Clustering")
-
-    # --- Step 1: Prepare data ---
-    features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-    scaled = StandardScaler().fit_transform(features)
-
-    # --- Step 2: Automatically find best k (Silhouette) ---
-    sil_scores = {}
-    for k in range(2, 11):
-        kmeans = KMeans(n_clusters=k, random_state=42)
-        labels = kmeans.fit_predict(scaled)
-        sil_scores[k] = silhouette_score(scaled, labels)
-
-    best_k = max(sil_scores, key=sil_scores.get)
-
-    # --- Step 3: Apply final model ---
-    final_model = KMeans(n_clusters=best_k, random_state=42)
-    merged_df['Cluster'] = final_model.fit_predict(scaled)
-
-    # --- Step 4: Create interactive 3D scatter ---
-    fig = px.scatter_3d(
-        merged_df,
-        x='Total number of fishing vessels',
-        y='Total Fish Landing (Tonnes)',
-        z='Year',
-        color='Cluster',
-        color_continuous_scale='Viridis',
-        title=f"3D KMeans Clustering (k={best_k})",
-        height=600
-    )
-
-    fig.update_traces(marker=dict(size=4, line=dict(width=0.5, color='DarkSlateGrey')))
-    fig.update_layout(
-        scene=dict(
-            xaxis_title="Vessels",
-            yaxis_title="Landings",
-            zaxis_title="Year"
-        ),
-        margin=dict(l=0, r=0, b=0, t=40)
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
+    elif plot_option == "3--D KMeans Clustering":
+        st.subheader("Interactive 3D K-Means Clustering")
     
-       
+        # --- Step 1: Prepare data ---
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        scaled = StandardScaler().fit_transform(features)
+    
+        # --- Step 2: Automatically find best k (Silhouette) ---
+        sil_scores = {}
+        for k in range(2, 11):
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            labels = kmeans.fit_predict(scaled)
+            sil_scores[k] = silhouette_score(scaled, labels)
+    
+        best_k = max(sil_scores, key=sil_scores.get)
+    
+        # --- Step 3: Apply final model ---
+        final_model = KMeans(n_clusters=best_k, random_state=42)
+        merged_df['Cluster'] = final_model.fit_predict(scaled)
+    
+        # --- Step 4: Create interactive 3D scatter ---
+        fig = px.scatter_3d(
+            merged_df,
+            x='Total number of fishing vessels',
+            y='Total Fish Landing (Tonnes)',
+            z='Year',
+            color='Cluster',
+            color_continuous_scale='Viridis',
+            title=f"3D KMeans Clustering (k={best_k})",
+            height=600
+        )
+    
+        fig.update_traces(marker=dict(size=4, line=dict(width=0.5, color='DarkSlateGrey')))
+        fig.update_layout(
+            scene=dict(
+                xaxis_title="Vessels",
+                yaxis_title="Landings",
+                zaxis_title="Year"
+            ),
+            margin=dict(l=0, r=0, b=0, t=40)
+        )
+    
+        st.plotly_chart(fig, use_container_width=True)
+        
+           
         
      
 
