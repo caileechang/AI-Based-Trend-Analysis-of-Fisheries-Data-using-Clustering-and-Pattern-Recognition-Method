@@ -539,16 +539,16 @@ def main():
             cmap='viridis',
             s=35, alpha=0.7,edgecolors='k'
         )
-        ax.set_xlabel('Vessels', labelpad=8)
-        ax.set_ylabel('Landings', labelpad=8)
-        ax.set_zlabel('Year', labelpad=10)
-        ax.set_title(f'3D KMeans Clustering (k={best_k})')
+         
+        ax.tick_params(labelsize=7)
+        ax.set_xlabel('Vessels', fontsize=8)
+        ax.set_ylabel('Landings', fontsize=8)
+        ax.set_zlabel('Year', fontsize=8)
+        ax.set_title(f'3D KMeans Clustering (k={best_k})', fontsize=9, pad=5)
+        plt.tight_layout(pad=0.5)
+        st.pyplot(fig, use_container_width=False)
     
-        # --- Apply user-controlled view ---
-        ax.view_init(elev=elev, azim=azim)
-        plt.tight_layout(pad=2.0)
-    
-        st.pyplot(fig)
+       
         
      
 
