@@ -270,19 +270,36 @@ def main():
 
    
     if plot_option == "Monthly Trends by Cluster":
-        monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
-
-        
-        # Ensure numeric month and valid values only
+       # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
+       
+                # --- Use merged dataset (always latest) ---
+        monthly = st.session_state.base_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
+                # --- Ensure Year/Month are numeric ---
+        monthly['Year'] = pd.to_numeric(monthly['Year'], errors='coerce')
         monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
-        monthly = monthly.dropna(subset=['Year', 'Month'])
+        # --- Dynamically filter realistic range ---
+        latest_year = int(monthly['Year'].max())
+        monthly = monthly[
+            (monthly['Year'].between(2000, latest_year)) &
+            (monthly['Month'].between(1, 12))
+        ]
         
-        # Convert to first day of month safely
+        # --- Convert to datetime safely ---
         monthly['MonthYear'] = pd.to_datetime(
             monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
             errors='coerce'
         )
         monthly = monthly.dropna(subset=['MonthYear'])
+        # Ensure numeric month and valid values only
+        #monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
+        #monthly = monthly.dropna(subset=['Year', 'Month'])
+        
+        # Convert to first day of month safely
+       # monthly['MonthYear'] = pd.to_datetime(
+         #   monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
+            #errors='coerce'
+        #)
+        #monthly = monthly.dropna(subset=['MonthYear'])
 
         #monthly['MonthYear'] = pd.to_datetime(monthly['Year'].astype(str) + '-' + monthly['Month'].astype(str).str.zfill(2))
         X = StandardScaler().fit_transform(monthly[['Month', 'Fish Landing (Tonnes)']])
