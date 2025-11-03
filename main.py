@@ -221,7 +221,7 @@ def main():
                     st.cache_data.clear()
                     
                     # Inform user that the visuals are now refreshed
-                    st.sidebar.success("✅ New dataset merged and visualizations updated.")
+                    st.sidebar.success("New dataset merged and visualizations updated.")
 
                   
         
@@ -242,7 +242,7 @@ def main():
             except Exception as e:
                 st.error(f"Error reading uploaded file: {e}")
 
-    merged_df = prepare_yearly(df_land, df_vess)
+merged_df = prepare_yearly(df_land, df_vess)
 
 
     
@@ -264,6 +264,7 @@ def main():
     if plot_option == "Monthly Trends by Cluster":
         monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
 
+        
         # Ensure numeric month and valid values only
         monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
         monthly = monthly.dropna(subset=['Year', 'Month'])
