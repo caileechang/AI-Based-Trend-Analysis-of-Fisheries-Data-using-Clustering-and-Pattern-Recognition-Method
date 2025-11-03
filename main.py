@@ -202,11 +202,11 @@ def main():
                     # --- Merge uploaded data with base historical data (SAME structure) ---
                     df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month', 'Type of Fish'])
                    
-                    msg1=st.success(" Uploaded data successfully merged with existing dataset.")
+                    msg1=st.toast(" Uploaded data successfully merged with existing dataset.")
                     msg2=st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
                     import time
                     time.sleep(4)
-                    msg1.empty()
+                    
                     msg2.empty()
                     # --- Clean uploaded vessel data to match base format ---
                     user_vess.columns = user_vess.columns.str.strip().str.title()
