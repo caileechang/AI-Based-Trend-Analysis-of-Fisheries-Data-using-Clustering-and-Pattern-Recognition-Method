@@ -136,12 +136,22 @@ def main():
     st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
     #df_land, df_vess = load_data()
-     # --- Load base data only once ---
+    
+
+
+    # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
         st.session_state.base_land, st.session_state.base_vess = load_data()
-
-    df_land = st.session_state.base_land.copy()
-    df_vess = st.session_state.base_vess.copy()
+        st.session_state.data_updated = False  # no uploaded data yet
+    
+    # If a new dataset has been uploaded previously, use that merged version
+    if "data_updated" in st.session_state and st.session_state.data_updated:
+        df_land = st.session_state.base_land.copy()
+        df_vess = st.session_state.base_vess.copy()
+    else:
+        # otherwise, use the original base data
+        df_land = st.session_state.base_land.copy()
+        df_vess = st.session_state.base_vess.copy()
 
 
     # Upload additional yearly CSV
@@ -213,15 +223,13 @@ def main():
 
                     df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
 
-                    # Update the session state so all visualizations use the new data
-                    st.session_state.base_land = df_land
-                    st.session_state.base_vess = df_vess
-                    
-                    # Clear old cache so load_data() won't revert to outdated data
+                                        # Update session state immediately and keep merged data
+                    st.session_state.base_land = df_land.copy()
+                    st.session_state.base_vess = df_vess.copy()
+                    st.session_state.data_updated = True  # mark that new data exists
                     st.cache_data.clear()
-                    
-                    # Inform user that the visuals are now refreshed
-                    st.sidebar.success("New dataset merged and visualizations updated.")
+                    st.sidebar.success("✅ New dataset merged. Visualizations will refresh automatically.")
+
 
                   
         
