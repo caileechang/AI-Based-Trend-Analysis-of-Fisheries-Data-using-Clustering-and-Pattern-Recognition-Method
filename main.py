@@ -432,33 +432,7 @@ def main():
         ax2.set_xlabel("k")
         ax2.set_ylabel("Score")
         st.pyplot(fig)
-'''
-    elif plot_option == "2D KMeans Scatter":
-        k = st.sidebar.slider("Select k for KMeans", 2, 10, 3)
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-        scaled = StandardScaler().fit_transform(features)
-        merged_df['Cluster'] = KMeans(n_clusters=k, random_state=42).fit_predict(scaled)
 
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(data=merged_df, x='Total number of fishing vessels', y='Total Fish Landing (Tonnes)', hue='Cluster', palette='viridis', s=70, ax=ax)
-        ax.set_title(f"KMeans Clustering (k={k})")
-        st.pyplot(fig)
-
-    elif plot_option == "3D KMeans Clustering":
-        from mpl_toolkits.mplot3d import Axes3D
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-        scaled = StandardScaler().fit_transform(features)
-        merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
-
-        fig = plt.figure(figsize=(10, 6))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(merged_df['Total number of fishing vessels'], merged_df['Total Fish Landing (Tonnes)'], merged_df['Year'], c=merged_df['Cluster'], cmap='viridis', s=60)
-        ax.set_xlabel('Vessels')
-        ax.set_ylabel('Landings')
-        ax.set_zlabel('Year')
-        ax.set_title('3D KMeans Clustering')
-        st.pyplot(fig)
-'''
     elif plot_option == "2D KMeans Scatter":
         st.subheader("Automatic 2D K-Means Clustering")
     
