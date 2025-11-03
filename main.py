@@ -213,7 +213,16 @@ def main():
 
                     df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
 
-        
+                    # Update the session state so all visualizations use the new data
+                    st.session_state.base_land = df_land
+                    st.session_state.base_vess = df_vess
+                    
+                    # Clear old cache so load_data() won't revert to outdated data
+                    st.cache_data.clear()
+                    
+                    # Inform user that the visuals are now refreshed
+                    st.sidebar.success("✅ New dataset merged and visualizations updated.")
+
                   
         
                     # --- Now analyze both datasets together ---
