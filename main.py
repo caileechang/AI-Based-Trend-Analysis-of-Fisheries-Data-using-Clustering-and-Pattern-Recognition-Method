@@ -947,7 +947,19 @@ def main():
                 [row['Coords'][0], row['Coords'][1], row['Total Fish Landing (Tonnes)']]
                 for _, row in geo_df.iterrows()
             ]
-            HeatMap(heat_data, name="Fish Landing Heatmap", radius=25, blur=15).add_to(m)
+            
+            gradient = {
+                0.0: 'blue',
+                0.3: 'lime',
+                0.5: 'yellow',
+                0.7: 'orange',
+                1.0: 'red'
+            }
+
+            min_val = geo_df['Total Fish Landing (Tonnes)'].min()
+            max_val = geo_df['Total Fish Landing (Tonnes)'].max()
+            
+            HeatMap(heat_data, name="Fish Landing Heatmap", radius=30, blur=18, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
     
             # --- Step 9: Map Controls ---
             MiniMap(toggle_display=True).add_to(m)
