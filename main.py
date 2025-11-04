@@ -838,7 +838,14 @@ def main():
         import branca.colormap as cm
         from folium.plugins import MarkerCluster, MiniMap, Fullscreen, HeatMap
         from streamlit_folium import st_folium
-    
+
+        valid_states = ["JOHOR", "JOHOR BARAT/WEST JOHORE", "JOHOR TIMUR/EAST JOHORE",
+            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+            "SABAH", "SARAWAK", "W.P. LABUAN"
+        ]
+        
+        merged_df = merged_df[merged_df['State'].isin(valid_states)]
         # --- Step 1: User Filters ---
         available_years = sorted(merged_df['Year'].unique())
         selected_year = st.selectbox("Select Year", available_years, index=len(available_years) - 1)
