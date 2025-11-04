@@ -919,7 +919,28 @@ def main():
             colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
             colormap.caption = "Fish Landing (Tonnes)"
             colormap.add_to(m)
-    
+
+            # --- Step 7: Add Circle Markers (clickable points) ---
+            for _, row in geo_df.iterrows():
+                popup_html = (
+                    f"<b>{row['State']}</b><br>"
+                    f"🐟 Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                    f"🚢 Fish Vessels: {row['Total number of fishing vessels']:.0f}"
+                )
+            
+                folium.CircleMarker(
+                    location=row['Coords'],
+                    radius=8,
+                    color='blue',
+                    fill=True,
+                    fill_color='cyan',
+                    fill_opacity=0.7,
+                    popup=folium.Popup(popup_html, max_width=250),
+                    tooltip=row['State']
+                ).add_to(m)
+                
+
+
          
             # --- Step 8: Heatmap Layer ---
             heat_data = [
