@@ -272,7 +272,7 @@ def main():
         "Automatic DBSCAN",
         "Nested Relationship",
         "Geospatial Map",
-        ""Interactive Geospatial Map"
+        "Interactive Geospatial Map"
     ])
 
    
