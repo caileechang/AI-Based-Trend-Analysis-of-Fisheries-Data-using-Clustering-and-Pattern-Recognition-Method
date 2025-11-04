@@ -851,7 +851,10 @@ def main():
         selected_year = st.selectbox("Select Year", available_years, index=len(available_years) - 1)
     
         available_states = sorted(merged_df['State'].unique())
-        selected_states = st.multiselect("Select State(s)", available_states, default=available_states)
+        selected_states = st.multiselect("Select State(s)",options=available_states,default=available_states,placeholder="Choose one or more states to display",label_visibility="visible")                   
+     
+    
+
     
         # Filter dataset
         geo_df = merged_df[
