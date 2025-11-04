@@ -920,27 +920,7 @@ def main():
             colormap.caption = "Fish Landing (Tonnes)"
             colormap.add_to(m)
     
-            # --- Step 7: Marker Cluster Layer ---
-            marker_cluster = MarkerCluster(name="Fish Landing Markers").add_to(m)
-    
-            for _, row in geo_df.iterrows():
-                color = colormap(row['Total Fish Landing (Tonnes)'])
-                popup_html = (
-                    f"<b>{row['State']}</b><br>"
-                    f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                    f"Vessels: {row['Total number of fishing vessels']:.0f}"
-                )
-                folium.CircleMarker(
-                    location=row['Coords'],
-                    radius=8,
-                    color=color,
-                    fill=True,
-                    fill_color=color,
-                    fill_opacity=0.8,
-                    popup=popup_html,
-                    tooltip=f"{row['State']}: {row['Total Fish Landing (Tonnes)']:.1f} tonnes"
-                ).add_to(marker_cluster)
-    
+         
             # --- Step 8: Heatmap Layer ---
             heat_data = [
                 [row['Coords'][0], row['Coords'][1], row['Total Fish Landing (Tonnes)']]
