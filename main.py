@@ -968,16 +968,7 @@ def main():
             )
             colormap.add_to(m)
 
-            with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
-                st.markdown("""
-                **Color Interpretation:**
-                - 🟥 **Red / Orange** → High fish landing states (e.g., Selangor, Johor)  
-                - 🟨 **Yellow / Lime** → Medium fish landing  
-                - 🟦 **Blue / Green** → Low fish landing  
-                <br>
-                The heatmap shows **relative fish landing intensity by region**.
-                """, unsafe_allow_html=True)
-                
+           
             # --- Step 9: Map Controls ---
             MiniMap(toggle_display=True).add_to(m)
             Fullscreen(position='topright').add_to(m)
@@ -986,6 +977,16 @@ def main():
             # --- Step 10: Display Map ---
             st_folium(m, use_container_width=True, height=600, returned_objects=[])
 
+            with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
+                st.markdown("""
+                **Color Interpretation:**
+                - 🟥 **Red / Orange** → High fish landing states  
+                - 🟨 **Yellow / Lime** → Medium fish landing  
+                - 🟦 **Blue / Green** → Low fish landing  
+                <br>
+                The heatmap shows **relative fish landing intensity by region**.
+                """, unsafe_allow_html=True)
+                
 
         
 
