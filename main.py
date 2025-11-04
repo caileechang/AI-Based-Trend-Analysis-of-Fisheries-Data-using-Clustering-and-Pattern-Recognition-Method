@@ -924,8 +924,8 @@ def main():
             for _, row in geo_df.iterrows():
                 popup_html = (
                     f"<b>{row['State']}</b><br>"
-                    f"🐟 Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                    f"🚢 Fish Vessels: {row['Total number of fishing vessels']:.0f}"
+                    f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                    f"Fish Vessels: {row['Total number of fishing vessels']:.0f}"
                 )
             
                 folium.CircleMarker(
@@ -960,7 +960,24 @@ def main():
             max_val = geo_df['Total Fish Landing (Tonnes)'].max()
             
             HeatMap(heat_data, name="Fish Landing Heatmap", radius=30, blur=18, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
-    
+
+            colormap = cm.LinearColormap(
+                colors=['blue', 'lime', 'yellow', 'orange', 'red'],
+                vmin=min_val, vmax=max_val,
+                caption="Fish Landing (Tonnes)"
+            )
+            colormap.add_to(m)
+
+            with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
+                st.markdown("""
+                **Color Interpretation:**
+                - 🟥 **Red / Orange** → High fish landing states (e.g., Selangor, Johor)  
+                - 🟨 **Yellow / Lime** → Medium fish landing  
+                - 🟦 **Blue / Green** → Low fish landing  
+                <br>
+                The heatmap shows **relative fish landing intensity by region**.
+                """, unsafe_allow_html=True)
+                
             # --- Step 9: Map Controls ---
             MiniMap(toggle_display=True).add_to(m)
             Fullscreen(position='topright').add_to(m)
