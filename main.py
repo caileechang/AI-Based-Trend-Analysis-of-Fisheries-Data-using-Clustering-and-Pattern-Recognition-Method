@@ -905,8 +905,11 @@ def main():
             st.warning("No valid locations found for the selected year.")
         else:
             # --- Step 5: Create Base Map ---
-            m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles="CartoDB positron")
-    
+           # m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles="CartoDB positron")
+
+            m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
+            folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
+
             # --- Step 6: Add Color Scale ---
             min_val = geo_df['Total Fish Landing (Tonnes)'].min()
             max_val = geo_df['Total Fish Landing (Tonnes)'].max()
