@@ -916,9 +916,9 @@ def main():
             # --- Step 6: Add Color Scale ---
             min_val = geo_df['Total Fish Landing (Tonnes)'].min()
             max_val = geo_df['Total Fish Landing (Tonnes)'].max()
-            colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
-            colormap.caption = "Fish Landing (Tonnes)"
-            colormap.add_to(m)
+           # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
+           # colormap.caption = "Fish Landing (Tonnes)"
+           # colormap.add_to(m)
 
             # --- Step 7: Add Circle Markers (clickable points) ---
             for _, row in geo_df.iterrows():
