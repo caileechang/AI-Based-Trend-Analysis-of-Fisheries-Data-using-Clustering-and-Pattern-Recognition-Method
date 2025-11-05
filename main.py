@@ -928,7 +928,8 @@ def main():
                     f"Fish Vessels: {row['Total number of fishing vessels']:.0f}"
                 )
 
-                color=colormap(row['Total Fish Landing（Tonnes)'])
+                color = colormap(row['Total Fish Landing (Tonnes)'])
+
                 folium.CircleMarker(
                     location=row['Coords'],
                     radius=10,
