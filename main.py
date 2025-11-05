@@ -940,11 +940,11 @@ def main():
                 ).add_to(m)
                 
 
-
+            geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)']
          
             # --- Step 8: Heatmap Layer ---
             heat_data = [
-                [row['Coords'][0], row['Coords'][1], row['Total Fish Landing (Tonnes)']]
+                [row['Coords'][0], row['Coords'][1], row['HeatValue']]
                 for _, row in geo_df.iterrows()
             ]
             
