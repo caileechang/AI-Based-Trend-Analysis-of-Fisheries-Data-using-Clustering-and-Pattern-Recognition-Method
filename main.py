@@ -927,14 +927,15 @@ def main():
                     f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
                     f"Fish Vessels: {row['Total number of fishing vessels']:.0f}"
                 )
-            
+
+                color=colormap(row['Total Fish Landing（Tonnes)'])
                 folium.CircleMarker(
                     location=row['Coords'],
-                    radius=8,
-                    color='blue',
+                    radius=10,
+                    color='color',
                     fill=True,
-                    fill_color='cyan',
-                    fill_opacity=0.7,
+                    fill_color='color,
+                    fill_opacity=0.9,
                     popup=folium.Popup(popup_html, max_width=250),
                     tooltip=row['State']
                 ).add_to(m)
@@ -959,7 +960,7 @@ def main():
             min_val = geo_df['Total Fish Landing (Tonnes)'].min()
             max_val = geo_df['Total Fish Landing (Tonnes)'].max()
             
-            HeatMap(heat_data, name="Fish Landing Heatmap", radius=30, blur=18, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
+            HeatMap(heat_data, name="Fish Landing Heatmap", radius=15, blur=8, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
 
             colormap = cm.LinearColormap(
                 colors=['blue', 'lime', 'yellow', 'orange', 'red'],
