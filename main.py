@@ -934,7 +934,7 @@ def main():
                     radius=10,
                     color='color',
                     fill=True,
-                    fill_color='color,
+                    fill_color='cyan,
                     fill_opacity=0.9,
                     popup=folium.Popup(popup_html, max_width=250),
                     tooltip=row['State']
