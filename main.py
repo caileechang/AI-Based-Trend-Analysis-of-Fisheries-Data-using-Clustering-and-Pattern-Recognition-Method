@@ -916,6 +916,14 @@ def main():
             # --- Step 6: Add Color Scale ---
             min_val = geo_df['Total Fish Landing (Tonnes)'].min()
             max_val = geo_df['Total Fish Landing (Tonnes)'].max()
+            
+            colormap = cm.LinearColormap(
+                colors=['blue', 'lime', 'yellow', 'orange', 'red'],
+                vmin=min_val, vmax=max_val,
+                caption="Fish Landing (Tonnes)"
+            )
+            colormap.add_to(m)
+
            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
            # colormap.caption = "Fish Landing (Tonnes)"
            # colormap.add_to(m)
@@ -962,13 +970,6 @@ def main():
             max_val = geo_df['Total Fish Landing (Tonnes)'].max()
             
             HeatMap(heat_data, name="Fish Landing Heatmap", radius=15, blur=8, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
-
-            colormap = cm.LinearColormap(
-                colors=['blue', 'lime', 'yellow', 'orange', 'red'],
-                vmin=min_val, vmax=max_val,
-                caption="Fish Landing (Tonnes)"
-            )
-            colormap.add_to(m)
 
            
             # --- Step 9: Map Controls ---
