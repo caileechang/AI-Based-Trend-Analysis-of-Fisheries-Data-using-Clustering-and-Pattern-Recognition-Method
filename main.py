@@ -940,7 +940,7 @@ def main():
                 ).add_to(m)
                 
 
-            geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)']
+            geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)'])
          
             # --- Step 8: Heatmap Layer ---
             heat_data = [
