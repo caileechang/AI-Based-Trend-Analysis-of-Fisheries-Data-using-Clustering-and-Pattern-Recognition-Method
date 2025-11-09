@@ -919,12 +919,12 @@ def main():
                 
             colormap = cm.LinearColormap(
                 colors=['blue', 'lime', 'yellow', 'orange', 'red'],
-                vmin=min_val, vmax=max_val
-            ).to_step(n=256)
+                vmin=min_val, vmax=max_val,  colormap.caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
+            )
               
 
 # Force legend to show exact min & max numbers
-            colormap.caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
+          
             colormap.add_to(m)
 
            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
