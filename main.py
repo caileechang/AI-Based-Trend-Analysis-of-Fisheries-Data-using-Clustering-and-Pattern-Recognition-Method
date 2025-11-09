@@ -728,6 +728,7 @@ def main():
 
     elif plot_option == "Hierarchical Clustering":
         import scipy.cluster.hierarchy as sch
+        from sklearn.cluster import AgglomerativeClustering
 
         st.subheader("Hierarchical Clustering (Nested Relationships)")
     
