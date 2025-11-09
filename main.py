@@ -919,8 +919,8 @@ def main():
         folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
         folium.TileLayer("CartoDB positron", name="Light Mode",
                          attr="© OpenStreetMap contributors © CARTO").add_to(m)
-        folium.TileLayer("Stamen Terrain", name="Terrain View",
-                         attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap").add_to(m)
+        #folium.TileLayer("Stamen Terrain", name="Terrain View",
+               #          attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap").add_to(m)
         folium.TileLayer("Stamen Toner", name="Dark Mode",
                          attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap").add_to(m)
               
@@ -939,7 +939,9 @@ def main():
 # Force legend to show exact min & max numbers
           
         colormap.add_to(m)
+        
         marker_cluster = MarkerCluster(name="Fish Landing Locations").add_to(m)
+        folium.LayerControl(collapsed=False).add_to(m)
 
            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
            # colormap.caption = "Fish Landing (Tonnes)"
