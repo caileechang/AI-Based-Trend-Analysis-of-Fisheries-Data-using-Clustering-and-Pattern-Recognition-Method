@@ -841,6 +841,7 @@ def main():
         import branca.colormap as cm
         from folium.plugins import MarkerCluster, MiniMap, Fullscreen, HeatMap
         from streamlit_folium import st_folium
+        from streamlit_js_eval import streamlit_js_eval
 
         valid_states = ["JOHOR", "JOHOR BARAT/WEST JOHORE", "JOHOR TIMUR/EAST JOHORE",
             "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -996,7 +997,7 @@ def main():
             - 🚢 Total vessels: {geo_df['Total number of fishing vessels'].sum():,}
             """)
 
-            from streamlit_js_eval import streamlit_js_eval
+            
             if st.checkbox("Show Legend", value=True):
                 colormap.add_to(m)
 
