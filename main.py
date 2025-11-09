@@ -728,7 +728,7 @@ def main():
 
       
  
-
+    
 
     elif plot_option == "Geospatial Map":
         st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
@@ -739,6 +739,8 @@ def main():
 
     # Filter dataset by selected year
         geo_df = merged_df[merged_df['Year'] == selected_year].copy()
+
+        import re
 
     # Manually define coordinates for each region (including subregions)
         state_coords = {
@@ -786,10 +788,8 @@ def main():
             .str.strip()
         )
 
-        clean_coords = {
-            re.sub(r'\s*/\s*', '/', k.upper().strip()): v
-            for k, v in state_coords.items()
-        }
+      # Clean coordinate dictionary
+        clean_coords = { re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items() }
 
         
         # Clean coordinate dictionary keys the same way
