@@ -937,8 +937,7 @@ def main():
           
         colormap.add_to(m)
         
-        marker_cluster = MarkerCluster(name="Fish Landing Locations").add_to(m)
-        folium.LayerControl(collapsed=False).add_to(m)
+       
 
            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
            # colormap.caption = "Fish Landing (Tonnes)"
