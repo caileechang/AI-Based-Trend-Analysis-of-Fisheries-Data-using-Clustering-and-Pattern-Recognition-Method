@@ -920,7 +920,7 @@ def main():
             colormap = cm.LinearColormap(
                 colors=['blue', 'lime', 'yellow', 'orange', 'red'],
                 vmin=min_val, vmax=max_val,
-                caption="Fish Landing (Tonnes)"
+                caption=f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
             )
             colormap.add_to(m)
 
