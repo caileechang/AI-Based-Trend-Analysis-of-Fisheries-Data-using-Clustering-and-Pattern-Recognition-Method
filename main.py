@@ -916,7 +916,7 @@ def main():
 
             m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
             folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
-            folium.TileLayer("Stamen Terrain",name="Terrain View",attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap").add_to(m)
+           
 
             folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
             folium.TileLayer("Stamen Toner", name="Dark Mode").add_to(m)
