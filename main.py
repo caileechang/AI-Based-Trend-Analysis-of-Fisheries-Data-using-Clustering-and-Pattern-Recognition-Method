@@ -785,6 +785,8 @@ def main():
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
 
+            base_df = merged_df.copy()
+
     elif plot_option == "Hierarchical Clustering":
         import scipy.cluster.hierarchy as sch
         from sklearn.cluster import AgglomerativeClustering
@@ -794,6 +796,7 @@ def main():
     
         st.subheader("Hierarchical Clustering (Nested Relationships Between States)")
     
+       
         # --- Step 1: Define valid states ---
         valid_states = [
             "JOHOR", "JOHOR BARAT/WEST JOHORE", "JOHOR TIMUR/EAST JOHORE",
@@ -802,16 +805,19 @@ def main():
             "SABAH", "SARAWAK", "W.P. LABUAN"
         ]
     
-         # --- Step 2: Validate merged_df availability ---
+        # --- Step 2: Create a clean local copy of merged_df ---
         if "merged_df" not in locals() and "merged_df" not in globals():
             st.error("Merged dataset is not available. Please load or upload valid data first.")
             st.stop()
+    
         if merged_df.empty:
             st.warning("Merged dataset is empty. Please upload valid data before clustering.")
             st.stop()
     
-        # --- Step 3: Clean and filter valid states ---
+        # create a local working copy so the main dataset stays intact
         df_hc = merged_df.copy()
+    
+        # --- Step 3: Clean and filter valid states ---
         df_hc["State"] = df_hc["State"].astype(str).str.upper().str.strip()
         df_hc = df_hc[df_hc["State"].isin(valid_states)]
     
@@ -819,7 +825,7 @@ def main():
             st.warning("No valid state data found for hierarchical clustering.")
             st.stop()
     
-        # --- Step 4: Drop invalid rows (NaN or zeros) ---
+        # --- Step 4: Drop invalid or missing values ---
         df_hc = df_hc.replace([np.inf, -np.inf], np.nan).dropna(
             subset=["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
         )
@@ -834,7 +840,7 @@ def main():
             st.warning("No valid numeric data available for clustering after cleaning.")
             st.stop()
     
-        # --- Step 5: Aggregate data by state ---
+        # --- Step 5: Aggregate by state ---
         df_state = (
             df_hc.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
             .mean()
@@ -846,7 +852,6 @@ def main():
             st.stop()
     
         # --- Step 6: Scale the data safely ---
-        from sklearn.preprocessing import StandardScaler
         X_scaled = StandardScaler().fit_transform(
             df_state[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         )
@@ -855,7 +860,7 @@ def main():
         linkage_matrix = sch.linkage(X_scaled, method='ward')
     
         # --- Step 8: Static dendrogram ---
-        st.write("### Dendrogram (Nested Relationship between States)")
+        st.write("### Dendrogram (Nested Relationship Between States)")
         fig, ax = plt.subplots(figsize=(12, 6))
         sch.dendrogram(
             linkage_matrix,
@@ -870,7 +875,7 @@ def main():
         plt.tight_layout()
         st.pyplot(fig)
     
-        # --- Step 9: Interactive dendrogram (Plotly) ---
+        # --- Step 9: Interactive dendrogram (optional) ---
         with st.expander("Interactive Dendrogram (Zoom and Explore)"):
             try:
                 fig_interactive = ff.create_dendrogram(
@@ -916,7 +921,10 @@ def main():
         plt.title("Hierarchical Cluster Visualization (Valid States Only)")
         plt.tight_layout()
         st.pyplot(fig2)
-
+    
+        # --- Step 13: Clean up temporary variables (optional, but safe) ---
+        del df_hc, df_state, X_scaled, linkage_matrix
+    
 
  
             
