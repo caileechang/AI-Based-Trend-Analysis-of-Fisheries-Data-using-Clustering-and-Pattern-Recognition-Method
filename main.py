@@ -733,6 +733,12 @@ def main():
         import matplotlib.pyplot as plt
 
         st.subheader("Hierarchical Clustering (Nested Relationships)")
+        valid_states = [
+            "JOHOR", "JOHOR BARAT/WEST JOHORE", "JOHOR TIMUR/EAST JOHORE",
+            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+            "SABAH", "SARAWAK", "W.P. LABUAN"
+        ]
     
         # --- Prepare data for clustering ---
         #features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']].dropna()
@@ -802,8 +808,8 @@ def main():
         plt.tight_layout()
         st.pyplot(fig2)
 
-      # --- Step 8: Optional Interactive Dendrogram ---
-        with st.expander("📊 Interactive Dendrogram (Zoom and Explore)"):
+    # Interactive dendrogram (this part was fine)
+        with st.expander("Interactive Dendrogram (Zoom and Explore)"):
             fig_interactive = ff.create_dendrogram(
                 X_scaled,
                 orientation="top",
@@ -816,6 +822,34 @@ def main():
                 title="Interactive Hierarchical Clustering (Aggregated by State)"
             )
             st.plotly_chart(fig_interactive, use_container_width=True)
+    
+        # Cluster labels -> stay on df_state
+        n_clusters = st.slider("Select number of clusters", 2, 10, 3)
+        hc = AgglomerativeClustering(n_clusters=n_clusters, linkage="ward")
+        df_state["Cluster"] = hc.fit_predict(X_scaled)
+    
+        # Table (use df_state)
+        st.write(f"### Cluster Assignments (n = {n_clusters})")
+        st.dataframe(
+            df_state[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]],
+            use_container_width=True
+        )
+    
+        # Scatter (use df_state)
+        fig2, ax2 = plt.subplots(figsize=(8, 5))
+        scatter = ax2.scatter(
+            df_state["Total Fish Landing (Tonnes)"],
+            df_state["Total number of fishing vessels"],
+            c=df_state["Cluster"], cmap="rainbow", s=100, edgecolors="black"
+        )
+        plt.colorbar(scatter, label="Cluster ID")
+        plt.xlabel("Total Fish Landing (Tonnes)")
+        plt.ylabel("Total Number of Fishing Vessels")
+        plt.title("Hierarchical Cluster Visualization (Valid States Only)")
+        plt.tight_layout()
+        st.pyplot(fig2)
+
+    
         
         
 
