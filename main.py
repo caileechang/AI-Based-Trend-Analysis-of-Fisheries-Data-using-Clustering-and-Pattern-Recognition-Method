@@ -727,54 +727,7 @@ def main():
             st.dataframe(outlier_details)
 
       
-    elif plot_option == "Hierarchical Clustering":
-        st.subheader("Automatic Hierarchical Clustering of Fisheries Data")
     
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.cluster import AgglomerativeClustering
-        import scipy.cluster.hierarchy as sch
-        import matplotlib.pyplot as plt
-        from sklearn.preprocessing import StandardScaler  
-    
-        # --- Step 1: Select features ---
-        features = geo_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-    
-        # --- Step 2: Normalize data ---
-        scaled = StandardScaler().fit_transform(features)
-    
-        # --- Step 3: Display dendrogram ---
-        st.write("### Dendrogram (to visualize optimal cluster number)")
-        fig, ax = plt.subplots(figsize=(8, 5))
-        dendrogram = sch.dendrogram(sch.linkage(scaled, method='ward'))
-        plt.title("Hierarchical Clustering Dendrogram")
-        plt.xlabel("Samples")
-        plt.ylabel("Euclidean Distance")
-        st.pyplot(fig)
-    
-        # --- Step 4: Choose cluster number ---
-        n_clusters = st.slider("Select Number of Clusters", 2, 10, 3)
-    
-        # --- Step 5: Apply Agglomerative Clustering ---
-        hc = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean', linkage='ward')
-        geo_df['Cluster'] = hc.fit_predict(scaled)
-    
-        # --- Step 6: Show Results ---
-        st.write("### Clustered Data")
-        st.dataframe(geo_df[['State', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels', 'Cluster']])
-    
-        # --- Step 7: 2D Visualization ---
-        fig2, ax2 = plt.subplots(figsize=(8, 5))
-        scatter = ax2.scatter(
-            geo_df['Total Fish Landing (Tonnes)'],
-            geo_df['Total number of fishing vessels'],
-            c=geo_df['Cluster'], cmap='rainbow'
-        )
-        plt.xlabel("Total Fish Landing (Tonnes)")
-        plt.ylabel("Total Number of Fishing Vessels")
-        plt.title("Hierarchical Clustering Visualization")
-        plt.colorbar(scatter, label="Cluster ID")
-        st.pyplot(fig2)
-
     
 
     elif plot_option == "Geospatial Map":
@@ -1061,6 +1014,55 @@ def main():
                 <br>
                 The heatmap shows **relative fish landing intensity by region**.
                 """, unsafe_allow_html=True)
+
+    elif plot_option == "Hierarchical Clustering":
+            st.subheader("Automatic Hierarchical Clustering of Fisheries Data")
+        
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.cluster import AgglomerativeClustering
+            import scipy.cluster.hierarchy as sch
+            import matplotlib.pyplot as plt
+            from sklearn.preprocessing import StandardScaler  
+        
+            # --- Step 1: Select features ---
+            features = geo_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        
+            # --- Step 2: Normalize data ---
+            scaled = StandardScaler().fit_transform(features)
+        
+            # --- Step 3: Display dendrogram ---
+            st.write("### Dendrogram (to visualize optimal cluster number)")
+            fig, ax = plt.subplots(figsize=(8, 5))
+            dendrogram = sch.dendrogram(sch.linkage(scaled, method='ward'))
+            plt.title("Hierarchical Clustering Dendrogram")
+            plt.xlabel("Samples")
+            plt.ylabel("Euclidean Distance")
+            st.pyplot(fig)
+        
+            # --- Step 4: Choose cluster number ---
+            n_clusters = st.slider("Select Number of Clusters", 2, 10, 3)
+        
+            # --- Step 5: Apply Agglomerative Clustering ---
+            hc = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean', linkage='ward')
+            geo_df['Cluster'] = hc.fit_predict(scaled)
+        
+            # --- Step 6: Show Results ---
+            st.write("### Clustered Data")
+            st.dataframe(geo_df[['State', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels', 'Cluster']])
+        
+            # --- Step 7: 2D Visualization ---
+            fig2, ax2 = plt.subplots(figsize=(8, 5))
+            scatter = ax2.scatter(
+                geo_df['Total Fish Landing (Tonnes)'],
+                geo_df['Total number of fishing vessels'],
+                c=geo_df['Cluster'], cmap='rainbow'
+            )
+            plt.xlabel("Total Fish Landing (Tonnes)")
+            plt.ylabel("Total Number of Fishing Vessels")
+            plt.title("Hierarchical Clustering Visualization")
+            plt.colorbar(scatter, label="Cluster ID")
+            st.pyplot(fig2)
+
                 
 
         
