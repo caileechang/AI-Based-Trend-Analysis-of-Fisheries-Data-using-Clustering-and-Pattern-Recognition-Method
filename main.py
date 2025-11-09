@@ -739,7 +739,20 @@ def main():
             "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
             "SABAH", "SARAWAK", "W.P. LABUAN"
         ]
-    
+        # --- Step 2: Clean state names ---
+        merged_df["State"] = (
+            merged_df["State"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+        )
+
+        # --- Step 3: Filter BEFORE aggregation ---
+        filtered_df = merged_df[merged_df["State"].isin(valid_states)]
+
+        if filtered_df.empty:
+            st.warning("No valid state data found for hierarchical clustering.")
+            st.stop()
         # --- Prepare data for clustering ---
         #features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']].dropna()
     
@@ -748,14 +761,12 @@ def main():
             #st.stop()
         # --- Step 1: Aggregate data by State ---
         df_state = (
-            merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+            filtered_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
             .mean()
             .reset_index()
         )
     
-        if df_state.empty:
-            st.warning("No valid data available for hierarchical clustering.")
-            st.stop()
+       
 
      # --- Step 2: Scale features ---
         X_scaled = StandardScaler().fit_transform(
@@ -784,31 +795,8 @@ def main():
         plt.xlabel("States")
         plt.ylabel("Euclidean Distance")
         st.pyplot(fig)
-    
-        # --- Optional: cluster summary ---
-        n_clusters = st.slider("Select number of clusters", 2, 10, 3)
-        hc = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward')
-       # merged_df['Cluster'] = hc.fit_predict(X_scaled)
-        df_state["Cluster"] = hc.fit_predict(X_scaled)
-    
-        st.write(f"### Cluster assignments (n = {n_clusters})")
-        #st.dataframe(merged_df[['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels', 'Cluster']].head(20))
-        st.dataframe(df_state[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]])
-        # --- Simple 2D cluster plot ---
-        fig2, ax2 = plt.subplots(figsize=(8, 5))
-        scatter = ax2.scatter(
-            merged_df['Total Fish Landing (Tonnes)'],
-            merged_df['Total number of fishing vessels'],
-            c=merged_df['Cluster'], cmap='rainbow',s=100, edgecolors="black"
-        )
-        plt.colorbar(scatter, label="Cluster ID")
-        plt.xlabel("Total Fish Landing (Tonnes)")
-        plt.ylabel("Total Number of Fishing Vessels")
-        plt.title("Hierarchical Cluster Visualization")
-        plt.tight_layout()
-        st.pyplot(fig2)
 
-    # Interactive dendrogram (this part was fine)
+# --- Step 8: Interactive dendrogram (optional) ---
         with st.expander("Interactive Dendrogram (Zoom and Explore)"):
             fig_interactive = ff.create_dendrogram(
                 X_scaled,
@@ -819,28 +807,31 @@ def main():
             fig_interactive.update_layout(
                 width=1000,
                 height=600,
-                title="Interactive Hierarchical Clustering (Aggregated by State)"
+                title="Interactive Hierarchical Clustering (Valid States Only)"
             )
             st.plotly_chart(fig_interactive, use_container_width=True)
     
-        # Cluster labels -> stay on df_state
+        # --- Step 9: Agglomerative clustering ---
         n_clusters = st.slider("Select number of clusters", 2, 10, 3)
         hc = AgglomerativeClustering(n_clusters=n_clusters, linkage="ward")
         df_state["Cluster"] = hc.fit_predict(X_scaled)
     
-        # Table (use df_state)
+        # --- Step 10: Display results ---
         st.write(f"### Cluster Assignments (n = {n_clusters})")
         st.dataframe(
             df_state[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]],
             use_container_width=True
         )
     
-        # Scatter (use df_state)
+        # --- Step 11: 2D Scatter Visualization ---
         fig2, ax2 = plt.subplots(figsize=(8, 5))
         scatter = ax2.scatter(
             df_state["Total Fish Landing (Tonnes)"],
             df_state["Total number of fishing vessels"],
-            c=df_state["Cluster"], cmap="rainbow", s=100, edgecolors="black"
+            c=df_state["Cluster"],
+            cmap="rainbow",
+            s=100,
+            edgecolors="black"
         )
         plt.colorbar(scatter, label="Cluster ID")
         plt.xlabel("Total Fish Landing (Tonnes)")
@@ -849,9 +840,12 @@ def main():
         plt.tight_layout()
         st.pyplot(fig2)
 
-    
-        
-        
+
+
+ 
+            
+
+    #
 
     elif plot_option == "Geospatial Map":
         st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
