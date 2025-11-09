@@ -797,136 +797,83 @@ def main():
         st.subheader("Hierarchical Clustering (Nested Relationships Between States)")
     
        
-        # --- Step 1: Define valid states ---
-        valid_states = [
-            "JOHOR", "JOHOR BARAT/WEST JOHORE", "JOHOR TIMUR/EAST JOHORE",
-            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
-            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
-            "SABAH", "SARAWAK", "W.P. LABUAN"
-        ]
-    
-     
+       
 
-        # --- Step 2: Make a completely isolated copy ---
-        try:
-            df_hc = merged_df.copy()
-        except Exception:
-            st.error("No dataset found. Please load or upload valid data first.")
-            st.stop()
-    
-        if df_hc.empty:
-            st.warning("Dataset is empty. Please upload valid data before clustering.")
-            st.stop()
-    
-        # --- Step 3: Clean & filter for valid states ---
-        df_hc["State"] = df_hc["State"].astype(str).str.upper().str.strip()
-        df_hc = df_hc[df_hc["State"].isin(valid_states)]
-    
-        if df_hc.empty:
-            st.warning("No valid states found for clustering.")
-            st.stop()
-    
-        # --- Step 4: Drop invalid or missing data ---
-        df_hc = df_hc.replace([np.inf, -np.inf], np.nan).dropna(
-            subset=["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
-        )
-        df_hc = df_hc[
-            (df_hc["Total Fish Landing (Tonnes)"] > 0) &
-            (df_hc["Total number of fishing vessels"] > 0)
-        ]
-    
-        if df_hc.empty:
-            st.warning("No valid numeric data available after cleaning.")
-            st.stop()
-    
-        # --- Step 5: Aggregate by state ---
+        # --- Step 1: Aggregate data by State ---
         df_state = (
-            df_hc.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+            merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
             .mean()
             .reset_index()
         )
     
         if df_state.empty:
-            st.warning("Not enough data to aggregate by state for hierarchical clustering.")
+            st.warning("No valid data available for hierarchical clustering.")
             st.stop()
     
-        # --- Step 6: Scale the data safely ---
+        # --- Step 2: Scale features ---
         X_scaled = StandardScaler().fit_transform(
             df_state[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         )
     
-        # --- Step 7: Create linkage matrix ---
-        linkage_matrix = sch.linkage(X_scaled, method='ward')
+        # --- Step 3: Create linkage matrix ---
+        linkage_matrix = sch.linkage(X_scaled, method="ward")
     
-        # --- Step 8: Static Dendrogram ---
-        st.write("### Dendrogram (Nested Relationship Between States)")
-        fig, ax = plt.subplots(figsize=(12, 6))
+        # --- Step 4: Dendrogram visualization ---
+        st.write("### Dendrogram (Aggregated by State)")
+        fig, ax = plt.subplots(figsize=(10, 5))
         sch.dendrogram(
             linkage_matrix,
             labels=df_state["State"].tolist(),
             leaf_rotation=90,
-            leaf_font_size=8,
-            color_threshold=0.7 * max(linkage_matrix[:, 2])
+            leaf_font_size=9,
+            color_threshold=0.7 * max(linkage_matrix[:, 2])  # optional colored branches
         )
-        plt.title("Hierarchical Clustering Dendrogram (Valid States Only)")
+        plt.title("Hierarchical Clustering Dendrogram (States Only)")
         plt.xlabel("States")
         plt.ylabel("Euclidean Distance")
         plt.tight_layout()
         st.pyplot(fig)
     
-        # --- Step 9: Interactive dendrogram ---
-        with st.expander("Interactive Dendrogram (Zoom and Explore)"):
-            try:
-                fig_interactive = ff.create_dendrogram(
-                    X_scaled,
-                    orientation="top",
-                    labels=df_state["State"].tolist(),
-                    linkagefun=lambda x: sch.linkage(x, "ward")
-                )
-                fig_interactive.update_layout(
-                    width=1000,
-                    height=600,
-                    title="Interactive Hierarchical Clustering (Valid States Only)"
-                )
-                st.plotly_chart(fig_interactive, use_container_width=True)
-            except Exception as e:
-                st.warning(f"Interactive dendrogram could not be generated: {e}")
-    
-        # --- Step 10: Agglomerative clustering ---
+        # --- Step 5: Choose number of clusters ---
         n_clusters = st.slider("Select number of clusters", 2, 10, 3)
         hc = AgglomerativeClustering(n_clusters=n_clusters, linkage="ward")
         df_state["Cluster"] = hc.fit_predict(X_scaled)
     
-        # --- Step 11: Display results ---
+        # --- Step 6: Display cluster assignments ---
         st.write(f"### Cluster Assignments (n = {n_clusters})")
-        st.dataframe(
-            df_state[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]],
-            use_container_width=True
-        )
+        st.dataframe(df_state[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]])
     
-        # --- Step 12: 2D Scatter Visualization ---
+        # --- Step 7: 2D Cluster Visualization ---
         fig2, ax2 = plt.subplots(figsize=(8, 5))
         scatter = ax2.scatter(
             df_state["Total Fish Landing (Tonnes)"],
             df_state["Total number of fishing vessels"],
-            c=df_state["Cluster"],
-            cmap="rainbow",
-            s=100,
-            edgecolors="black"
+            c=df_state["Cluster"], cmap="rainbow", s=100, edgecolors="black"
         )
         plt.colorbar(scatter, label="Cluster ID")
         plt.xlabel("Total Fish Landing (Tonnes)")
         plt.ylabel("Total Number of Fishing Vessels")
-        plt.title("Hierarchical Cluster Visualization (Valid States Only)")
+        plt.title("Hierarchical Cluster Visualization (Aggregated by State)")
         plt.tight_layout()
         st.pyplot(fig2)
     
-        # --- Step 13: Full Cleanup (to avoid memory interference) ---
-        del df_hc, df_state, X_scaled, linkage_matrix
-
+        # --- Step 8: Optional Interactive Dendrogram ---
+        with st.expander("Interactive Dendrogram (Zoom and Explore)"):
+            fig_interactive = ff.create_dendrogram(
+                X_scaled,
+                orientation="top",
+                labels=df_state["State"].tolist(),
+                linkagefun=lambda x: sch.linkage(x, "ward")
+            )
+            fig_interactive.update_layout(
+                width=1000,
+                height=600,
+                title="Interactive Hierarchical Clustering (Aggregated by State)"
+            )
+            st.plotly_chart(fig_interactive, use_container_width=True)
+        
     
-
- 
+     
             
 
     #
