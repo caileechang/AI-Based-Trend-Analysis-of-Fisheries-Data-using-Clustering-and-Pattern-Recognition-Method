@@ -741,6 +741,8 @@ def main():
         geo_df = merged_df[merged_df['Year'] == selected_year].copy()
 
         import re
+        import folium
+        from streamlit_folium import st_folium
 
     # Manually define coordinates for each region (including subregions)
         state_coords = {
