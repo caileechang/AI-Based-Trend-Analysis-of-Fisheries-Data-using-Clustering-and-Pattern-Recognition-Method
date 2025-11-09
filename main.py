@@ -914,12 +914,12 @@ def main():
             folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
 
             # --- Step 6: Add Color Scale ---
-            min_val = (geo_df['Total Fish Landing (Tonnes)'].min())
-            max_val = (geo_df['Total Fish Landing (Tonnes)'].max())
+            min_val = geo_df['Total Fish Landing (Tonnes)'].min()
+            max_val = geo_df['Total Fish Landing (Tonnes)'].max()
                 
             colormap = cm.LinearColormap(
                 colors=['blue', 'lime', 'yellow', 'orange', 'red'],
-                vmin=min_val, vmax=max_val,  colormap.caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
+                vmin=min_val, vmax=max_val, caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
             )
               
 
