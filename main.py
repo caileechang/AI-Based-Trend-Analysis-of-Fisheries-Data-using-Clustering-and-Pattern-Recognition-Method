@@ -323,64 +323,7 @@ def main():
         plt.xticks(rotation=45)
         st.pyplot(fig)
 
-    elif plot_option == "Monthly Trends by Cluster":
-        st.subheader("Monthly Fish Landing Trends by Cluster")
-    
-        # --- Build monthly dataset ---
-        if "base_land" not in st.session_state:
-            st.error("Dataset not loaded yet.")
-            st.stop()
-    
-        monthly = st.session_state.base_land.copy()
-        if monthly.empty:
-            st.warning("No data available in Fish Landing dataset.")
-            st.stop()
-    
-        # Ensure columns exist
-        required_cols = ["Year", "Month", "Fish Landing (Tonnes)"]
-        for col in required_cols:
-            if col not in monthly.columns:
-                st.error(f"Missing column: {col}")
-                st.stop()
-    
-        # Convert to numeric safely
-        monthly["Year"] = pd.to_numeric(monthly["Year"], errors="coerce")
-        monthly["Month"] = pd.to_numeric(monthly["Month"], errors="coerce")
-        monthly["Fish Landing (Tonnes)"] = pd.to_numeric(monthly["Fish Landing (Tonnes)"], errors="coerce")
-        monthly = monthly.dropna(subset=["Year", "Month", "Fish Landing (Tonnes)"])
-    
-        if monthly.empty:
-            st.warning("After cleaning, no valid numeric data remains.")
-            st.stop()
-    
-        # --- Compute clusters ---
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.cluster import KMeans
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-    
-        X = StandardScaler().fit_transform(monthly[["Month", "Fish Landing (Tonnes)"]])
-        monthly["Cluster"] = KMeans(n_clusters=3, random_state=42).fit_predict(X)
-    
-        # --- Plot the trend ---
-        fig, ax = plt.subplots(figsize=(12, 6))
-        sns.lineplot(
-            data=monthly.sort_values("Year"),
-            x="Month",
-            y="Fish Landing (Tonnes)",
-            hue="Cluster",
-            marker="o",
-            ax=ax,
-            linewidth=1.5,
-        )
-    
-        ax.set_title("Monthly Fish Landing Trends by Cluster")
-        ax.set_xlabel("Month")
-        ax.set_ylabel("Fish Landing (Tonnes)")
-        plt.xticks(range(1, 13))
-        plt.tight_layout()
-        st.pyplot(fig)
-
+   
    
 
     elif plot_option == "Yearly Fish Landing Summary":
