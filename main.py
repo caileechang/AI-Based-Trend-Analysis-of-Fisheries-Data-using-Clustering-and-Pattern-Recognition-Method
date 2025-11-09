@@ -729,18 +729,35 @@ def main():
     elif plot_option == "Hierarchical Clustering":
         import scipy.cluster.hierarchy as sch
         from sklearn.cluster import AgglomerativeClustering
+        import plotly.figure_factory as ff
+        import matplotlib.pyplot as plt
 
         st.subheader("Hierarchical Clustering (Nested Relationships)")
     
         # --- Prepare data for clustering ---
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']].dropna()
+        #features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']].dropna()
     
-        if features.empty:
+        #if features.empty:
+           # st.warning("No valid data available for hierarchical clustering.")
+            #st.stop()
+        # --- Step 1: Aggregate data by State ---
+        df_state = (
+            merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+            .mean()
+            .reset_index()
+        )
+    
+        if df_state.empty:
             st.warning("No valid data available for hierarchical clustering.")
             st.stop()
-    
+
+     # --- Step 2: Scale features ---
+        X_scaled = StandardScaler().fit_transform(
+            df_state[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        )
+            
         # --- Scale data ---
-        X_scaled = StandardScaler().fit_transform(features)
+       # X_scaled = StandardScaler().fit_transform(features)
     
         # --- Create linkage matrix ---
         linkage_matrix = sch.linkage(X_scaled, method='ward')
@@ -750,8 +767,9 @@ def main():
         fig, ax = plt.subplots(figsize=(10, 6))
         sch.dendrogram(
             linkage_matrix,
-            labels=merged_df['State'].astype(str).tolist()[:len(X_scaled)],
-            orientation='top',
+            labels=df_state["State"].tolist(),
+            #labels=merged_df['State'].astype(str).tolist()[:len(X_scaled)],
+            #orientation='top',
             leaf_rotation=90,
             leaf_font_size=8,
             color_threshold=0.7 * max(linkage_matrix[:, 2])  # optional for color grouping
@@ -764,26 +782,42 @@ def main():
         # --- Optional: cluster summary ---
         n_clusters = st.slider("Select number of clusters", 2, 10, 3)
         hc = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward')
-        merged_df['Cluster'] = hc.fit_predict(X_scaled)
+       # merged_df['Cluster'] = hc.fit_predict(X_scaled)
+        df_state["Cluster"] = hc.fit_predict(X_scaled)
     
         st.write(f"### Cluster assignments (n = {n_clusters})")
-        st.dataframe(merged_df[['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels', 'Cluster']].head(20))
-    
+        #st.dataframe(merged_df[['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels', 'Cluster']].head(20))
+        st.dataframe(df_state[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]])
         # --- Simple 2D cluster plot ---
         fig2, ax2 = plt.subplots(figsize=(8, 5))
         scatter = ax2.scatter(
             merged_df['Total Fish Landing (Tonnes)'],
             merged_df['Total number of fishing vessels'],
-            c=merged_df['Cluster'], cmap='rainbow'
+            c=merged_df['Cluster'], cmap='rainbow',s=100, edgecolors="black"
         )
         plt.colorbar(scatter, label="Cluster ID")
         plt.xlabel("Total Fish Landing (Tonnes)")
         plt.ylabel("Total Number of Fishing Vessels")
         plt.title("Hierarchical Cluster Visualization")
+        plt.tight_layout()
         st.pyplot(fig2)
-     
-    
-    
+
+      # --- Step 8: Optional Interactive Dendrogram ---
+        with st.expander("📊 Interactive Dendrogram (Zoom and Explore)"):
+            fig_interactive = ff.create_dendrogram(
+                X_scaled,
+                orientation="top",
+                labels=df_state["State"].tolist(),
+                linkagefun=lambda x: sch.linkage(x, "ward")
+            )
+            fig_interactive.update_layout(
+                width=1000,
+                height=600,
+                title="Interactive Hierarchical Clustering (Aggregated by State)"
+            )
+            st.plotly_chart(fig_interactive, use_container_width=True)
+        
+        
 
     elif plot_option == "Geospatial Map":
         st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
