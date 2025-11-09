@@ -726,7 +726,59 @@ def main():
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
 
-      
+     elif plot_option == "Hierarchical Clustering":
+        st.subheader("Hierarchical Clustering (Nested Relationships)")
+    
+        # --- Prepare data for clustering ---
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']].dropna()
+    
+        if features.empty:
+            st.warning("No valid data available for hierarchical clustering.")
+            st.stop()
+    
+        # --- Scale data ---
+        X_scaled = StandardScaler().fit_transform(features)
+    
+        # --- Create linkage matrix ---
+        linkage_matrix = sch.linkage(X_scaled, method='ward')
+    
+        # --- Dendrogram visualization ---
+        st.write("### Dendrogram (Nested Relationship between States)")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sch.dendrogram(
+            linkage_matrix,
+            labels=merged_df['State'].astype(str).tolist()[:len(X_scaled)],
+            orientation='top',
+            leaf_rotation=90,
+            leaf_font_size=8,
+            color_threshold=0.7 * max(linkage_matrix[:, 2])  # optional for color grouping
+        )
+        plt.title("Hierarchical Clustering Dendrogram (Nested Relationships)")
+        plt.xlabel("States")
+        plt.ylabel("Euclidean Distance")
+        st.pyplot(fig)
+    
+        # --- Optional: cluster summary ---
+        n_clusters = st.slider("Select number of clusters", 2, 10, 3)
+        hc = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward')
+        merged_df['Cluster'] = hc.fit_predict(X_scaled)
+    
+        st.write(f"### Cluster assignments (n = {n_clusters})")
+        st.dataframe(merged_df[['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels', 'Cluster']].head(20))
+    
+        # --- Simple 2D cluster plot ---
+        fig2, ax2 = plt.subplots(figsize=(8, 5))
+        scatter = ax2.scatter(
+            merged_df['Total Fish Landing (Tonnes)'],
+            merged_df['Total number of fishing vessels'],
+            c=merged_df['Cluster'], cmap='rainbow'
+        )
+        plt.colorbar(scatter, label="Cluster ID")
+        plt.xlabel("Total Fish Landing (Tonnes)")
+        plt.ylabel("Total Number of Fishing Vessels")
+        plt.title("Hierarchical Cluster Visualization")
+        st.pyplot(fig2)
+     
     
     
 
@@ -1015,41 +1067,7 @@ def main():
                 The heatmap shows **relative fish landing intensity by region**.
                 """, unsafe_allow_html=True)
 
-    elif plot_option == "Hierarchical Clustering":
-        st.subheader("Hierarchical Clustering of Fisheries Data (Nested Relationships)")
-    
-        from sklearn.preprocessing import StandardScaler
-        from scipy.cluster import hierarchy
-        import matplotlib.pyplot as plt
-    
-        # --- Prepare data ---
-        df = st.session_state.base_land.copy()  # or merged_df if that's your unified dataset
-        features = df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']].dropna()
-    
-        if features.empty:
-            st.warning("No valid data available for clustering.")
-            st.stop()
-    
-        # --- Scale features ---
-        X_scaled = StandardScaler().fit_transform(features)
-    
-        # --- Create linkage matrix (the nested structure) ---
-        linkage_matrix = hierarchy.linkage(X_scaled, method='ward')
-    
-        # --- Plot dendrogram (nested relationships) ---
-        st.write("### Dendrogram (shows nested relationships between states)")
-        fig, ax = plt.subplots(figsize=(10, 6))
-        hierarchy.dendrogram(
-            linkage_matrix,
-            labels=df['State'].astype(str).tolist()[:len(X_scaled)],  # label by state name
-            leaf_rotation=90,
-            leaf_font_size=9
-        )
-        plt.title("Hierarchical Clustering Dendrogram (Nested Relationships)")
-        plt.xlabel("States")
-        plt.ylabel("Euclidean Distance")
-        st.pyplot(fig)
-
+   
 
                 
 
