@@ -910,38 +910,27 @@ def main():
         geo_df = geo_df.dropna(subset=['Coords'])
         if geo_df.empty:
             st.warning("No valid locations found for the selected year.")
-        else:
+       
             # --- Step 5: Create Base Map ---
            # m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles="CartoDB positron")
 
-            m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
-            folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
-            # --- Add Multiple Base Layers (with required attributions) ---
-            folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
-            folium.TileLayer(
-                "CartoDB positron",
-                name="Light Mode",
-                attr="© OpenStreetMap contributors © CARTO"
-            ).add_to(m)
-            folium.TileLayer(
-                "Stamen Terrain",
-                name="Terrain View",
-                attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap"
-            ).add_to(m)
-            folium.TileLayer(
-                "Stamen Toner",
-                name="Dark Mode",
-                attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap"
-            ).add_to(m)
-            
-            folium.LayerControl(collapsed=False).add_to(m)
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
+        #folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
+        folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
+        folium.TileLayer("CartoDB positron", name="Light Mode",
+                         attr="© OpenStreetMap contributors © CARTO").add_to(m)
+        folium.TileLayer("Stamen Terrain", name="Terrain View",
+                         attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap").add_to(m)
+        folium.TileLayer("Stamen Toner", name="Dark Mode",
+                         attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap").add_to(m)
+              
 
             
             # --- Step 6: Add Color Scale ---
-            min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
-            max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
+        min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
+        max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
                 
-            colormap = cm.LinearColormap(
+        colormap = cm.LinearColormap(
                 colors=['blue', 'lime', 'yellow', 'orange', 'red'],
                 vmin=min_val, vmax=max_val, caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
             )
@@ -949,8 +938,8 @@ def main():
 
 # Force legend to show exact min & max numbers
           
-            colormap.add_to(m)
-            marker_cluster = MarkerCluster(name="Fish Landing Locations").add_to(m)
+        colormap.add_to(m)
+        marker_cluster = MarkerCluster(name="Fish Landing Locations").add_to(m)
 
            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
            # colormap.caption = "Fish Landing (Tonnes)"
