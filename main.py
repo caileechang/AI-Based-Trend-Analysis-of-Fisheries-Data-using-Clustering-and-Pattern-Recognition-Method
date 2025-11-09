@@ -726,7 +726,7 @@ def main():
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
 
-     elif plot_option == "Hierarchical Clustering":
+    elif plot_option == "Hierarchical Clustering":
         st.subheader("Hierarchical Clustering (Nested Relationships)")
     
         # --- Prepare data for clustering ---
