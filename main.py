@@ -726,7 +726,7 @@ def main():
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
 
-   elif plot_option == "Hierarchical Clustering":
+elif plot_option == "Hierarchical Clustering":
         import scipy.cluster.hierarchy as sch
         from sklearn.cluster import AgglomerativeClustering
         from sklearn.preprocessing import StandardScaler
