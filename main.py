@@ -727,6 +727,8 @@ def main():
             st.dataframe(outlier_details)
 
     elif plot_option == "Hierarchical Clustering":
+        import scipy.cluster.hierarchy as sch
+
         st.subheader("Hierarchical Clustering (Nested Relationships)")
     
         # --- Prepare data for clustering ---
