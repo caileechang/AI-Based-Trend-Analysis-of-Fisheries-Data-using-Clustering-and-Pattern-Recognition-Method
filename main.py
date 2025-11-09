@@ -734,6 +734,7 @@ def main():
         from sklearn.cluster import AgglomerativeClustering
         import scipy.cluster.hierarchy as sch
         import matplotlib.pyplot as plt
+        from sklearn.preprocessing import StandardScaler  
     
         # --- Step 1: Select features ---
         features = geo_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
