@@ -8,3 +8,4 @@ openpyxl
 folium
 streamlit-folium
 plotly
+streamlit-js-eval
