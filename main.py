@@ -916,7 +916,25 @@ def main():
 
             m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
             folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
-           
+            # --- Add Multiple Base Layers (with required attributions) ---
+            folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
+            folium.TileLayer(
+                "CartoDB positron",
+                name="Light Mode",
+                attr="© OpenStreetMap contributors © CARTO"
+            ).add_to(m)
+            folium.TileLayer(
+                "Stamen Terrain",
+                name="Terrain View",
+                attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap"
+            ).add_to(m)
+            folium.TileLayer(
+                "Stamen Toner",
+                name="Dark Mode",
+                attr="Map tiles by Stamen Design, CC BY 3.0 — Map data © OpenStreetMap"
+            ).add_to(m)
+            
+            folium.LayerControl(collapsed=False).add_to(m)
 
             
             # --- Step 6: Add Color Scale ---
@@ -998,8 +1016,7 @@ def main():
             """)
 
             
-            if st.checkbox("Show Legend", value=True):
-                colormap.add_to(m)
+           
 
             with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
                 st.markdown("""
