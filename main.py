@@ -918,8 +918,7 @@ def main():
             folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
            
 
-            folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
-            folium.TileLayer("Stamen Toner", name="Dark Mode").add_to(m)
+            
             # --- Step 6: Add Color Scale ---
             min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
             max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
