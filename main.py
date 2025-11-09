@@ -946,7 +946,7 @@ def main():
            # colormap.add_to(m)
 
             # --- Step 7: Add Circle Markers (clickable points) ---
-            for _, row in geo_df.iterrows():
+        for _, row in geo_df.iterrows():
                 popup_html = (
                     f"<b>{row['State']}</b><br>"
                     f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
@@ -967,15 +967,15 @@ def main():
                 ).add_to(m)
                 
 
-            geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)'])
+        geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)'])
          
             # --- Step 8: Heatmap Layer ---
-            heat_data = [
+        heat_data = [
                 [row['Coords'][0], row['Coords'][1], row['HeatValue']]
                 for _, row in geo_df.iterrows()
             ]
             
-            gradient = {
+        gradient = {
                 0.0: 'blue',
                 0.3: 'lime',
                 0.5: 'yellow',
@@ -983,21 +983,21 @@ def main():
                 1.0: 'red'
             }
 
-            min_val = geo_df['Total Fish Landing (Tonnes)'].min()
-            max_val = geo_df['Total Fish Landing (Tonnes)'].max()
+        min_val = geo_df['Total Fish Landing (Tonnes)'].min()
+        max_val = geo_df['Total Fish Landing (Tonnes)'].max()
             
-            HeatMap(heat_data, name="Fish Landing Heatmap", radius=15, blur=8, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
+        HeatMap(heat_data, name="Fish Landing Heatmap", radius=15, blur=8, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
 
            
             # --- Step 9: Map Controls ---
-            MiniMap(toggle_display=True).add_to(m)
-            Fullscreen(position='topright').add_to(m)
-            folium.LayerControl(collapsed=False).add_to(m)
+        MiniMap(toggle_display=True).add_to(m)
+        Fullscreen(position='topright').add_to(m)
+        folium.LayerControl(collapsed=False).add_to(m)
     
             # --- Step 10: Display Map ---
-            st_folium(m, use_container_width=True, height=600, returned_objects=[])
+        st_folium(m, use_container_width=True, height=600, returned_objects=[])
 
-            st.markdown(f"""
+        st.markdown(f"""
             **Summary for {selected_year}:**
             - 🟢 States displayed: {len(selected_states)}
             - ⚓ Total fish landing: {geo_df['Total Fish Landing (Tonnes)'].sum():,.0f} tonnes
@@ -1007,7 +1007,7 @@ def main():
             
            
 
-            with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
+        with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
                 st.markdown("""
                 **Color Interpretation:**
                 - 🟥 **Red / Orange** → High fish landing states  
