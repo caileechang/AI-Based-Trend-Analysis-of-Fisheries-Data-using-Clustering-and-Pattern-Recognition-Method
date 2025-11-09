@@ -802,73 +802,105 @@ def main():
             "SABAH", "SARAWAK", "W.P. LABUAN"
         ]
     
-        # --- Step 2: Clean and filter states ---
-        merged_df["State"] = merged_df["State"].astype(str).str.strip().str.upper()
-        filtered_df = merged_df[merged_df["State"].isin(valid_states)].copy()
+         # --- Step 2: Validate merged_df availability ---
+        if "merged_df" not in locals() and "merged_df" not in globals():
+            st.error("Merged dataset is not available. Please load or upload valid data first.")
+            st.stop()
+        if merged_df.empty:
+            st.warning("Merged dataset is empty. Please upload valid data before clustering.")
+            st.stop()
     
-        if filtered_df.empty:
+        # --- Step 3: Clean and filter valid states ---
+        df_hc = merged_df.copy()
+        df_hc["State"] = df_hc["State"].astype(str).str.upper().str.strip()
+        df_hc = df_hc[df_hc["State"].isin(valid_states)]
+    
+        if df_hc.empty:
             st.warning("No valid state data found for hierarchical clustering.")
             st.stop()
     
-        # --- Step 3: Aggregate data by State ---
+        # --- Step 4: Drop invalid rows (NaN or zeros) ---
+        df_hc = df_hc.replace([np.inf, -np.inf], np.nan).dropna(
+            subset=["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
+        )
+    
+        # --- Optional: remove zero rows ---
+        df_hc = df_hc[
+            (df_hc["Total Fish Landing (Tonnes)"] > 0) &
+            (df_hc["Total number of fishing vessels"] > 0)
+        ]
+    
+        if df_hc.empty:
+            st.warning("No valid numeric data available for clustering after cleaning.")
+            st.stop()
+    
+        # --- Step 5: Aggregate data by state ---
         df_state = (
-            filtered_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+            df_hc.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
             .mean()
             .reset_index()
         )
     
-        # --- Step 4: Standardize features ---
+        if df_state.empty:
+            st.warning("Not enough data to aggregate by state for hierarchical clustering.")
+            st.stop()
+    
+        # --- Step 6: Scale the data safely ---
+        from sklearn.preprocessing import StandardScaler
         X_scaled = StandardScaler().fit_transform(
             df_state[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         )
     
-        # --- Step 5: Create linkage matrix ---
-        linkage_matrix = sch.linkage(X_scaled, method="ward")
+        # --- Step 7: Create linkage matrix ---
+        linkage_matrix = sch.linkage(X_scaled, method='ward')
     
-        # --- Step 6: Dendrogram visualization ---
-        st.write("### Dendrogram (Aggregated by Valid States)")
-        fig, ax = plt.subplots(figsize=(12, 5))  # slightly wider for readability
+        # --- Step 8: Static dendrogram ---
+        st.write("### Dendrogram (Nested Relationship between States)")
+        fig, ax = plt.subplots(figsize=(12, 6))
         sch.dendrogram(
             linkage_matrix,
             labels=df_state["State"].tolist(),
             leaf_rotation=90,
-            leaf_font_size=9,
-            color_threshold=0.7 * float(linkage_matrix[:, 2].max())
+            leaf_font_size=8,
+            color_threshold=0.7 * max(linkage_matrix[:, 2])
         )
-        plt.title("Hierarchical Clustering Dendrogram (Valid Malaysian States)")
-        plt.xlabel("State")
+        plt.title("Hierarchical Clustering Dendrogram (Valid States Only)")
+        plt.xlabel("States")
         plt.ylabel("Euclidean Distance")
         plt.tight_layout()
         st.pyplot(fig)
     
-        # --- Step 7: Interactive dendrogram (Plotly) ---
-        with st.expander("🔍 Interactive Dendrogram (Zoom & Explore)"):
-            fig_interactive = ff.create_dendrogram(
-                X_scaled,
-                orientation="top",
-                labels=df_state["State"].tolist(),
-                linkagefun=lambda x: sch.linkage(x, "ward")
-            )
-            fig_interactive.update_layout(
-                width=1000,
-                height=600,
-                title="Interactive Hierarchical Clustering (Valid States Only)"
-            )
-            st.plotly_chart(fig_interactive, use_container_width=True)
+        # --- Step 9: Interactive dendrogram (Plotly) ---
+        with st.expander("Interactive Dendrogram (Zoom and Explore)"):
+            try:
+                fig_interactive = ff.create_dendrogram(
+                    X_scaled,
+                    orientation="top",
+                    labels=df_state["State"].tolist(),
+                    linkagefun=lambda x: sch.linkage(x, "ward")
+                )
+                fig_interactive.update_layout(
+                    width=1000,
+                    height=600,
+                    title="Interactive Hierarchical Clustering (Valid States Only)"
+                )
+                st.plotly_chart(fig_interactive, use_container_width=True)
+            except Exception as e:
+                st.warning(f"Interactive dendrogram could not be generated: {e}")
     
-        # --- Step 8: Agglomerative clustering (cut the tree) ---
+        # --- Step 10: Agglomerative clustering ---
         n_clusters = st.slider("Select number of clusters", 2, 10, 3)
         hc = AgglomerativeClustering(n_clusters=n_clusters, linkage="ward")
         df_state["Cluster"] = hc.fit_predict(X_scaled)
     
-        # --- Step 9: Display summary ---
+        # --- Step 11: Display results ---
         st.write(f"### Cluster Assignments (n = {n_clusters})")
         st.dataframe(
             df_state[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]],
             use_container_width=True
         )
     
-        # --- Step 10: 2D Scatter Visualization ---
+        # --- Step 12: 2D Scatter Visualization ---
         fig2, ax2 = plt.subplots(figsize=(8, 5))
         scatter = ax2.scatter(
             df_state["Total Fish Landing (Tonnes)"],
