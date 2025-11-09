@@ -915,7 +915,9 @@ def main():
 
             m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
             folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
-
+            folium.TileLayer("Stamen Terrain", name="Terrain View").add_to(m)
+            folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
+            folium.TileLayer("Stamen Toner", name="Dark Mode").add_to(m)
             # --- Step 6: Add Color Scale ---
             min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
             max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
@@ -929,6 +931,7 @@ def main():
 # Force legend to show exact min & max numbers
           
             colormap.add_to(m)
+            marker_cluster = MarkerCluster(name="Fish Landing Locations").add_to(m)
 
            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
            # colormap.caption = "Fish Landing (Tonnes)"
@@ -985,6 +988,17 @@ def main():
     
             # --- Step 10: Display Map ---
             st_folium(m, use_container_width=True, height=600, returned_objects=[])
+
+            st.markdown(f"""
+            **Summary for {selected_year}:**
+            - 🟢 States displayed: {len(selected_states)}
+            - ⚓ Total fish landing: {geo_df['Total Fish Landing (Tonnes)'].sum():,.0f} tonnes
+            - 🚢 Total vessels: {geo_df['Total number of fishing vessels'].sum():,}
+            """)
+
+            from streamlit_js_eval import streamlit_js_eval
+            if st.checkbox("Show Legend", value=True):
+                colormap.add_to(m)
 
             with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
                 st.markdown("""
