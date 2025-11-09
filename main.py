@@ -805,39 +805,38 @@ def main():
             "SABAH", "SARAWAK", "W.P. LABUAN"
         ]
     
-        # --- Step 2: Create a clean local copy of merged_df ---
-        if "merged_df" not in locals() and "merged_df" not in globals():
-            st.error("Merged dataset is not available. Please load or upload valid data first.")
+     
+
+        # --- Step 2: Make a completely isolated copy ---
+        try:
+            df_hc = merged_df.copy()
+        except Exception:
+            st.error("No dataset found. Please load or upload valid data first.")
             st.stop()
     
-        if merged_df.empty:
-            st.warning("Merged dataset is empty. Please upload valid data before clustering.")
+        if df_hc.empty:
+            st.warning("Dataset is empty. Please upload valid data before clustering.")
             st.stop()
     
-        # create a local working copy so the main dataset stays intact
-        df_hc = merged_df.copy()
-    
-        # --- Step 3: Clean and filter valid states ---
+        # --- Step 3: Clean & filter for valid states ---
         df_hc["State"] = df_hc["State"].astype(str).str.upper().str.strip()
         df_hc = df_hc[df_hc["State"].isin(valid_states)]
     
         if df_hc.empty:
-            st.warning("No valid state data found for hierarchical clustering.")
+            st.warning("No valid states found for clustering.")
             st.stop()
     
-        # --- Step 4: Drop invalid or missing values ---
+        # --- Step 4: Drop invalid or missing data ---
         df_hc = df_hc.replace([np.inf, -np.inf], np.nan).dropna(
             subset=["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
         )
-    
-        # --- Optional: remove zero rows ---
         df_hc = df_hc[
             (df_hc["Total Fish Landing (Tonnes)"] > 0) &
             (df_hc["Total number of fishing vessels"] > 0)
         ]
     
         if df_hc.empty:
-            st.warning("No valid numeric data available for clustering after cleaning.")
+            st.warning("No valid numeric data available after cleaning.")
             st.stop()
     
         # --- Step 5: Aggregate by state ---
@@ -859,7 +858,7 @@ def main():
         # --- Step 7: Create linkage matrix ---
         linkage_matrix = sch.linkage(X_scaled, method='ward')
     
-        # --- Step 8: Static dendrogram ---
+        # --- Step 8: Static Dendrogram ---
         st.write("### Dendrogram (Nested Relationship Between States)")
         fig, ax = plt.subplots(figsize=(12, 6))
         sch.dendrogram(
@@ -875,7 +874,7 @@ def main():
         plt.tight_layout()
         st.pyplot(fig)
     
-        # --- Step 9: Interactive dendrogram (optional) ---
+        # --- Step 9: Interactive dendrogram ---
         with st.expander("Interactive Dendrogram (Zoom and Explore)"):
             try:
                 fig_interactive = ff.create_dendrogram(
@@ -922,8 +921,9 @@ def main():
         plt.tight_layout()
         st.pyplot(fig2)
     
-        # --- Step 13: Clean up temporary variables (optional, but safe) ---
+        # --- Step 13: Full Cleanup (to avoid memory interference) ---
         del df_hc, df_state, X_scaled, linkage_matrix
+
     
 
  
