@@ -919,7 +919,8 @@ def main():
             
             colormap = cm.LinearColormap(
                 colors=['blue', 'lime', 'yellow', 'orange', 'red'],
-                vmin=min_val, vmax=max_val,).to_step(n=256)
+                vmin=min_val, vmax=max_val
+            ).to_step(n=256)
               
 
 # Force legend to show exact min & max numbers
