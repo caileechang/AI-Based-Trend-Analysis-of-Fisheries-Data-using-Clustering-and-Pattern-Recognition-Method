@@ -786,13 +786,14 @@ def main():
             .str.strip()
         )
 
-
-        
-        # Clean coordinate dictionary keys the same way
         clean_coords = {
             re.sub(r'\s*/\s*', '/', k.upper().strip()): v
             for k, v in state_coords.items()
         }
+
+        
+        # Clean coordinate dictionary keys the same way
+       
 # Now safely map using the cleaned version
         geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
 
