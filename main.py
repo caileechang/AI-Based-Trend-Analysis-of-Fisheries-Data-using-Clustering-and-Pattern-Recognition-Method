@@ -757,32 +757,32 @@ def main():
         import numpy as np
         from sklearn.preprocessing import StandardScaler
         from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
-    
+
         st.subheader("🏗️ Hierarchical Clustering (Adaptive)")
-    
+
         # --- Step 1: Automatically group by State (if column exists) ---
         if "State" not in merged_df.columns:
             st.error("Missing 'State' column in dataset.")
             return
-    
+
         grouped = (
             merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
             .mean()
             .reset_index()
         )
-    
+
         if grouped.empty:
             st.warning("No data available for clustering.")
             return
-    
+
         # --- Step 2: Scale features automatically ---
         scaler = StandardScaler()
         scaled = scaler.fit_transform(grouped[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]])
-    
+
         # --- Step 3: Compute linkage matrix (user-selectable method) ---
         method = st.selectbox("Choose linkage method:", ["ward", "average", "complete", "single"], index=0)
         linked = linkage(scaled, method=method)
-    
+
         # --- Step 4: Adaptive dendrogram settings ---
         plt.figure(figsize=(max(10, len(grouped) * 0.5), 6))
         dendrogram(
@@ -797,13 +797,13 @@ def main():
         plt.ylabel("Distance")
         plt.grid(False)
         st.pyplot(plt.gcf())
-    
+
         # --- Step 5: Auto-determine number of clusters (silhouette-based or slider) ---
         max_clusters = min(10, len(grouped))
         t = st.slider("Select number of clusters (k):", 2, max_clusters, 3)
         cluster_labels = fcluster(linked, t=t, criterion='maxclust')
         grouped["Cluster"] = cluster_labels
-    
+
         # --- Step 6: Display clustered summary ---
         st.write(f"✅ Generated {t} clusters using {method} linkage.")
         st.dataframe(
@@ -811,7 +811,7 @@ def main():
             .sort_values("Cluster")
             .reset_index(drop=True)
         )
-    
+
         # --- Step 7 (optional): Cluster heatmap ---
         if st.checkbox("Show cluster heatmap"):
             sns.clustermap(
@@ -824,11 +824,11 @@ def main():
         
     
        
-    elif plot_option == "Hierarchical Clustering":
-        hierarchical_clustering(merged_df)
+        elif plot_option == "Hierarchical Clustering":
+            hierarchical_clustering(merged_df)
 
-    elif plot_option == "DBSCAN Clustering":
-        dbscan_analysis(merged_df)
+        elif plot_option == "DBSCAN Clustering":
+            dbscan_analysis(merged_df)
         
 
 
@@ -838,298 +838,297 @@ def main():
 
     
 
-    elif plot_option == "Geospatial Map":
-        st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
+        elif plot_option == "Geospatial Map":
+            st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
 
-    # Let user choose year
-        available_years = sorted(merged_df['Year'].unique())
-        selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+        # Let user choose year
+            available_years = sorted(merged_df['Year'].unique())
+            selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
 
-    # Filter dataset by selected year
-        geo_df = merged_df[merged_df['Year'] == selected_year].copy()
+        # Filter dataset by selected year
+            geo_df = merged_df[merged_df['Year'] == selected_year].copy()
 
-        import re
-        import folium
-        from streamlit_folium import st_folium
+            import re
+            import folium
+            from streamlit_folium import st_folium
 
-    # Manually define coordinates for each region (including subregions)
-        state_coords = {
-        # Johor regions
-            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
-            "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
-            "JOHOR": [1.4854, 103.7618],
-        # Melaka
-            "MELAKA": [2.1896, 102.2501],
-        # Negeri Sembilan
-            "NEGERI SEMBILAN": [2.7258, 101.9424],
-        # Selangor
-            "SELANGOR": [3.0738, 101.5183],
-        # Pahang
-            "PAHANG": [3.8126, 103.3256],
-        # Terengganu
-            "TERENGGANU": [5.3302, 103.1408],
-        # Kelantan
-            "KELANTAN": [6.1254, 102.2381],
-        # Perak
-            "PERAK": [4.5921, 101.0901],
-        # Pulau Pinang
-            "PULAU PINANG": [5.4164, 100.3327],
-        # Kedah
-            "KEDAH": [6.1184, 100.3685],
-        # Perlis
-            "PERLIS": [6.4449, 100.2048],
-        # Sabah & Sarawak regions
-            "SABAH": [5.9788, 116.0753],
-        
-            "SARAWAK": [1.5533, 110.3592],
-        # Labuan
-            "W.P. LABUAN": [5.2831, 115.2308]
-    }
-
- 
-
-        # Clean state names in dataset (remove spaces and unify slashes)
-        geo_df['State_Clean'] = (
-            geo_df['State']
-            .astype(str)
-            .str.upper()
-            .str.replace(r'\s*/\s*', '/', regex=True)  # Normalize " / " to "/"
-            .str.replace(r'\s+', ' ', regex=True)      # Remove multiple spaces
-            .str.strip()
-        )
-
-      # Clean coordinate dictionary
-        clean_coords = { re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items() }
-
-        
-        # Clean coordinate dictionary keys the same way
-       
-# Now safely map using the cleaned version
-        geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
-
-    # Drop regions with no coordinates (to avoid map crash)
-        missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
-        if len(missing_coords) > 0:
-            st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
-
-        geo_df = geo_df.dropna(subset=['Coords'])
-
-         #  Safety check: make sure there’s data to map
-        if geo_df.empty:
-            st.warning("No valid locations found for the selected year.")
-        else:
-        # Create Folium map centered on Malaysia
-            m = folium.Map(location=[4.5, 109.5], zoom_start=6)
-
-   
-
-    # Add markers for each region
-            for _, row in geo_df.iterrows():
-                folium.CircleMarker(
-                    location=row['Coords'],
-                    radius=8,
-                    color='blue',
-                    fill=True,
-                    fill_color='cyan',
-                    popup=f"<b>{row['State']}</b><br>"
-                          f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                          f"Vessels: {row['Total number of fishing vessels']:.0f}",
-                    tooltip=row['State']
-                ).add_to(m)
-
-    # Display map
-            st_folium(m, width=800, height=500)
-
-    
-    elif plot_option == "Interactive Geospatial Map":
-        st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
-    
-        import re
-        import folium
-        import branca.colormap as cm
-        from folium.plugins import MarkerCluster, MiniMap, Fullscreen, HeatMap
-        from streamlit_folium import st_folium
-        from streamlit_js_eval import streamlit_js_eval
-
-        valid_states = ["JOHOR", "JOHOR BARAT/WEST JOHORE", "JOHOR TIMUR/EAST JOHORE",
-            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
-            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
-            "SABAH", "SARAWAK", "W.P. LABUAN"
-        ]
-        
-        merged_df = merged_df[merged_df['State'].isin(valid_states)]
-        # --- Step 1: User Filters ---
-        available_years = sorted(merged_df['Year'].unique())
-        selected_year = st.selectbox("Select Year", available_years, index=len(available_years) - 1)
-    
-        available_states = sorted(merged_df['State'].unique())
-        selected_states = st.multiselect("Select State(s)",options=available_states,default=available_states,placeholder="Choose one or more states to display",label_visibility="visible")                   
-     
-    
-
-    
-        # Filter dataset
-        geo_df = merged_df[
-            (merged_df['Year'] == selected_year) &
-            (merged_df['State'].isin(selected_states))
-        ].copy()
-    
-        # --- Step 2: Define Coordinates ---
-        state_coords = {
-            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
-            "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
-            "JOHOR": [1.4854, 103.7618],
-            "MELAKA": [2.1896, 102.2501],
-            "NEGERI SEMBILAN": [2.7258, 101.9424],
-            "SELANGOR": [3.0738, 101.5183],
-            "PAHANG": [3.8126, 103.3256],
-            "TERENGGANU": [5.3302, 103.1408],
-            "KELANTAN": [6.1254, 102.2381],
-            "PERAK": [4.5921, 101.0901],
-            "PULAU PINANG": [5.4164, 100.3327],
-            "KEDAH": [6.1184, 100.3685],
-            "PERLIS": [6.4449, 100.2048],
-            "SABAH": [5.9788, 116.0753],
-            "SARAWAK": [1.5533, 110.3592],
-            "W.P. LABUAN": [5.2831, 115.2308]
-        }
-    
-        # --- Step 3: Clean Names & Map Coordinates ---
-        geo_df['State_Clean'] = (
-            geo_df['State']
-            .astype(str)
-            .str.upper()
-            .str.replace(r'\s*/\s*', '/', regex=True)
-            .str.replace(r'\s+', ' ', regex=True)
-            .str.strip()
-        )
-    
-        clean_coords = {
-            re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items()
-        }
-    
-        geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
-    
-        # --- Step 4: Handle Missing Data ---
-        missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
-        if len(missing_coords) > 0:
-            st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
-    
-        geo_df = geo_df.dropna(subset=['Coords'])
-        if geo_df.empty:
-            st.warning("No valid locations found for the selected year.")
-       
-            # --- Step 5: Create Base Map ---
-           # m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles="CartoDB positron")
-
-        m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
-        #folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
-        folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
-        folium.TileLayer("CartoDB positron", name="Light Mode",
-                         attr="© OpenStreetMap contributors © CARTO").add_to(m)
-        
-              
-
+        # Manually define coordinates for each region (including subregions)
+            state_coords = {
+            # Johor regions
+                "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+                "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+                "JOHOR": [1.4854, 103.7618],
+            # Melaka
+                "MELAKA": [2.1896, 102.2501],
+            # Negeri Sembilan
+                "NEGERI SEMBILAN": [2.7258, 101.9424],
+            # Selangor
+                "SELANGOR": [3.0738, 101.5183],
+            # Pahang
+                "PAHANG": [3.8126, 103.3256],
+            # Terengganu
+                "TERENGGANU": [5.3302, 103.1408],
+            # Kelantan
+                "KELANTAN": [6.1254, 102.2381],
+            # Perak
+                "PERAK": [4.5921, 101.0901],
+            # Pulau Pinang
+                "PULAU PINANG": [5.4164, 100.3327],
+            # Kedah
+                "KEDAH": [6.1184, 100.3685],
+            # Perlis
+                "PERLIS": [6.4449, 100.2048],
+            # Sabah & Sarawak regions
+                "SABAH": [5.9788, 116.0753],
             
-            # --- Step 6: Add Color Scale ---
-        min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
-        max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
-                
-        colormap = cm.LinearColormap(
-                colors=['blue', 'lime', 'yellow', 'orange', 'red'],
-                vmin=min_val, vmax=max_val, caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
+                "SARAWAK": [1.5533, 110.3592],
+            # Labuan
+                "W.P. LABUAN": [5.2831, 115.2308]
+        }
+
+    
+
+            # Clean state names in dataset (remove spaces and unify slashes)
+            geo_df['State_Clean'] = (
+                geo_df['State']
+                .astype(str)
+                .str.upper()
+                .str.replace(r'\s*/\s*', '/', regex=True)  # Normalize " / " to "/"
+                .str.replace(r'\s+', ' ', regex=True)      # Remove multiple spaces
+                .str.strip()
             )
-              
 
-# Force legend to show exact min & max numbers
-          
-        colormap.add_to(m)
+        # Clean coordinate dictionary
+            clean_coords = { re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items() }
+
+            
+            # Clean coordinate dictionary keys the same way
         
-       
+    # Now safely map using the cleaned version
+            geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
 
-           # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
-           # colormap.caption = "Fish Landing (Tonnes)"
-           # colormap.add_to(m)
+        # Drop regions with no coordinates (to avoid map crash)
+            missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
+            if len(missing_coords) > 0:
+                st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
 
-            # --- Step 7: Add Circle Markers (clickable points) ---
-        for _, row in geo_df.iterrows():
-                popup_html = (
-                    f"<b>{row['State']}</b><br>"
-                    f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                    f"Fish Vessels: {row['Total number of fishing vessels']:.0f}"
-                )
+            geo_df = geo_df.dropna(subset=['Coords'])
 
-                color = colormap(row['Total Fish Landing (Tonnes)'])
+            #  Safety check: make sure there’s data to map
+            if geo_df.empty:
+                st.warning("No valid locations found for the selected year.")
+            else:
+            # Create Folium map centered on Malaysia
+                m = folium.Map(location=[4.5, 109.5], zoom_start=6)
 
-                folium.CircleMarker(
-                    location=row['Coords'],
-                    radius=10,
-                    color=color,
-                    fill=True,
-                    fill_color=color,
-                    fill_opacity=0.9,
-                    popup=folium.Popup(popup_html, max_width=250),
-                    tooltip=row['State']
-                ).add_to(m)
-                
+    
 
-        geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)'])
-         
-            # --- Step 8: Heatmap Layer ---
-        heat_data = [
-                [row['Coords'][0], row['Coords'][1], row['HeatValue']]
-                for _, row in geo_df.iterrows()
+        # Add markers for each region
+                for _, row in geo_df.iterrows():
+                    folium.CircleMarker(
+                        location=row['Coords'],
+                        radius=8,
+                        color='blue',
+                        fill=True,
+                        fill_color='cyan',
+                        popup=f"<b>{row['State']}</b><br>"
+                            f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                            f"Vessels: {row['Total number of fishing vessels']:.0f}",
+                        tooltip=row['State']
+                    ).add_to(m)
+
+        # Display map
+                st_folium(m, width=800, height=500)
+
+    
+        elif plot_option == "Interactive Geospatial Map":
+            st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
+        
+            import re
+            import folium
+            import branca.colormap as cm
+            from folium.plugins import MarkerCluster, MiniMap, Fullscreen, HeatMap
+            from streamlit_folium import st_folium
+            from streamlit_js_eval import streamlit_js_eval
+
+            valid_states = ["JOHOR", "JOHOR BARAT/WEST JOHORE", "JOHOR TIMUR/EAST JOHORE",
+                "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+                "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+                "SABAH", "SARAWAK", "W.P. LABUAN"
             ]
             
-        gradient = {
-                0.0: 'blue',
-                0.3: 'lime',
-                0.5: 'yellow',
-                0.7: 'orange',
-                1.0: 'red'
+            merged_df = merged_df[merged_df['State'].isin(valid_states)]
+            # --- Step 1: User Filters ---
+            available_years = sorted(merged_df['Year'].unique())
+            selected_year = st.selectbox("Select Year", available_years, index=len(available_years) - 1)
+        
+            available_states = sorted(merged_df['State'].unique())
+            selected_states = st.multiselect("Select State(s)",options=available_states,default=available_states,placeholder="Choose one or more states to display",label_visibility="visible")                   
+        
+        
+
+        
+            # Filter dataset
+            geo_df = merged_df[
+                (merged_df['Year'] == selected_year) &
+                (merged_df['State'].isin(selected_states))
+            ].copy()
+        
+            # --- Step 2: Define Coordinates ---
+            state_coords = {
+                "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+                "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+                "JOHOR": [1.4854, 103.7618],
+                "MELAKA": [2.1896, 102.2501],
+                "NEGERI SEMBILAN": [2.7258, 101.9424],
+                "SELANGOR": [3.0738, 101.5183],
+                "PAHANG": [3.8126, 103.3256],
+                "TERENGGANU": [5.3302, 103.1408],
+                "KELANTAN": [6.1254, 102.2381],
+                "PERAK": [4.5921, 101.0901],
+                "PULAU PINANG": [5.4164, 100.3327],
+                "KEDAH": [6.1184, 100.3685],
+                "PERLIS": [6.4449, 100.2048],
+                "SABAH": [5.9788, 116.0753],
+                "SARAWAK": [1.5533, 110.3592],
+                "W.P. LABUAN": [5.2831, 115.2308]
             }
+        
+            # --- Step 3: Clean Names & Map Coordinates ---
+            geo_df['State_Clean'] = (
+                geo_df['State']
+                .astype(str)
+                .str.upper()
+                .str.replace(r'\s*/\s*', '/', regex=True)
+                .str.replace(r'\s+', ' ', regex=True)
+                .str.strip()
+            )
+        
+            clean_coords = {
+                re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items()
+            }
+        
+            geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
+        
+            # --- Step 4: Handle Missing Data ---
+            missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
+            if len(missing_coords) > 0:
+                st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
+        
+            geo_df = geo_df.dropna(subset=['Coords'])
+            if geo_df.empty:
+                st.warning("No valid locations found for the selected year.")
+        
+                # --- Step 5: Create Base Map ---
+            # m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles="CartoDB positron")
 
-        min_val = geo_df['Total Fish Landing (Tonnes)'].min()
-        max_val = geo_df['Total Fish Landing (Tonnes)'].max()
+            m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
+            #folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
+            folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
+            folium.TileLayer("CartoDB positron", name="Light Mode",
+                            attr="© OpenStreetMap contributors © CARTO").add_to(m)
             
-        HeatMap(heat_data, name="Fish Landing Heatmap", radius=15, blur=8, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
-
-           
-            # --- Step 9: Map Controls ---
-        MiniMap(toggle_display=True).add_to(m)
-        Fullscreen(position='topright').add_to(m)
-        folium.LayerControl(collapsed=False).add_to(m)
-    
-            # --- Step 10: Display Map ---
-        st_folium(m, use_container_width=True, height=600, returned_objects=[])
-
-        st.markdown(f"""
-            **Summary for {selected_year}:**
-            - 🟢 States displayed: {len(selected_states)}
-            - ⚓ Total fish landing: {geo_df['Total Fish Landing (Tonnes)'].sum():,.0f} tonnes
-            - 🚢 Total vessels: {geo_df['Total number of fishing vessels'].sum():,}
-            """)
-
-            
-           
-
-        with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
-                st.markdown("""
-                **Color Interpretation:**
-                - 🟥 **Red / Orange** → High fish landing states  
-                - 🟨 **Yellow / Lime** → Medium fish landing  
-                - 🟦 **Blue / Green** → Low fish landing  
-                <br>
-                The heatmap shows **relative fish landing intensity by region**.
-                """, unsafe_allow_html=True)
-
-   
+                
 
                 
+                # --- Step 6: Add Color Scale ---
+            min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
+            max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
+                    
+            colormap = cm.LinearColormap(
+                    colors=['blue', 'lime', 'yellow', 'orange', 'red'],
+                    vmin=min_val, vmax=max_val, caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
+                )
+                
+
+    # Force legend to show exact min & max numbers
+            
+            colormap.add_to(m)
+            
+        
+
+            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
+            # colormap.caption = "Fish Landing (Tonnes)"
+            # colormap.add_to(m)
+
+                # --- Step 7: Add Circle Markers (clickable points) ---
+            for _, row in geo_df.iterrows():
+                    popup_html = (
+                        f"<b>{row['State']}</b><br>"
+                        f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                        f"Fish Vessels: {row['Total number of fishing vessels']:.0f}"
+                    )
+
+                    color = colormap(row['Total Fish Landing (Tonnes)'])
+
+                    folium.CircleMarker(
+                        location=row['Coords'],
+                        radius=10,
+                        color=color,
+                        fill=True,
+                        fill_color=color,
+                        fill_opacity=0.9,
+                        popup=folium.Popup(popup_html, max_width=250),
+                        tooltip=row['State']
+                    ).add_to(m)
+                    
+
+            geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)'])
+            
+                # --- Step 8: Heatmap Layer ---
+            heat_data = [
+                    [row['Coords'][0], row['Coords'][1], row['HeatValue']]
+                    for _, row in geo_df.iterrows()
+                ]
+                
+            gradient = {
+                    0.0: 'blue',
+                    0.3: 'lime',
+                    0.5: 'yellow',
+                    0.7: 'orange',
+                    1.0: 'red'
+                }
+
+            min_val = geo_df['Total Fish Landing (Tonnes)'].min()
+            max_val = geo_df['Total Fish Landing (Tonnes)'].max()
+                
+            HeatMap(heat_data, name="Fish Landing Heatmap", radius=15, blur=8, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
+
+            
+                # --- Step 9: Map Controls ---
+            MiniMap(toggle_display=True).add_to(m)
+            Fullscreen(position='topright').add_to(m)
+            folium.LayerControl(collapsed=False).add_to(m)
+        
+                # --- Step 10: Display Map ---
+            st_folium(m, use_container_width=True, height=600, returned_objects=[])
+
+            st.markdown(f"""
+                **Summary for {selected_year}:**
+                - 🟢 States displayed: {len(selected_states)}
+                - ⚓ Total fish landing: {geo_df['Total Fish Landing (Tonnes)'].sum():,.0f} tonnes
+                - 🚢 Total vessels: {geo_df['Total number of fishing vessels'].sum():,}
+                """)
+
+                
+            
+
+            with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
+                    st.markdown("""
+                    **Color Interpretation:**
+                    - 🟥 **Red / Orange** → High fish landing states  
+                    - 🟨 **Yellow / Lime** → Medium fish landing  
+                    - 🟦 **Blue / Green** → Low fish landing  
+                    <br>
+                    The heatmap shows **relative fish landing intensity by region**.
+                    """, unsafe_allow_html=True)
+
+    
+
+                    
 
         
 
    
 if __name__ == "__main__":
     main()
-
