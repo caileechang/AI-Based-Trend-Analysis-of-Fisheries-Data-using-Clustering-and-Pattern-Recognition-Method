@@ -15,7 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-from clustering_method import (monthly_trends_by_cluster,yearly_summary,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
+from clustering import (monthly_trends_by_cluster,yearly_summary,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
 
 
 
