@@ -15,7 +15,6 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-
 import pandas as pd
 
 # Load the correct sheet
