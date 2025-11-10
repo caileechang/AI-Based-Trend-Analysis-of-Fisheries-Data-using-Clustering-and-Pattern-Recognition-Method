@@ -15,7 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-from clustering method import hierarchical_clustering
+from clustering_method import hierarchical_clustering
 
 
 
