@@ -15,7 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-from clustering_method import hierarchical_clustering
+
 
 
 
@@ -727,10 +727,15 @@ def main():
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
 
-        from clustering_method import hierarchical_clustering
+        
             
-    elif plot_option == "Hierarchical Clustering":
-        hierarchical_clustering(merged_df)
+    from clustering_method import dbscan_analysis
+
+    # inside your Streamlit code:
+    elif plot_option == "DBSCAN Clustering":
+        # assuming you already computed merged_df and scaled_features earlier
+        dbscan_analysis(merged_df, scaled_features)
+
 
  
             
