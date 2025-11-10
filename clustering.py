@@ -113,18 +113,50 @@ def kmeans_3d(merged_df):
 # 6️⃣ HIERARCHICAL CLUSTERING
 # ========================================
 def hierarchical_clustering(merged_df):
-    st.subheader("🏗️ Hierarchical Clustering")
-    scaler = StandardScaler()
-    scaled = scaler.fit_transform(merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']])
-    linked = linkage(scaled, method='ward')
-    cluster_labels = fcluster(linked, t=3, criterion='maxclust')
-    merged_df['Cluster'] = cluster_labels
+    import streamlit as st
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from sklearn.preprocessing import StandardScaler
+    from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
-    plt.figure(figsize=(14, 6))
-    dendrogram(linked, labels=merged_df['Year'].astype(str).tolist())
-    plt.title("Dendrogram - Hierarchical Clustering")
-    plt.grid(True)
+    st.subheader("🏗️ Hierarchical Clustering (Grouped by State)")
+
+    # --- STEP 1: Aggregate to reduce label clutter ---
+    grouped = (
+        merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        .mean()
+        .reset_index()
+    )
+
+    # --- STEP 2: Scale features ---
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(grouped[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]])
+
+    # --- STEP 3: Compute linkage ---
+    linked = linkage(scaled, method='ward')
+
+    # --- STEP 4: Dendrogram with cleaner labels ---
+    plt.figure(figsize=(12, 6))
+    dendrogram(
+        linked,
+        labels=grouped["State"].tolist(),
+        leaf_rotation=45,
+        leaf_font_size=9,
+        color_threshold=15
+    )
+    plt.title("Hierarchical Clustering Dendrogram (by State)")
+    plt.xlabel("State")
+    plt.ylabel("Distance (Ward linkage)")
+    plt.grid(False)
     st.pyplot(plt.gcf())
+
+    # --- STEP 5: Optional cluster assignment ---
+    cluster_labels = fcluster(linked, t=3, criterion='maxclust')
+    grouped["Cluster"] = cluster_labels
+
+    # --- STEP 6: Show summary ---
+    st.dataframe(grouped[["State", "Cluster", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"]])
+
 
 # ========================================
 # 7️⃣ DBSCAN CLUSTERING
