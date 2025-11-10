@@ -11,6 +11,51 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 # ========================================
 # 1️⃣ MONTHLY CLUSTER TRENDS
 # ========================================
+def prepare_monthly(df_land, df_vess):
+    import pandas as pd
+    import numpy as np
+
+    # --- Step 1: Basic cleaning ---
+    df_land = df_land.copy()
+    df_land['Month'] = pd.to_numeric(df_land['Month'], errors='coerce')
+    df_land['Year'] = pd.to_numeric(df_land['Year'], errors='coerce')
+    df_land['Fish Landing (Tonnes)'] = pd.to_numeric(df_land['Fish Landing (Tonnes)'], errors='coerce')
+
+    # Remove invalid or missing entries
+    df_land = df_land.dropna(subset=['Month', 'Year', 'Fish Landing (Tonnes)', 'State'])
+
+    # --- Step 2: Group by Year + Month + State ---
+    monthly_totals = (
+        df_land.groupby(['Year', 'Month', 'State'], as_index=False)['Fish Landing (Tonnes)']
+        .sum()
+    )
+
+    # --- Step 3: Clean & aggregate vessel data ---
+    for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
+        df_vess[col] = pd.to_numeric(df_vess[col], errors='coerce').fillna(0)
+
+    df_vess['Total number of fishing vessels'] = (
+        df_vess['Inboard Powered'] + df_vess['Outboard Powered'] + df_vess['Non-Powered']
+    )
+    df_vess['State'] = df_vess['State'].astype(str).str.upper().str.strip()
+    df_vess['Year'] = pd.to_numeric(df_vess['Year'], errors='coerce')
+
+    # --- Step 4: Merge by State + Year ---
+    merged_monthly = pd.merge(
+        monthly_totals,
+        df_vess[['State', 'Year', 'Total number of fishing vessels']],
+        on=['State', 'Year'],
+        how='left'
+    )
+
+    # --- Step 5: Drop rows with missing months ---
+    merged_monthly = merged_monthly.dropna(subset=['Month'])
+
+    # --- Step 6: Sort chronologically ---
+    merged_monthly = merged_monthly.sort_values(['Year', 'Month', 'State']).reset_index(drop=True)
+
+    return merged_monthly
+
 def monthly_trends_by_cluster(merged_df):
     import pandas as pd
     import seaborn as sns
@@ -21,40 +66,50 @@ def monthly_trends_by_cluster(merged_df):
 
     st.subheader("📅 Monthly Trends by Cluster")
 
-    # --- STEP 1: Ensure Month column exists ---
+    # --- Step 1: Ensure Month column exists ---
     if 'Month' not in merged_df.columns:
-        st.warning("Month data not available in merged_df. Using yearly data instead.")
+        st.warning("⚠️ Month data not available in merged_df. Using yearly data instead.")
         return
 
-    # --- STEP 2: Group data by Year + Month ---
+    # --- Step 2: Aggregate by Year + Month (summed across states) ---
     monthly_data = (
-        merged_df.groupby(['Year', 'Month'])[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        merged_df.groupby(['Year', 'Month'], as_index=False)[
+            ['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']
+        ]
         .sum()
-        .reset_index()
     )
 
-    # --- STEP 3: Scale features ---
+    # --- Step 3: Scale and cluster ---
     scaler = StandardScaler()
     scaled = scaler.fit_transform(monthly_data[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']])
 
-    # --- STEP 4: Apply KMeans ---
-    kmeans = KMeans(n_clusters=3, random_state=42)
+    kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
     monthly_data['Cluster'] = kmeans.fit_predict(scaled)
 
-    # --- STEP 5: Create a MonthYear column for better plotting ---
+    # --- Step 4: Create combined Month-Year label ---
     monthly_data['MonthYear'] = pd.to_datetime(
-        monthly_data['Year'].astype(str) + '-' + monthly_data['Month'].astype(str).str.zfill(2)
+        monthly_data['Year'].astype(str) + '-' + monthly_data['Month'].astype(str).str.zfill(2),
+        errors='coerce'
     )
 
-    # --- STEP 6: Plot true monthly trend ---
+    # --- Step 5: Plot trend ---
     plt.figure(figsize=(12, 6))
-    sns.lineplot(data=monthly_data, x='MonthYear', y='Total Fish Landing (Tonnes)', hue='Cluster', marker='o')
+    sns.lineplot(
+        data=monthly_data,
+        x='MonthYear',
+        y='Total Fish Landing (Tonnes)',
+        hue='Cluster',
+        marker='o',
+        palette='tab10'
+    )
     plt.title("Monthly Fish Landing Trends by Cluster")
     plt.xlabel("Month-Year")
     plt.ylabel("Total Fish Landing (Tonnes)")
     plt.xticks(rotation=45)
     plt.grid(True)
     st.pyplot(plt.gcf())
+
+
 
 
 # ========================================
