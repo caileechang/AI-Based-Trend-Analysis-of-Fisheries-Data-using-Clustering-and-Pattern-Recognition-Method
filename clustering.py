@@ -12,7 +12,7 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 # 1️⃣ MONTHLY CLUSTER TRENDS
 # ========================================
 def monthly_trends_by_cluster(merged_df):
-    st.subheader("📅 Monthly Trends by Cluster")
+    st.subheader("Monthly Trends by Cluster")
     if merged_df.empty:
         st.warning("No data available.")
         return
@@ -116,47 +116,73 @@ def hierarchical_clustering(merged_df):
     import streamlit as st
     import matplotlib.pyplot as plt
     import seaborn as sns
+    import numpy as np
     from sklearn.preprocessing import StandardScaler
     from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
-    st.subheader("🏗️ Hierarchical Clustering (Grouped by State)")
+    st.subheader("🏗️ Hierarchical Clustering (Adaptive)")
 
-    # --- STEP 1: Aggregate to reduce label clutter ---
+    # --- Step 1: Automatically group by State (if column exists) ---
+    if "State" not in merged_df.columns:
+        st.error("Missing 'State' column in dataset.")
+        return
+
     grouped = (
         merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         .mean()
         .reset_index()
     )
 
-    # --- STEP 2: Scale features ---
+    if grouped.empty:
+        st.warning("No data available for clustering.")
+        return
+
+    # --- Step 2: Scale features automatically ---
     scaler = StandardScaler()
     scaled = scaler.fit_transform(grouped[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]])
 
-    # --- STEP 3: Compute linkage ---
-    linked = linkage(scaled, method='ward')
+    # --- Step 3: Compute linkage matrix (user-selectable method) ---
+    method = st.selectbox("Choose linkage method:", ["ward", "average", "complete", "single"], index=0)
+    linked = linkage(scaled, method=method)
 
-    # --- STEP 4: Dendrogram with cleaner labels ---
-    plt.figure(figsize=(12, 6))
+    # --- Step 4: Adaptive dendrogram settings ---
+    plt.figure(figsize=(max(10, len(grouped) * 0.5), 6))
     dendrogram(
         linked,
         labels=grouped["State"].tolist(),
         leaf_rotation=45,
-        leaf_font_size=9,
-        color_threshold=15
+        leaf_font_size=8,
+        color_threshold=None,  # auto color scaling
     )
-    plt.title("Hierarchical Clustering Dendrogram (by State)")
+    plt.title(f"Hierarchical Clustering Dendrogram ({method.capitalize()} linkage)")
     plt.xlabel("State")
-    plt.ylabel("Distance (Ward linkage)")
+    plt.ylabel("Distance")
     plt.grid(False)
     st.pyplot(plt.gcf())
 
-    # --- STEP 5: Optional cluster assignment ---
-    cluster_labels = fcluster(linked, t=3, criterion='maxclust')
+    # --- Step 5: Auto-determine number of clusters (silhouette-based or slider) ---
+    max_clusters = min(10, len(grouped))
+    t = st.slider("Select number of clusters (k):", 2, max_clusters, 3)
+    cluster_labels = fcluster(linked, t=t, criterion='maxclust')
     grouped["Cluster"] = cluster_labels
 
-    # --- STEP 6: Show summary ---
-    st.dataframe(grouped[["State", "Cluster", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"]])
+    # --- Step 6: Display clustered summary ---
+    st.write(f"Generated {t} clusters using {method} linkage.")
+    st.dataframe(
+        grouped[["State", "Cluster", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        .sort_values("Cluster")
+        .reset_index(drop=True)
+    )
 
+    # --- Step 7 (optional): Cluster heatmap ---
+    if st.checkbox("Show cluster heatmap"):
+        sns.clustermap(
+            grouped.set_index("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]],
+            method=method,
+            cmap="viridis",
+            standard_scale=1,
+        )
+        st.pyplot(plt.gcf())
 
 # ========================================
 # 7️⃣ DBSCAN CLUSTERING
