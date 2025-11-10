@@ -1047,6 +1047,11 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 import streamlit as st
 
+    st.write("merged_df shape:", merged_df.shape)
+    st.write("merged_df columns:", list(merged_df.columns))
+    st.dataframe(merged_df.head())
+
+
 def hierarchical_clustering(merged_df):
     st.subheader("Hierarchical Clustering (by Year)")
 
