@@ -15,7 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-from clustering import (monthly_trends_by_cluster,yearly_summary,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
+from clustering import (prepare_monthly,monthly_trends_by_cluster,yearly_summary,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
 
 
 
@@ -266,6 +266,7 @@ def main():
                 st.error(f"Error reading uploaded file: {e}")
 
     merged_df = prepare_yearly(df_land, df_vess)
+    merged_monthly = prepare_monthly(df_land, df_vess)
 
 
     
@@ -286,7 +287,7 @@ def main():
     ])
 
     if plot_option == "Monthly Trends by Cluster2":
-        monthly_trends_by_cluster(merged_df)
+        monthly_trends_by_cluster(merged_monthly)
     elif plot_option == "Yearly Summary":
         yearly_summary(merged_df)
     elif plot_option == "Yearly KMeans Trends":
