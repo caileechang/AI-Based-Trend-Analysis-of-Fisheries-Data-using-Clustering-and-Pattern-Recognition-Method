@@ -17,7 +17,7 @@ import time
 import plotly.express as px
 
 # Import your clustering modules
-from clustering_method import dbscan_analysis, hierarchical_clustering
+from clustering_method import hierarchical_clustering
 
 
 
