@@ -15,6 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
+from clustering method import hierarchical_clustering
 
 
 
@@ -264,11 +265,11 @@ def main():
         "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
         "Yearly K-Means Cluster Trends",
-        "Yearly Elbow & Silhouette",
+        #"Yearly Elbow & Silhouette",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
         "3--D KMeans Clustering",
-        "DBSCAN Anomaly Detection",
+        #"DBSCAN Anomaly Detection",
         "Automatic DBSCAN",
         "Hierarchical Clustering",
         "Geospatial Map",
@@ -727,6 +728,8 @@ def main():
             st.dataframe(outlier_details)
 
 
+    elif plot_option == "Hierarchical Clustering":
+        hierarchical_clustering(merged_df)
 
  
             
