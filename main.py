@@ -15,9 +15,11 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-import os
-st.write("Current working directory:", os.getcwd())
-st.write("Files in this directory:", os.listdir())
+
+from clustering_method import hierarchical_clustering
+
+st.success("✅ clustering_method.py imported successfully!")
+
 
 
 # Import your clustering modules
