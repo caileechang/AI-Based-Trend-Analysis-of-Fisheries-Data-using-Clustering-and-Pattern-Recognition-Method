@@ -834,42 +834,45 @@ plt.grid(True)
 plt.show()
 
 import numpy as np
-
-labels = merged_df['DBSCAN_Label']
-n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-n_outliers = list(labels).count(-1)
-
-print(f"Clusters found: {n_clusters}")
-print(f"Outliers detected: {n_outliers}")
-
-# All points labeled -1 are anomalies
-
-anomalies = merged_df[merged_df['DBSCAN_Label'] == -1]
-print(f"Number of anomalies detected: {len(anomalies)}")
-
-if not anomalies.empty:
-    st.dataframe(anomalies)
-
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 import matplotlib.pyplot as plt
 
+def dbscan_analysis(merged_df, scaled_features):
+
+    labels = merged_df['DBSCAN_Label']
+    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+    n_outliers = list(labels).count(-1)
+    
+    print(f"Clusters found: {n_clusters}")
+    print(f"Outliers detected: {n_outliers}")
+    
+    # All points labeled -1 are anomalies
+    
+    anomalies = merged_df[merged_df['DBSCAN_Label'] == -1]
+    print(f"Number of anomalies detected: {len(anomalies)}")
+    
+    if not anomalies.empty:
+        st.dataframe(anomalies)
+
+    
+
 # Use the same scaled features you passed to DBSCAN
-neighbors = NearestNeighbors(n_neighbors=5)  # min_samples = 5
-neighbors_fit = neighbors.fit(scaled_features)
-distances, indices = neighbors_fit.kneighbors(scaled_features)
-
-# Take the distance to the 5th nearest neighbor (index 4 since zero-indexed)
-distances = np.sort(distances[:, 4])
-
-# Plot the sorted k-distances to find the elbow (suggested eps)
-plt.figure(figsize=(10, 5))
-plt.plot(distances)
-plt.title("k-distance Graph to Choose eps for DBSCAN")
-plt.xlabel("Data Points (sorted)")
-plt.ylabel("5th Nearest Neighbor Distance")
-plt.grid(True)
-plt.show()
+    neighbors = NearestNeighbors(n_neighbors=5)  # min_samples = 5
+    neighbors_fit = neighbors.fit(scaled_features)
+    distances, indices = neighbors_fit.kneighbors(scaled_features)
+    
+    # Take the distance to the 5th nearest neighbor (index 4 since zero-indexed)
+    distances = np.sort(distances[:, 4])
+    
+    # Plot the sorted k-distances to find the elbow (suggested eps)
+    plt.figure(figsize=(10, 5))
+    plt.plot(distances)
+    plt.title("k-distance Graph to Choose eps for DBSCAN")
+    plt.xlabel("Data Points (sorted)")
+    plt.ylabel("5th Nearest Neighbor Distance")
+    plt.grid(True)
+    plt.show()
 
 from sklearn.cluster import DBSCAN
 
