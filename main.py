@@ -15,8 +15,15 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-from clustering import hierarchical_clustering, dbscan_analysis
-
+from clustering_method import (
+    monthly_trends_by_cluster,
+    yearly_summary,
+    yearly_kmeans_trends,
+    kmeans_2d,
+    kmeans_3d,
+    hierarchical_clustering,
+    dbscan_analysis
+)
 
 
 
@@ -272,20 +279,34 @@ def main():
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
-        "Monthly Trends by Cluster",
-        "Yearly Fish Landing Summary",
-        "Yearly K-Means Cluster Trends",
+        "Monthly Trends by Cluster","Monthly Trends by Cluster2",
+        "Yearly Fish Landing Summary","Yearly Summary",
+        "Yearly K-Means Cluster Trends","Yearly KMeans Trends",
         #"Yearly Elbow & Silhouette",
-        "2D KMeans Scatter",
-        "3D KMeans Clustering",
+        "2D KMeans Scatter","2D KMeans Scatter2",
+        "3D KMeans Clustering","3D KMeans Clustering2",
         "3--D KMeans Clustering","DBSCAN Clustering",
         #"DBSCAN Anomaly Detection",
         "Automatic DBSCAN",
-        "Hierarchical Clustering",
+        "Hierarchical Clustering", "Hierarchical Clustering2", "DBSCAN Analysis",
         "Geospatial Map",
         "Interactive Geospatial Map"
     ])
 
+    if plot_option == "Monthly Trends by Cluster2":
+        monthly_trends_by_cluster(merged_df)
+    elif plot_option == "Yearly Summary":
+        yearly_summary(merged_df)
+    elif plot_option == "Yearly KMeans Trends":
+        yearly_kmeans_trends(merged_df)
+    elif plot_option == "2D KMeans Scatter2":
+        kmeans_2d(merged_df)
+    elif plot_option == "3D KMeans Clustering2":
+        kmeans_3d(merged_df)
+    elif plot_option == "Hierarchical Clustering2":
+        hierarchical_clustering(merged_df)
+    elif plot_option == "DBSCAN Analysis":
+        dbscan_analysis(merged_df)
    
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
