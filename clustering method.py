@@ -1041,6 +1041,10 @@ print(monthly_freshwater[monthly_freshwater['DBSCAN_Label'] == -1])
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+import streamlit as st
+
+def hierarchical_clustering(merged_df):
+    st.subheader("Hierarchical Clustering (by Year)")
 
 # STEP 1: Scale the yearly features (e.g., Total Fish Landing, Vessels, etc.)
 features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
