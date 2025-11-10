@@ -846,7 +846,7 @@ print(f"Outliers detected: {n_outliers}")
 
 anomalies = merged_df[merged_df['DBSCAN_Label'] == -1]
 print(f"Number of anomalies detected: {len(anomalies)}")
-display(anomalies)
+st.dataframe(anomalies)
 
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
