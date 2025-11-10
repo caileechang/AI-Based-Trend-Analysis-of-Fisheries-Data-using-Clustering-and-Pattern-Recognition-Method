@@ -81,8 +81,8 @@ def prepare_yearly(df_land, df_vess):
 
     # --- Fuzzy match state names ---
     def match_state(name):
-        if not isinstance(name, str) or name.strip() == "":
-            return np.nan
+        #if not isinstance(name, str) or name.strip() == "":
+            #return np.nan
         matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.75)
         return matches[0] if matches else np.nan
 
