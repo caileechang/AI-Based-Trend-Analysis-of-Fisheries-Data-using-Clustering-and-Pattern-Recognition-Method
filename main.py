@@ -15,10 +15,10 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
+from clustering import hierarchical_clustering, dbscan_analysis
 
-from clustering_method import hierarchical_clustering
 
-st.success("✅ clustering_method.py imported successfully!")
+
 
 
 
@@ -743,6 +743,8 @@ def main():
     elif plot_option == "Hierarchical Clustering":
         hierarchical_clustering(merged_df)
 
+    elif plot_option == "DBSCAN Clustering":
+        dbscan_analysis(merged_df)
         
 
 
