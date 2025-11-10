@@ -1042,18 +1042,22 @@ plt.show()
 print("\n🔍 Anomalous Months for Freshwater:")
 print(monthly_freshwater[monthly_freshwater['DBSCAN_Label'] == -1])
 
-from scipy.cluster.hierarchy import dendrogram, linkage
-import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-import streamlit as st
-
-    st.write("merged_df shape:", merged_df.shape)
-    st.write("merged_df columns:", list(merged_df.columns))
-    st.dataframe(merged_df.head())
-
-
 def hierarchical_clustering(merged_df):
+    import numpy as np
+    import streamlit as st
+    from sklearn.preprocessing import StandardScaler
+    from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from sklearn.metrics import silhouette_score
+
     st.subheader("Hierarchical Clustering (by Year)")
+
+
+
+
+
+   
 
 # STEP 1: Scale the yearly features (e.g., Total Fish Landing, Vessels, etc.)
 features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
