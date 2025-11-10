@@ -15,10 +15,13 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
+import os
+st.write("Current working directory:", os.getcwd())
+st.write("Files in this directory:", os.listdir())
 
 
 # Import your clustering modules
-from clustering_method import hierarchical_clustering
+#from clustering_method import hierarchical_clustering
 
 
 
