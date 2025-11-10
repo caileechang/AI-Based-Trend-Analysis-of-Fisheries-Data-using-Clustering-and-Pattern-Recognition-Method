@@ -727,7 +727,8 @@ def main():
             st.markdown("### Outlier Details")
             st.dataframe(outlier_details)
 
-
+        from clustering_method import hierarchical_clustering
+            
     elif plot_option == "Hierarchical Clustering":
         hierarchical_clustering(merged_df)
 
