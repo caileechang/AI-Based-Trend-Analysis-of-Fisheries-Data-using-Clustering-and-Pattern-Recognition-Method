@@ -268,7 +268,7 @@ def main():
         #"Yearly Elbow & Silhouette",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "3--D KMeans Clustering",
+        "3--D KMeans Clustering","DBSCAN Clustering",
         #"DBSCAN Anomaly Detection",
         "Automatic DBSCAN",
         "Hierarchical Clustering",
@@ -730,11 +730,18 @@ def main():
         
             
         from clustering_method import dbscan_analysis
-
     # inside your Streamlit code:
     elif plot_option == "DBSCAN Clustering":
         # assuming you already computed merged_df and scaled_features earlier
         dbscan_analysis(merged_df, scaled_features)
+
+        from clustering_method import hierarchical_clustering
+        
+    elif plot_option == "Hierarchical Clustering":
+        hierarchical_clustering(merged_df)
+
+        
+
 
 
  
