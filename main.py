@@ -732,7 +732,7 @@ def main():
     from clustering_method import dbscan_analysis
 
     # inside your Streamlit code:
-    elif plot_option == "DBSCAN Clustering":
+elif plot_option == "DBSCAN Clustering":
         # assuming you already computed merged_df and scaled_features earlier
         dbscan_analysis(merged_df, scaled_features)
 
