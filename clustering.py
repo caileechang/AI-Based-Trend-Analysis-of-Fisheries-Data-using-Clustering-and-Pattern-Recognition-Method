@@ -12,22 +12,50 @@ from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 # 1️⃣ MONTHLY CLUSTER TRENDS
 # ========================================
 def monthly_trends_by_cluster(merged_df):
-    st.subheader("Monthly Trends by Cluster")
-    if merged_df.empty:
-        st.warning("No data available.")
-        return
-    
-    scaler = StandardScaler()
-    features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-    scaled = scaler.fit_transform(features)
-    kmeans = KMeans(n_clusters=3, random_state=42)
-    merged_df['Cluster'] = kmeans.fit_predict(scaled)
+    import pandas as pd
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    from sklearn.cluster import KMeans
+    from sklearn.preprocessing import StandardScaler
+    import streamlit as st
 
+    st.subheader("📅 Monthly Trends by Cluster")
+
+    # --- STEP 1: Ensure Month column exists ---
+    if 'Month' not in merged_df.columns:
+        st.warning("Month data not available in merged_df. Using yearly data instead.")
+        return
+
+    # --- STEP 2: Group data by Year + Month ---
+    monthly_data = (
+        merged_df.groupby(['Year', 'Month'])[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        .sum()
+        .reset_index()
+    )
+
+    # --- STEP 3: Scale features ---
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(monthly_data[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']])
+
+    # --- STEP 4: Apply KMeans ---
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    monthly_data['Cluster'] = kmeans.fit_predict(scaled)
+
+    # --- STEP 5: Create a MonthYear column for better plotting ---
+    monthly_data['MonthYear'] = pd.to_datetime(
+        monthly_data['Year'].astype(str) + '-' + monthly_data['Month'].astype(str).str.zfill(2)
+    )
+
+    # --- STEP 6: Plot true monthly trend ---
     plt.figure(figsize=(12, 6))
-    sns.lineplot(data=merged_df, x='Year', y='Total Fish Landing (Tonnes)', hue='Cluster', marker='o')
+    sns.lineplot(data=monthly_data, x='MonthYear', y='Total Fish Landing (Tonnes)', hue='Cluster', marker='o')
     plt.title("Monthly Fish Landing Trends by Cluster")
+    plt.xlabel("Month-Year")
+    plt.ylabel("Total Fish Landing (Tonnes)")
+    plt.xticks(rotation=45)
     plt.grid(True)
     st.pyplot(plt.gcf())
+
 
 # ========================================
 # 2️⃣ YEARLY SUMMARY
