@@ -119,70 +119,81 @@ def hierarchical_clustering(merged_df):
     import numpy as np
     from sklearn.preprocessing import StandardScaler
     from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+    import re
 
-    st.subheader("🏗️ Hierarchical Clustering (Adaptive)")
+    st.subheader("Hierarchical Clustering (by Valid State)")
 
-    # --- Step 1: Automatically group by State (if column exists) ---
-    if "State" not in merged_df.columns:
-        st.error("Missing 'State' column in dataset.")
+    # --- STEP 1: Define official valid states ---
+    valid_states = [
+        "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+        "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+        "SABAH", "SARAWAK", "W.P. LABUAN"
+    ]
+
+    # --- STEP 2: Clean and strictly filter state names ---
+    df = merged_df.copy()
+    df["State"] = (
+        df["State"]
+        .astype(str)
+        .str.upper()
+        .str.strip()
+        .str.replace(r"\s*/\s*", "/", regex=True)
+        .str.replace(r"\s+", " ", regex=True)
+    )
+
+    # Drop rows with invalid or summary-like entries
+    invalid_pattern = r"(JUMLAH|MALAYSIA|REGISTERED|TONNAGE|TOTAL|SUM|GROSS|GRAND|KES|AVERAGE|NA)"
+    df = df[~df["State"].str.contains(invalid_pattern, regex=True, na=False)]
+
+    # Keep only valid state names
+    df = df[df["State"].isin(valid_states)]
+
+    if df.empty:
+        st.warning("No valid state records found after cleaning.")
         return
 
+    # --- STEP 3: Group by State (to reduce label clutter) ---
     grouped = (
-        merged_df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         .mean()
         .reset_index()
     )
 
-    if grouped.empty:
-        st.warning("No data available for clustering.")
-        return
-
-    # --- Step 2: Scale features automatically ---
+    # --- STEP 4: Scale features ---
     scaler = StandardScaler()
     scaled = scaler.fit_transform(grouped[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]])
 
-    # --- Step 3: Compute linkage matrix (user-selectable method) ---
-    method = st.selectbox("Choose linkage method:", ["ward", "average", "complete", "single"], index=0)
-    linked = linkage(scaled, method=method)
+    # --- STEP 5: Compute linkage ---
+    linked = linkage(scaled, method="ward")
 
-    # --- Step 4: Adaptive dendrogram settings ---
-    plt.figure(figsize=(max(10, len(grouped) * 0.5), 6))
+    # --- STEP 6: Plot dendrogram (clean, valid labels only) ---
+    plt.figure(figsize=(12, 6))
     dendrogram(
         linked,
         labels=grouped["State"].tolist(),
         leaf_rotation=45,
-        leaf_font_size=8,
-        color_threshold=None,  # auto color scaling
+        leaf_font_size=9,
+        color_threshold=None
     )
-    plt.title(f"Hierarchical Clustering Dendrogram ({method.capitalize()} linkage)")
+    plt.title("Hierarchical Clustering Dendrogram (Valid States Only)")
     plt.xlabel("State")
-    plt.ylabel("Distance")
+    plt.ylabel("Distance (Ward linkage)")
     plt.grid(False)
     st.pyplot(plt.gcf())
 
-    # --- Step 5: Auto-determine number of clusters (silhouette-based or slider) ---
-    max_clusters = min(10, len(grouped))
-    t = st.slider("Select number of clusters (k):", 2, max_clusters, 3)
-    cluster_labels = fcluster(linked, t=t, criterion='maxclust')
+    # --- STEP 7: Assign clusters ---
+    cluster_labels = fcluster(linked, t=3, criterion="maxclust")
     grouped["Cluster"] = cluster_labels
 
-    # --- Step 6: Display clustered summary ---
-    st.write(f"Generated {t} clusters using {method} linkage.")
+    # --- STEP 8: Show results ---
+    st.write("###Cluster Summary (Cleaned States Only)")
     st.dataframe(
         grouped[["State", "Cluster", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         .sort_values("Cluster")
         .reset_index(drop=True)
     )
 
-    # --- Step 7 (optional): Cluster heatmap ---
-    if st.checkbox("Show cluster heatmap"):
-        sns.clustermap(
-            grouped.set_index("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]],
-            method=method,
-            cmap="viridis",
-            standard_scale=1,
-        )
-        st.pyplot(plt.gcf())
 
 # ========================================
 # 7️⃣ DBSCAN CLUSTERING
