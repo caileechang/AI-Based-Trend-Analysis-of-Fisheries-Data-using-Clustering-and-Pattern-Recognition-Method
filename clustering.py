@@ -187,7 +187,7 @@ def hierarchical_clustering(merged_df):
     grouped["Cluster"] = cluster_labels
 
     # --- STEP 8: Show results ---
-    st.write("###Cluster Summary (Cleaned States Only)")
+    st.write("### Cluster Summary (Cleaned States Only)")
     st.dataframe(
         grouped[["State", "Cluster", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         .sort_values("Cluster")
