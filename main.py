@@ -274,15 +274,7 @@ def hierarchical_clustering(merged_df):
         )
         st.markdown("### Average Total Fish Landing per Cluster")
         st.dataframe(summary)
-    # --- STEP 11: Optional: CSV download ---
-    csv = summary.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        "Download Cluster Summary (CSV)",
-        csv,
-        "hierarchical_total_fish_landing_summary.csv",
-        "text/csv"
-    )
-
+  
     
 def main():
     st.set_page_config(layout='wide')
