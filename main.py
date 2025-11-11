@@ -1229,6 +1229,13 @@ def main():
             lon_max = geo_df["Coords"].apply(lambda x: x[1]).max()
         
             m = folium.Map(location=[4.2, 108.0], zoom_start=6.7, tiles=None)
+                    # Apply selected tile theme (with clean label)
+            folium.TileLayer(
+                tiles=tile_map[map_theme],
+                name="Base Map",          # clean name for control
+                attr="© OpenStreetMap & Esri contributors", 
+                control=False             # hide from layer list
+            ).add_to(m)
             m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]], padding=(10, 10))
              
             # --- Step 6: Add Color Scale ---
