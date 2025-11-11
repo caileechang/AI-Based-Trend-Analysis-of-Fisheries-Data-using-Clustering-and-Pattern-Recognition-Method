@@ -1207,21 +1207,60 @@ def main():
             # m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles="CartoDB positron")
 # --- Step 5: Create Base Map ---
 # Compute automatic bounds to include all states tightly (Peninsular + Borneo)
+           # --- Step 5: Create Base Map (with Theme Toggle) ---
+            st.sidebar.markdown("### 🗺️ Map Theme")
+            map_theme = st.sidebar.radio(
+                "Choose Map Theme:",
+                options=["Light Mode", "Dark Mode", "Satellite", "Default"],
+                index=0,
+                horizontal=True
+            )
+            
+            # Compute automatic bounds to include both Peninsular + Borneo tightly
             if not geo_df.empty:
                 lat_min = geo_df['Coords'].apply(lambda x: x[0]).min()
                 lat_max = geo_df['Coords'].apply(lambda x: x[0]).max()
                 lon_min = geo_df['Coords'].apply(lambda x: x[1]).min()
                 lon_max = geo_df['Coords'].apply(lambda x: x[1]).max()
             
-                # Initialize map centered between both regions, with tighter zoom
-                m = folium.Map(location=[4.2, 108.0], zoom_start=6.7, tiles=None)
-                folium.TileLayer("CartoDB positron", name="Base Map").add_to(m)
+                # Map center between East & West Malaysia
+                m = folium.Map(location=[4.2, 108.0], zoom_start=6.6, tiles=None)
             
-                # Fit bounds automatically to all markers (brings Peninsular + Borneo closer)
+                # --- Apply theme based on user selection ---
+                if map_theme == "Light Mode":
+                    folium.TileLayer(
+                        "CartoDB positron",
+                        name="Light Mode",
+                        attr="© OpenStreetMap contributors © CARTO"
+                    ).add_to(m)
+                elif map_theme == "Dark Mode":
+                    folium.TileLayer(
+                        "CartoDB DarkMatter",
+                        name="Dark Mode",
+                        attr="© OpenStreetMap contributors © CARTO"
+                    ).add_to(m)
+                elif map_theme == "Satellite":
+                    folium.TileLayer(
+                        "Esri.WorldImagery",
+                        name="Satellite",
+                        attr="Tiles © Esri"
+                    ).add_to(m)
+                else:
+                    folium.TileLayer(
+                        "OpenStreetMap",
+                        name="Default",
+                        attr="© OpenStreetMap contributors"
+                    ).add_to(m)
+            
+                # Optional: allow toggling between multiple layers
+                folium.TileLayer("Stamen Toner", name="Black & White").add_to(m)
+            
+                # Automatically fit both regions (Semenanjung + Sabah/Sarawak)
                 m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]], padding=(10, 10))
             else:
-                # Default fallback (Malaysia center)
+                # Default fallback center
                 m = folium.Map(location=[4.5, 109.5], zoom_start=6.5, tiles="CartoDB positron")
+
             
             # --- Step 6: Add Color Scale ---
             min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
