@@ -971,44 +971,8 @@ def main():
             st.warning("Silhouette score unavailable — only one cluster or all points labeled as noise.")
 
 
-        # --- Step 10: Visualize clustering results ---
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(x=scaled[:, 1], y=scaled[:, 0], hue=labels, palette="tab10", s=70, ax=ax)
-        ax.set_title(f"Automatic DBSCAN (ε={eps_auto:.3f}, min_samples={min_samples_auto})")
-        ax.set_xlabel("Vessels (scaled)")
-        ax.set_ylabel("Landings (scaled)")
-        st.pyplot(fig)
-
-        # --- Step 11: Identify and explain outliers ---
-        n_outliers = (labels == -1).sum()
-        st.success(f"Detected {n_outliers} outliers (noise points)")
-
-        if n_outliers > 0:
-            outlier_details = merged_df.loc[labels == -1, [
-                "State", "Year", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
-            ]].copy()
-
-            avg_land = merged_df["Total Fish Landing (Tonnes)"].mean()
-            avg_ves = merged_df["Total number of fishing vessels"].mean()
-
-            def explain(r):
-                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
-                    return "High landing but few vessels – possible overperformance or data anomaly."
-                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
-                    return "Low catch per vessel – possible overfishing or resource decline."
-                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
-                    return "Low overall activity – small fleet or seasonal downtime."
-                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] > avg_ves:
-                    return "Unusually high scale – large operations or exceptional yield."
-                return "Atypical pattern compared to national average."
-
-            outlier_details["Why Flagged"] = outlier_details.apply(explain, axis=1)
-            st.markdown("### Outlier Details")
-            st.dataframe(outlier_details)
-
-   
-       
-        
+        # --- Step 10: Improved cluster visualization ---
+         
                 
     elif plot_option == "Hierarchical Clustering":
                     
