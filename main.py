@@ -15,7 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-from clustering import (prepare_monthly, monthly_trends_by_cluster,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
+from clustering import prepare_monthly, monthly_trends_by_cluster
 
 # Import your clustering modules
 #from clustering_method import hierarchical_clustering
@@ -187,12 +187,10 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
 
 
 def hierarchical_clustering(merged_df):
-    import streamlit as st
-    import matplotlib.pyplot as plt
-    from sklearn.preprocessing import StandardScaler
+  
     from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
-    st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
+    st.subheader("Hierarchical Clustering (Total Fish Landing)")
 
     # --- STEP 1: Define valid Malaysian states ---
     valid_states = [
@@ -263,7 +261,7 @@ def hierarchical_clustering(merged_df):
     # --- STEP 11: Optional: CSV download ---
     csv = summary.to_csv(index=False).encode("utf-8")
     st.download_button(
-        "📥 Download Cluster Summary (CSV)",
+        "Download Cluster Summary (CSV)",
         csv,
         "hierarchical_total_fish_landing_summary.csv",
         "text/csv"
