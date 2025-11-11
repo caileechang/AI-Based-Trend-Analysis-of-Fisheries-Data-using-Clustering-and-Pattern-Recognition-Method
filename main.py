@@ -398,59 +398,116 @@ def main():
        # fig, ax = plt.subplots(figsize=(14, 6))
 
 # Plot the bar
+     # --- Helper: compute silhouette & inertia for a range of k values ---
+def analyze_k(data, title_prefix):
+    inertia, silhouette = [], []
+    K_range = range(2, 11)
+
+    for k in K_range:
+        model = KMeans(n_clusters=k, random_state=42)
+        model.fit(data)
+        inertia.append(model.inertia_)
+        score = silhouette_score(data, model.labels_)
+        silhouette.append(score)
+        print(f"Silhouette={score:.4f}, Inertia={model.inertia_:.2f}")
+
+    best_k = K_range[np.argmax(silhouette)]
+    best_score = max(silhouette)
+
+    # --- Plot side by side ---
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+    axes[0].plot(K_range, silhouette, marker='o')
+    axes[0].set_title(f"{title_prefix} - Silhouette Score vs K")
+    axes[0].set_xlabel("Number of Clusters (K)")
+    axes[0].set_ylabel("Silhouette Score")
+    axes[0].axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+    axes[0].legend()
+
+    axes[1].plot(K_range, inertia, marker='o', color='orange')
+    axes[1].set_title(f"{title_prefix} - Elbow Method: Inertia vs K")
+    axes[1].set_xlabel("Number of Clusters (K)")
+    axes[1].set_ylabel("Inertia (WSS)")
+    axes[1].axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+    axes[1].legend()
+
+    st.pyplot(fig)
+    st.success(f"{title_prefix}: Best k = {best_k} (Silhouette = {best_score:.3f})")
+
+    return best_k
+
+# --- MAIN section ---
+    elif plot_option == "Determine Optimal K for Monthly & Yearly":
+        st.subheader("Automatic Determination of Optimal K (Monthly & Yearly)")
+    
+        features = ['Freshwater (Tonnes)', 'Marine (Tonnes)']
+        scaled = StandardScaler().fit_transform(merged_df[features])
+    
+        # Monthly
+        st.markdown("### 📅 Monthly Fish Landing")
+        best_k_monthly = analyze_k(scaled, "Monthly Fish Landing")
+    
+        # Yearly
+        yearly_df = merged_df.groupby(['Year'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']].mean().reset_index()
+        scaled_yearly = StandardScaler().fit_transform(yearly_df[features])
+        st.markdown("### 📈 Yearly Fish Landing")
+        best_k_yearly = analyze_k(scaled_yearly, "Yearly Fish Landing")
+    
+        # Store for reuse
+        st.session_state['best_k_monthly'] = best_k_monthly
+        st.session_state['best_k_yearly'] = best_k_yearly   
+        elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
+            st.subheader("Yearly K-Means Cluster Trends")
         
-    elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
-        st.subheader("Yearly K-Means Cluster Trends")
-    
-        # --- Cluster the data ---
-        features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
-        scaled = StandardScaler().fit_transform(features)
-        merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
-    
-        # --- Aggregate yearly means by cluster ---
-        cluster_trends = (
-            merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
-            .mean()
-            .reset_index()
-        )
-    
-        # --- User selection ---
-        trend_option = st.radio(
-            "Select trend to display:",
-            ("Freshwater", "Marine", "Both")
-        )
-    
-        # --- Freshwater plot ---
-        if trend_option == "Freshwater" or trend_option == "Both":
-            fig1, ax1 = plt.subplots(figsize=(12, 6))
-            sns.lineplot(
-                data=cluster_trends,
-                x='Year',
-                y='Freshwater (Tonnes)',
-                hue='Cluster',
-                marker='o',
-                ax=ax1
+            # --- Cluster the data ---
+            features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+            scaled = StandardScaler().fit_transform(features)
+            merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
+        
+            # --- Aggregate yearly means by cluster ---
+            cluster_trends = (
+                merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+                .mean()
+                .reset_index()
             )
-            ax1.set_title("Yearly Freshwater Landing Trends by Cluster")
-            ax1.set_xlabel("Year")
-            ax1.set_ylabel("Freshwater (Tonnes)")
-            st.pyplot(fig1)
-    
-        # --- Marine plot ---
-        if trend_option == "Marine" or trend_option == "Both":
-            fig2, ax2 = plt.subplots(figsize=(12, 6))
-            sns.lineplot(
-                data=cluster_trends,
-                x='Year',
-                y='Marine (Tonnes)',
-                hue='Cluster',
-                marker='o',
-                ax=ax2
+        
+            # --- User selection ---
+            trend_option = st.radio(
+                "Select trend to display:",
+                ("Freshwater", "Marine", "Both")
             )
-            ax2.set_title("Yearly Marine Landing Trends by Cluster")
-            ax2.set_xlabel("Year")
-            ax2.set_ylabel("Marine (Tonnes)")
-            st.pyplot(fig2)
+        
+            # --- Freshwater plot ---
+            if trend_option == "Freshwater" or trend_option == "Both":
+                fig1, ax1 = plt.subplots(figsize=(12, 6))
+                sns.lineplot(
+                    data=cluster_trends,
+                    x='Year',
+                    y='Freshwater (Tonnes)',
+                    hue='Cluster',
+                    marker='o',
+                    ax=ax1
+                )
+                ax1.set_title("Yearly Freshwater Landing Trends by Cluster")
+                ax1.set_xlabel("Year")
+                ax1.set_ylabel("Freshwater (Tonnes)")
+                st.pyplot(fig1)
+        
+            # --- Marine plot ---
+            if trend_option == "Marine" or trend_option == "Both":
+                fig2, ax2 = plt.subplots(figsize=(12, 6))
+                sns.lineplot(
+                    data=cluster_trends,
+                    x='Year',
+                    y='Marine (Tonnes)',
+                    hue='Cluster',
+                    marker='o',
+                    ax=ax2
+                )
+                ax2.set_title("Yearly Marine Landing Trends by Cluster")
+                ax2.set_xlabel("Year")
+                ax2.set_ylabel("Marine (Tonnes)")
+                st.pyplot(fig2)
 
 
     elif plot_option == "Yearly Elbow & Silhouette":
