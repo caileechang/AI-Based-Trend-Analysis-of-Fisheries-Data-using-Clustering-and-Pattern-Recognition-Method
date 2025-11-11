@@ -1253,7 +1253,8 @@ def main():
                     ).add_to(m)
             
                 # Optional: allow toggling between multiple layers
-                folium.TileLayer("Stamen Toner", name="Black & White").add_to(m)
+                folium.TileLayer("Stamen Toner",name="Black & White",attr="Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.").add_to(m)
+
             
                 # Automatically fit both regions (Semenanjung + Sabah/Sarawak)
                 m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]], padding=(10, 10))
