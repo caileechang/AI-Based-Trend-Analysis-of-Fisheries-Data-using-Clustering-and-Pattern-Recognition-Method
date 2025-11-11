@@ -920,7 +920,86 @@ def main():
        
         
                 
+        elif plot_option == "Hierarchical Clustering":
+            st.subheader("Hierarchical Clustering (Total Fish Landing)")
         
+            from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+            from sklearn.preprocessing import StandardScaler
+        
+            # --- Let user choose data level ---
+            level_choice = st.radio("Select data level:", ["Yearly", "Monthly"], horizontal=True)
+        
+            # --- Prepare dataset ---
+            if level_choice == "Yearly":
+                df_total = (
+                    df_land.groupby("Year")["Fish Landing (Tonnes)"]
+                    .sum()
+                    .reset_index()
+                )
+                index_col = "Year"
+        
+            else:  # Monthly
+                df_total = (
+                    df_land.groupby(["Year", "Month"])["Fish Landing (Tonnes)"]
+                    .sum()
+                    .reset_index()
+                )
+                df_total["MonthYear"] = pd.to_datetime(
+                    df_total["Year"].astype(int).astype(str)
+                    + "-" + df_total["Month"].astype(int).astype(str)
+                    + "-01"
+                )
+                index_col = "MonthYear"
+        
+            # --- Scale feature ---
+            scaled = StandardScaler().fit_transform(df_total[["Fish Landing (Tonnes)"]])
+        
+            # --- User selects linkage method ---
+            linkage_method = st.selectbox(
+                "Select linkage method:",
+                ["ward", "complete", "average", "single"],
+                index=0
+            )
+        
+            # --- Perform linkage ---
+            linked = linkage(scaled, method=linkage_method)
+        
+            # --- Plot dendrogram ---
+            fig, ax = plt.subplots(figsize=(10, 5))
+            dendrogram(linked, labels=df_total[index_col].astype(str).values, orientation="top")
+            ax.set_title(f"{level_choice} Hierarchical Clustering (method = {linkage_method})")
+            ax.set_xlabel("Time")
+            ax.set_ylabel("Distance")
+            st.pyplot(fig)
+        
+            # --- Let user select number of clusters ---
+            num_clusters = st.slider("Select number of clusters", 2, 10, 3)
+            cluster_labels = fcluster(linked, num_clusters, criterion="maxclust")
+            df_total["Cluster"] = cluster_labels
+        
+            # --- Display results ---
+            st.markdown(f"### Cluster Assignments (k = {num_clusters})")
+            st.dataframe(df_total[[index_col, "Fish Landing (Tonnes)", "Cluster"]])
+        
+            # --- Cluster summary ---
+            summary = (
+                df_total.groupby("Cluster")["Fish Landing (Tonnes)"]
+                .mean()
+                .reset_index()
+                .sort_values("Cluster")
+            )
+            st.markdown("### Average Total Landing per Cluster")
+            st.dataframe(summary)
+        
+            # --- Optional: Download button ---
+            csv = summary.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                "📥 Download Cluster Summary (CSV)",
+                csv,
+                "hierarchical_total_fish_landing_summary.csv",
+                "text/csv"
+            )
+
         
         
          
