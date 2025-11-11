@@ -134,43 +134,57 @@ def prepare_yearly(df_land, df_vess):
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
-# --- Helper: compute silhouette & inertia for a range of k values ---
-def analyze_k(data, title_prefix):
-    inertia, silhouette = [], []
-    K_range = range(2, 11)
+def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
+    from sklearn.cluster import KMeans
+    from sklearn.metrics import silhouette_score
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import streamlit as st
 
-    for k in K_range:
-        model = KMeans(n_clusters=k, random_state=42)
-        model.fit(data)
-        inertia.append(model.inertia_)
-        score = silhouette_score(data, model.labels_)
-        silhouette.append(score)
-        print(f"Silhouette={score:.4f}, Inertia={model.inertia_:.2f}")
+    silhouette_scores, inertia_scores = [], []
+    k_range = range(2, 11)
 
-    best_k = K_range[np.argmax(silhouette)]
-    best_score = max(silhouette)
+    for k in k_range:
+        kmeans = KMeans(n_clusters=k, random_state=42)
+        labels = kmeans.fit_predict(data)
+        sil_score = silhouette_score(data, labels)
+        inertia = kmeans.inertia_
+        silhouette_scores.append(sil_score)
+        inertia_scores.append(inertia)
+        print(f"K={k}: Silhouette={sil_score:.4f}, Inertia={inertia:.2f}")
 
-    # --- Plot side by side ---
+    best_index = np.argmax(silhouette_scores)
+    best_k = list(k_range)[best_index]
+    best_sil = silhouette_scores[best_index]
+    best_inertia = inertia_scores[best_index]
+
+    # --- Plot both side-by-side ---
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-    axes[0].plot(K_range, silhouette, marker='o')
+    axes[0].plot(k_range, silhouette_scores, marker='o')
+    axes[0].axvline(best_k, color='red', linestyle='--', label=f"Best k={best_k}")
     axes[0].set_title(f"{title_prefix} - Silhouette Score vs K")
     axes[0].set_xlabel("Number of Clusters (K)")
     axes[0].set_ylabel("Silhouette Score")
-    axes[0].axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
     axes[0].legend()
 
-    axes[1].plot(K_range, inertia, marker='o', color='orange')
+    axes[1].plot(k_range, inertia_scores, marker='o', color='orange')
+    axes[1].axvline(best_k, color='red', linestyle='--', label=f"Best k={best_k}")
     axes[1].set_title(f"{title_prefix} - Elbow Method: Inertia vs K")
     axes[1].set_xlabel("Number of Clusters (K)")
     axes[1].set_ylabel("Inertia (WSS)")
-    axes[1].axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
     axes[1].legend()
 
-    st.pyplot(fig)
-    st.success(f"{title_prefix}: Best k = {best_k} (Silhouette = {best_score:.3f})")
+    plt.tight_layout()
 
-    return best_k
+    if use_streamlit:
+        st.pyplot(fig)
+        st.success(f"{title_prefix}: Best k = {best_k} (Silhouette = {best_sil:.3f})")
+    else:
+        plt.show()
+        print(f"\n{title_prefix} - Best k = {best_k} | Silhouette = {best_sil:.4f} | Inertia = {best_inertia:.2f}")
+
+    return best_k, best_sil, best_inertia
+
 
 
     
@@ -303,7 +317,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
-        "Yearly Cluster Trends for Marine and Freshwater Fish","Automatic Determination of Optimal K (Monthly & Yearly)",                  
+        "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
         "2D KMeans Scatter",
         "3D KMeans Clustering","3D KMeans Clustering2",
         "3--D KMeans Clustering","DBSCAN Clustering",
@@ -438,26 +452,35 @@ def main():
 
 
 
-    # --- MAIN section ---
-    elif plot_option == "Automatic Determination of Optimal K (Monthly & Yearly)":
+    elif plot_option == "Optimal K for Monthly & Yearly":
         st.subheader("Automatic Determination of Optimal K (Monthly & Yearly)")
-
+    
+        # --- Prepare Monthly data ---
         features = ['Freshwater (Tonnes)', 'Marine (Tonnes)']
-        scaled = StandardScaler().fit_transform(merged_df[features])
-
-        # Monthly
+        scaled_monthly = StandardScaler().fit_transform(merged_df[features])
+    
         st.markdown("### 📅 Monthly Fish Landing")
-        best_k_monthly = analyze_k(scaled, "Monthly Fish Landing")
-
-        # Yearly
+        best_k_monthly, _, _ = evaluate_kmeans_k(scaled_monthly, "Monthly Fish Landing", use_streamlit=True)
+    
+        # --- Prepare Yearly data ---
         yearly_df = merged_df.groupby(['Year'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']].mean().reset_index()
         scaled_yearly = StandardScaler().fit_transform(yearly_df[features])
+    
         st.markdown("### 📈 Yearly Fish Landing")
-        best_k_yearly = analyze_k(scaled_yearly, "Yearly Fish Landing")
-
-        # Store for reuse
+        best_k_yearly, _, _ = evaluate_kmeans_k(scaled_yearly, "Yearly Fish Landing", use_streamlit=True)
+    
+        # --- Store for reuse ---
         st.session_state['best_k_monthly'] = best_k_monthly
         st.session_state['best_k_yearly'] = best_k_yearly
+    
+        # --- Display summary table ---
+        st.markdown("### 🧾 Summary of Optimal K Results")
+        st.table({
+            "Dataset": ["Monthly Fish Landing", "Yearly Fish Landing"],
+            "Best K": [best_k_monthly, best_k_yearly]
+        })
+
+
     
         
 
