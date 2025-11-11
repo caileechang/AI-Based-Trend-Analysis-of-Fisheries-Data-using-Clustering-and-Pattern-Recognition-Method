@@ -186,6 +186,88 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
     return best_k, best_sil, best_inertia
 
 
+def hierarchical_clustering(merged_df):
+    import streamlit as st
+    import matplotlib.pyplot as plt
+    from sklearn.preprocessing import StandardScaler
+    from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+
+    st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
+
+    # --- STEP 1: Define valid Malaysian states ---
+    valid_states = [
+        "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+        "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+        "SABAH", "SARAWAK", "W.P. LABUAN"
+    ]
+
+    # --- STEP 2: Clean data and filter for valid states ---
+    df = merged_df.copy()
+    df["State"] = (
+        df["State"]
+        .astype(str)
+        .str.upper()
+        .str.strip()
+        .str.replace(r"\s*/\s*", "/", regex=True)
+        .str.replace(r"\s+", " ", regex=True)
+    )
+
+    df = df[df["State"].isin(valid_states)]
+    if df.empty:
+        st.warning("No valid state records found after filtering.")
+        return
+
+    # --- STEP 3: Aggregate by state (average total fish landing) ---
+    grouped = (
+        df.groupby("State")[["Total Fish Landing (Tonnes)"]]
+        .mean()
+        .reset_index()
+    )
+
+    # --- STEP 4: Scale data ---
+    scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
+
+    # --- STEP 5: Let user choose linkage method ---
+    method = st.selectbox("Select linkage method:", ["ward", "complete", "average", "single"], index=0)
+
+    # --- STEP 6: Compute linkage ---
+    linked = linkage(scaled, method=method)
+
+    # --- STEP 7: Dendrogram plot ---
+    fig, ax = plt.subplots(figsize=(10, 5))
+    dendrogram(linked, labels=grouped["State"].tolist(), leaf_rotation=45, leaf_font_size=9)
+    ax.set_title(f"Hierarchical Clustering Dendrogram ({method.title()} linkage)")
+    ax.set_xlabel("State")
+    ax.set_ylabel("Distance")
+    st.pyplot(fig)
+
+    # --- STEP 8: Let user dynamically select number of clusters ---
+    num_clusters = st.slider("Select number of clusters", 2, 10, 3)
+    grouped["Cluster"] = fcluster(linked, num_clusters, criterion="maxclust")
+
+    # --- STEP 9: Display cluster results ---
+    st.markdown(f"### Cluster Assignments (k = {num_clusters})")
+    st.dataframe(grouped.sort_values("Cluster").reset_index(drop=True))
+
+    # --- STEP 10: Cluster summary ---
+    summary = (
+        grouped.groupby("Cluster")["Total Fish Landing (Tonnes)"]
+        .mean()
+        .reset_index()
+        .sort_values("Cluster")
+    )
+    st.markdown("### Average Total Fish Landing per Cluster")
+    st.dataframe(summary)
+
+    # --- STEP 11: Optional: CSV download ---
+    csv = summary.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        "📥 Download Cluster Summary (CSV)",
+        csv,
+        "hierarchical_total_fish_landing_summary.csv",
+        "text/csv"
+    )
 
     
 def main():
