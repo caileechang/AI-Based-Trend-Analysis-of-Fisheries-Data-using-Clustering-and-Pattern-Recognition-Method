@@ -1228,7 +1228,7 @@ def main():
             lon_min = geo_df["Coords"].apply(lambda x: x[1]).min()
             lon_max = geo_df["Coords"].apply(lambda x: x[1]).max()
         
-            m = folium.Map(location=[4.2, 108.0], zoom_start=6.7, tiles=tile_map[map_theme])
+            m = folium.Map(location=[4.2, 108.0], zoom_start=6.7, tiles=None)
             m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]], padding=(10, 10))
              
             # --- Step 6: Add Color Scale ---
