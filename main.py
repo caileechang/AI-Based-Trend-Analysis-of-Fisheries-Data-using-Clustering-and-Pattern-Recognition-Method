@@ -319,9 +319,7 @@ def main():
         "Yearly Fish Landing Summary",
         "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
         "2D KMeans Scatter",
-        
-        "3D KMeans Clustering","DBSCAN Clustering",
-        #"DBSCAN Anomaly Detection",
+        "3D KMeans Clustering",
         "Automatic DBSCAN",
         "Hierarchical Clustering",
         "Geospatial Map",
