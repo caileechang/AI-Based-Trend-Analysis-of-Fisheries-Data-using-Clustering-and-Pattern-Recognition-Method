@@ -972,7 +972,83 @@ def main():
 
 
         # --- Step 10: Improved cluster visualization ---
-         
+          # --- Step 10: Improved cluster visualization ---
+        fig, ax = plt.subplots(figsize=(10, 6))
+        palette = sns.color_palette("bright", len(unique_labels) + 1)
+        n_clusters = len(unique_labels)
+    
+        for label in np.unique(labels):
+            cluster_points = scaled[labels == label]
+    
+            if label == -1:
+                ax.scatter(cluster_points[:, 1], cluster_points[:, 0],
+                           s=50, c="lightgray", edgecolor="k", alpha=0.6, label="Noise (-1)")
+            else:
+                color = palette[label % len(palette)]
+                ax.scatter(cluster_points[:, 1], cluster_points[:, 0],
+                           s=60, c=[color], edgecolor="k", alpha=0.85,
+                           label=f"Cluster {label} ({len(cluster_points)})")
+    
+                # Draw convex hull around each cluster
+                if len(cluster_points) >= 3:
+                    hull = ConvexHull(cluster_points)
+                    hull_vertices = np.append(hull.vertices, hull.vertices[0])
+                    ax.plot(cluster_points[hull_vertices, 1],
+                            cluster_points[hull_vertices, 0],
+                            color=color, linewidth=2, alpha=0.6)
+    
+        ax.set_title(f"Automatic DBSCAN (ε={eps_auto:.3f}, min_samples={min_samples_auto}) → {n_clusters} Clusters Found")
+        ax.set_xlabel("Vessels (scaled)")
+        ax.set_ylabel("Landings (scaled)")
+        ax.legend(frameon=True)
+        ax.grid(alpha=0.3)
+        st.pyplot(fig)
+    
+        # --- Step 11: Cluster summary table ---
+        cluster_summary = merged_df[labels != -1].groupby("DBSCAN_Label")[[
+            "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
+        ]].mean().reset_index().rename(columns={
+            "DBSCAN_Label": "Cluster",
+            "Total Fish Landing (Tonnes)": "Avg Fish Landing (Tonnes)",
+            "Total number of fishing vessels": "Avg Vessels"
+        })
+        st.markdown("### 📊 Cluster Summary (excluding noise)")
+        st.dataframe(cluster_summary)
+    
+        # --- Step 12: Outlier analysis ---
+        n_outliers = (labels == -1).sum()
+        st.success(f"Detected {n_outliers} outliers (noise points)")
+    
+        if n_outliers > 0:
+            outlier_details = merged_df.loc[labels == -1, [
+                "State", "Year", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
+            ]].copy()
+    
+            avg_land = merged_df["Total Fish Landing (Tonnes)"].mean()
+            avg_ves = merged_df["Total number of fishing vessels"].mean()
+    
+            def explain(r):
+                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "⚠️ High landing but few vessels – overperformance or anomaly."
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
+                    return "🐟 Low catch per vessel – possible overfishing or resource decline."
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "🛶 Low activity – small fleet or seasonal downtime."
+                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] > avg_ves:
+                    return "⚓ Unusually high scale – large operations or exceptional yield."
+                return "Atypical pattern vs national average."
+    
+            outlier_details["Why Flagged"] = outlier_details.apply(explain, axis=1)
+            st.markdown("### 🚨 Outlier Details")
+            st.dataframe(outlier_details)
+    
+            # Optional: visual heatmap of outliers
+            st.markdown("#### Outlier Heatmap (Catch vs Vessels)")
+            fig_h, ax_h = plt.subplots(figsize=(8, 4))
+            sns.heatmap(outlier_details[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]],
+                        annot=True, fmt=".0f", cmap="coolwarm", cbar=False, ax=ax_h)
+            ax_h.set_title("Outlier Catch-Vessel Patterns")
+            st.pyplot(fig_h)
                 
     elif plot_option == "Hierarchical Clustering":
                     
