@@ -451,7 +451,7 @@ def main():
     elif plot_option == "Optimal K for Monthly & Yearly":
         st.subheader("Automatic Determination of Optimal K (Freshwater + Marine Composition)")
     
-        # --- 📅 Monthly Composition ---
+        # --- Monthly Composition ---
         st.markdown("###  Monthly Fish Landing Composition (Freshwater + Marine)")
     
         # Prepare monthly totals by summing over states for each month
@@ -477,7 +477,7 @@ def main():
             scaled_monthly, "Monthly Fish Landing (Freshwater + Marine Composition)", use_streamlit=True
         )
     
-        # --- 📈 Yearly Composition ---
+        # --- Yearly Composition ---
         st.markdown("###  Yearly Fish Landing Composition (Freshwater + Marine)")
     
         yearly_comp = (
@@ -515,90 +515,131 @@ def main():
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         st.subheader("Yearly K-Means Cluster Trends for Marine and Freshwater Fish")
-    
-        # --- Prepare features ---
-        features = ['Freshwater (Tonnes)', 'Marine (Tonnes)']
-        scaled = StandardScaler().fit_transform(merged_df[features])
-    
-        # --- Use stored best_k from session state, or default to 3 ---
-        best_k_yearly = st.session_state.get('best_k_yearly', 3)
-    
-        # --- Run clustering ---
-        merged_df['Cluster'] = KMeans(n_clusters=best_k_yearly, random_state=42).fit_predict(scaled)
-    
-        # --- Compute yearly mean per cluster ---
-        cluster_trends = (
-            merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
-            .mean()
-            .reset_index()
-        )
+
+        # --- Let user choose level (Monthly or Yearly) ---
+        period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
     
         # --- Let user choose which trend to visualize ---
         trend_option = st.radio(
             "Select trend to display:",
-            ("Freshwater", "Marine", "Both")
+            ("Freshwater", "Marine", "Both"),
+            horizontal=True
         )
     
-        # --- Plot freshwater trends ---
-        if trend_option in ("Freshwater", "Both"):
-            fig1, ax1 = plt.subplots(figsize=(12, 6))
-            sns.lineplot(
-                data=cluster_trends,
-                x='Year',
-                y='Freshwater (Tonnes)',
-                hue='Cluster',
-                marker='o',
-                ax=ax1
+        # --- YEARLY COMPOSITION ----------------------------------------------------
+        if period_choice == "Yearly":
+            yearly_comp = (
+                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot_table(index="Year", columns="Type of Fish",
+                             values="Fish Landing (Tonnes)", aggfunc="sum")
+                .fillna(0)
+                .reset_index()
             )
-            ax1.set_title(f"Yearly Freshwater Landing Trends (k={best_k_yearly})")
-            st.pyplot(fig1)
+            yearly_comp.columns.name = None
+            yearly_comp.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
     
-        # --- Plot marine trends ---
-        if trend_option in ("Marine", "Both"):
-            fig2, ax2 = plt.subplots(figsize=(12, 6))
-            sns.lineplot(
-                data=cluster_trends,
-                x='Year',
-                y='Marine (Tonnes)',
-                hue='Cluster',
-                marker='o',
-                ax=ax2
+            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaled = StandardScaler().fit_transform(yearly_comp[features])
+    
+            # --- Use stored best_k from session state ---
+            best_k_yearly = st.session_state.get("best_k_yearly", 3)
+            yearly_comp["Cluster"] = KMeans(
+                n_clusters=best_k_yearly, random_state=42
+            ).fit_predict(scaled)
+    
+            # --- Plot yearly trends ---
+            cluster_trends = yearly_comp.melt(
+                id_vars=["Year", "Cluster"],
+                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+                var_name="Type", value_name="Landing"
             )
-            ax2.set_title(f"Yearly Marine Landing Trends (k={best_k_yearly})")
-            st.pyplot(fig2)
-
-
+    
+            st.markdown(f"**Optimal clusters used:** {best_k_yearly}")
+    
+            if trend_option in ("Freshwater", "Both"):
+                fig1, ax1 = plt.subplots(figsize=(12, 6))
+                sns.lineplot(
+                    data=cluster_trends[cluster_trends["Type"] == "Freshwater (Tonnes)"],
+                    x="Year", y="Landing", hue="Cluster", marker="o", ax=ax1
+                )
+                ax1.set_title(f"Yearly Freshwater Landing Trends (k={best_k_yearly})")
+                st.pyplot(fig1)
+    
+            if trend_option in ("Marine", "Both"):
+                fig2, ax2 = plt.subplots(figsize=(12, 6))
+                sns.lineplot(
+                    data=cluster_trends[cluster_trends["Type"] == "Marine (Tonnes)"],
+                    x="Year", y="Landing", hue="Cluster", marker="o", ax=ax2
+                )
+                ax2.set_title(f"Yearly Marine Landing Trends (k={best_k_yearly})")
+                st.pyplot(fig2)
+    
+        # --- MONTHLY COMPOSITION ---------------------------------------------------
+        else:
+            monthly_comp = (
+                df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot_table(index=["Year", "Month"], columns="Type of Fish",
+                             values="Fish Landing (Tonnes)", aggfunc="sum")
+                .fillna(0)
+                .reset_index()
+            )
+            monthly_comp.columns.name = None
+            monthly_comp.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
+    
+            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaled = StandardScaler().fit_transform(monthly_comp[features])
+    
+            # --- Use stored best_k from session state ---
+            best_k_monthly = st.session_state.get("best_k_monthly", 3)
+            monthly_comp["Cluster"] = KMeans(
+                n_clusters=best_k_monthly, random_state=42
+            ).fit_predict(scaled)
+    
+            monthly_comp["MonthYear"] = pd.to_datetime(
+                monthly_comp["Year"].astype(int).astype(str)
+                + "-" + monthly_comp["Month"].astype(int).astype(str)
+                + "-01"
+            )
+    
+            cluster_trends = monthly_comp.melt(
+                id_vars=["MonthYear", "Cluster"],
+                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+                var_name="Type", value_name="Landing"
+            )
+    
+            st.markdown(f"**Optimal clusters used:** {best_k_monthly}")
+    
+            if trend_option in ("Freshwater", "Both"):
+                fig1, ax1 = plt.subplots(figsize=(12, 6))
+                sns.lineplot(
+                    data=cluster_trends[cluster_trends["Type"] == "Freshwater (Tonnes)"],
+                    x="MonthYear", y="Landing", hue="Cluster", marker="o", ax=ax1
+                )
+                ax1.set_title(f"Monthly Freshwater Landing Trends (k={best_k_monthly})")
+                plt.xticks(rotation=45)
+                st.pyplot(fig1)
+    
+            if trend_option in ("Marine", "Both"):
+                fig2, ax2 = plt.subplots(figsize=(12, 6))
+                sns.lineplot(
+                    data=cluster_trends[cluster_trends["Type"] == "Marine (Tonnes)"],
+                    x="MonthYear", y="Landing", hue="Cluster", marker="o", ax=ax2
+                )
+                ax2.set_title(f"Monthly Marine Landing Trends (k={best_k_monthly})")
+                plt.xticks(rotation=45)
+                st.pyplot(fig2)
 
     
-
-
-    
-        
-
-
-    elif plot_option == "Yearly Elbow & Silhouette":
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-        scaled = StandardScaler().fit_transform(features)
-        ks = range(2, 11)
-        inertia = []
-        silhouette = []
-
-        for k in ks:
-            model = KMeans(n_clusters=k, random_state=42).fit(scaled)
-            inertia.append(model.inertia_)
-            silhouette.append(silhouette_score(scaled, model.labels_))
-
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-        ax1.plot(ks, inertia, marker='o')
-        ax1.set_title("Elbow Method")
-        ax1.set_xlabel("k")
-        ax1.set_ylabel("Inertia")
-        ax2.plot(ks, silhouette, marker='o', color='orange')
-        ax2.set_title("Silhouette Score")
-        ax2.set_xlabel("k")
-        ax2.set_ylabel("Score")
-        st.pyplot(fig)
-
     elif plot_option == "2D KMeans Scatter":
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
     
