@@ -275,23 +275,6 @@ def hierarchical_clustering(merged_df):
         st.markdown(f"### Average Values per Cluster ({selected_year})")
         st.dataframe(summary)
         
-st.markdown("""
-    <style>
-    /* Main title style */
-    h1, h2, h3 {
-        color: #0a3d62;
-        font-family: 'Poppins', sans-serif;
-    }
-    /* Sidebar background */
-    [data-testid="stSidebar"] {
-        background-color: #f1f2f6;
-    }
-    /* Metric cards alignment */
-    [data-testid="stMetricValue"] {
-        color: #1e3799;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 
     
