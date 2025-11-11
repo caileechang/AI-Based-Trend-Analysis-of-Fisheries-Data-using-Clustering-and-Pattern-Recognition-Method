@@ -933,8 +933,7 @@ def main():
         elif plot_option == "Hierarchical Clustering":
             hierarchical_clustering(merged_df)
 
-        elif plot_option == "DBSCAN Clustering":
-            dbscan_analysis(merged_df)
+      
         
 
 
