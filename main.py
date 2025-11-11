@@ -266,7 +266,7 @@ def main():
         "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
-                                  
+         "Yearly Elbow & Silhouette",                         
         #"Yearly Elbow & Silhouette",
         "2D KMeans Scatter",
         "3D KMeans Clustering","3D KMeans Clustering2",
