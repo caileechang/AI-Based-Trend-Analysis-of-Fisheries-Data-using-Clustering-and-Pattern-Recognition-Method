@@ -263,37 +263,31 @@ def main():
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
-        "Monthly Trends by Cluster","Monthly Trends by Cluster2",
+        "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
-        "Yearly K-Means Cluster Trends for Marine and Freshwater Fish",
+        "Yearly Cluster Trends for Marine and Freshwater Fish",
                                   
         #"Yearly Elbow & Silhouette",
-        "2D KMeans Scatter","2D KMeans Scatter2",
+        "2D KMeans Scatter",
         "3D KMeans Clustering","3D KMeans Clustering2",
         "3--D KMeans Clustering","DBSCAN Clustering",
         #"DBSCAN Anomaly Detection",
         "Automatic DBSCAN",
-        "Hierarchical Clustering", "Hierarchical Clustering2", "DBSCAN Analysis",
+        "Hierarchical Clustering",
         "Geospatial Map",
         "Interactive Geospatial Map"
     ])
 
-    if plot_option == "Monthly Trends by Cluster2":
-        monthly_trends_by_cluster(merged_monthly)
+    
    
    
-    elif plot_option == "2D KMeans Scatter2":
-        kmeans_2d(merged_df)
-    elif plot_option == "3D KMeans Clustering2":
-        kmeans_3d(merged_df)
-    elif plot_option == "Hierarchical Clustering2":
-        hierarchical_clustering(merged_df)
+   
   
    
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
        
-                # --- Use merged dataset (always latest) ---
+        # --- Use merged dataset (always latest) ---
         monthly = st.session_state.base_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
                 # --- Ensure Year/Month are numeric ---
         monthly['Year'] = pd.to_numeric(monthly['Year'], errors='coerce')
@@ -304,7 +298,6 @@ def main():
             (monthly['Year'].between(2000, latest_year)) &
             (monthly['Month'].between(1, 12))
         ]
-        
         # --- Convert to datetime safely ---
         monthly['MonthYear'] = pd.to_datetime(
             monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
@@ -335,8 +328,6 @@ def main():
         ax.set_ylabel("Fish Landing (Tonnes)")
         plt.xticks(rotation=45)
         st.pyplot(fig)
-
-   
 
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
@@ -396,65 +387,72 @@ def main():
         st.pyplot(fig)
     
        
-       
-
     # Allow filtering by year
         #selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
        # filtered = yearly_summary[yearly_summary['Year'] == selected_year]
         
         #st.dataframe(filtered, use_container_width=True, height=300)
 
-    
-
-     
 # Sort states by total landing for better visual clarity
         #filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
 
 # Make the figure a bit wider to prevent label overlap
        # fig, ax = plt.subplots(figsize=(14, 6))
 
-# Plot the bars
-
-    elif plot_option == "Yearly K-Means Cluster Trends for Marine and Freshwater Fish":
+# Plot the bar
+        
+    elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
+        st.subheader("Yearly K-Means Cluster Trends")
+    
+        # --- Cluster the data ---
         features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
         scaled = StandardScaler().fit_transform(features)
         merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
     
+        # --- Aggregate yearly means by cluster ---
         cluster_trends = (
             merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
             .mean()
             .reset_index()
         )
     
-        # --- Freshwater plot ---
-        fig1, ax1 = plt.subplots(figsize=(12, 6))
-        sns.lineplot(
-            data=cluster_trends,
-            x='Year',
-            y='Freshwater (Tonnes)',
-            hue='Cluster',
-            marker='o',
-            ax=ax1
+        # --- User selection ---
+        trend_option = st.radio(
+            "Select trend to display:",
+            ("Freshwater", "Marine", "Both")
         )
-        ax1.set_title("Yearly Freshwater Landing Trends by Cluster")
-        ax1.set_xlabel("Year")
-        ax1.set_ylabel("Freshwater (Tonnes)")
-        st.pyplot(fig1)
+    
+        # --- Freshwater plot ---
+        if trend_option == "Freshwater" or trend_option == "Both":
+            fig1, ax1 = plt.subplots(figsize=(12, 6))
+            sns.lineplot(
+                data=cluster_trends,
+                x='Year',
+                y='Freshwater (Tonnes)',
+                hue='Cluster',
+                marker='o',
+                ax=ax1
+            )
+            ax1.set_title("Yearly Freshwater Landing Trends by Cluster")
+            ax1.set_xlabel("Year")
+            ax1.set_ylabel("Freshwater (Tonnes)")
+            st.pyplot(fig1)
     
         # --- Marine plot ---
-        fig2, ax2 = plt.subplots(figsize=(12, 6))
-        sns.lineplot(
-            data=cluster_trends,
-            x='Year',
-            y='Marine (Tonnes)',
-            hue='Cluster',
-            marker='o',
-            ax=ax2
-        )
-        ax2.set_title("Yearly Marine Landing Trends by Cluster")
-        ax2.set_xlabel("Year")
-        ax2.set_ylabel("Marine (Tonnes)")
-        st.pyplot(fig2)
+        if trend_option == "Marine" or trend_option == "Both":
+            fig2, ax2 = plt.subplots(figsize=(12, 6))
+            sns.lineplot(
+                data=cluster_trends,
+                x='Year',
+                y='Marine (Tonnes)',
+                hue='Cluster',
+                marker='o',
+                ax=ax2
+            )
+            ax2.set_title("Yearly Marine Landing Trends by Cluster")
+            ax2.set_xlabel("Year")
+            ax2.set_ylabel("Marine (Tonnes)")
+            st.pyplot(fig2)
 
 
     elif plot_option == "Yearly Elbow & Silhouette":
