@@ -198,15 +198,12 @@ def kmeans_3d(merged_df):
 def hierarchical_clustering(merged_df):
     import streamlit as st
     import matplotlib.pyplot as plt
-    import seaborn as sns
-    import numpy as np
     from sklearn.preprocessing import StandardScaler
     from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
-    import re
 
-    st.subheader("Hierarchical Clustering (by Valid State)")
+    st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
 
-    # --- STEP 1: Define official valid states ---
+    # --- STEP 1: Define valid Malaysian states ---
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -214,7 +211,7 @@ def hierarchical_clustering(merged_df):
         "SABAH", "SARAWAK", "W.P. LABUAN"
     ]
 
-    # --- STEP 2: Clean and strictly filter state names ---
+    # --- STEP 2: Clean data and filter for valid states ---
     df = merged_df.copy()
     df["State"] = (
         df["State"]
@@ -225,56 +222,60 @@ def hierarchical_clustering(merged_df):
         .str.replace(r"\s+", " ", regex=True)
     )
 
-    # Drop rows with invalid or summary-like entries
-    invalid_pattern = r"(JUMLAH|MALAYSIA|REGISTERED|TONNAGE|TOTAL|SUM|GROSS|GRAND|KES|AVERAGE|NA)"
-    df = df[~df["State"].str.contains(invalid_pattern, regex=True, na=False)]
-
-    # Keep only valid state names
     df = df[df["State"].isin(valid_states)]
-
     if df.empty:
-        st.warning("No valid state records found after cleaning.")
+        st.warning("No valid state records found after filtering.")
         return
 
-    # --- STEP 3: Group by State (to reduce label clutter) ---
+    # --- STEP 3: Aggregate by state (average total fish landing) ---
     grouped = (
-        df.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        df.groupby("State")[["Total Fish Landing (Tonnes)"]]
         .mean()
         .reset_index()
     )
 
-    # --- STEP 4: Scale features ---
-    scaler = StandardScaler()
-    scaled = scaler.fit_transform(grouped[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]])
+    # --- STEP 4: Scale data ---
+    scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
 
-    # --- STEP 5: Compute linkage ---
-    linked = linkage(scaled, method="ward")
+    # --- STEP 5: Let user choose linkage method ---
+    method = st.selectbox("Select linkage method:", ["ward", "complete", "average", "single"], index=0)
 
-    # --- STEP 6: Plot dendrogram (clean, valid labels only) ---
-    plt.figure(figsize=(12, 6))
-    dendrogram(
-        linked,
-        labels=grouped["State"].tolist(),
-        leaf_rotation=45,
-        leaf_font_size=9,
-        color_threshold=None
-    )
-    plt.title("Hierarchical Clustering Dendrogram (Valid States Only)")
-    plt.xlabel("State")
-    plt.ylabel("Distance (Ward linkage)")
-    plt.grid(False)
-    st.pyplot(plt.gcf())
+    # --- STEP 6: Compute linkage ---
+    linked = linkage(scaled, method=method)
 
-    # --- STEP 7: Assign clusters ---
-    cluster_labels = fcluster(linked, t=3, criterion="maxclust")
-    grouped["Cluster"] = cluster_labels
+    # --- STEP 7: Dendrogram plot ---
+    fig, ax = plt.subplots(figsize=(10, 5))
+    dendrogram(linked, labels=grouped["State"].tolist(), leaf_rotation=45, leaf_font_size=9)
+    ax.set_title(f"Hierarchical Clustering Dendrogram ({method.title()} linkage)")
+    ax.set_xlabel("State")
+    ax.set_ylabel("Distance")
+    st.pyplot(fig)
 
-    # --- STEP 8: Show results ---
-    st.write("### Cluster Summary (Cleaned States Only)")
-    st.dataframe(
-        grouped[["State", "Cluster", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+    # --- STEP 8: Let user dynamically select number of clusters ---
+    num_clusters = st.slider("Select number of clusters", 2, 10, 3)
+    grouped["Cluster"] = fcluster(linked, num_clusters, criterion="maxclust")
+
+    # --- STEP 9: Display cluster results ---
+    st.markdown(f"### Cluster Assignments (k = {num_clusters})")
+    st.dataframe(grouped.sort_values("Cluster").reset_index(drop=True))
+
+    # --- STEP 10: Cluster summary ---
+    summary = (
+        grouped.groupby("Cluster")["Total Fish Landing (Tonnes)"]
+        .mean()
+        .reset_index()
         .sort_values("Cluster")
-        .reset_index(drop=True)
+    )
+    st.markdown("### Average Total Fish Landing per Cluster")
+    st.dataframe(summary)
+
+    # --- STEP 11: Optional: CSV download ---
+    csv = summary.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        "📥 Download Cluster Summary (CSV)",
+        csv,
+        "hierarchical_total_fish_landing_summary.csv",
+        "text/csv"
     )
 
 
