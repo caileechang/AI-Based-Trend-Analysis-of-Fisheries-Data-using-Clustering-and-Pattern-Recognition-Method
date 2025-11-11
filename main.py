@@ -248,30 +248,32 @@ def hierarchical_clustering(merged_df):
 
     # --- STEP 7: Dendrogram plot ---
     fig, ax = plt.subplots(figsize=(10, 5))
-    dendrogram(linked, labels=grouped["State"].tolist(), leaf_rotation=45, leaf_font_size=9)
-    ax.set_title(f"Hierarchical Clustering Dendrogram ({method.title()} linkage)")
-    ax.set_xlabel("State")
+    dendrogram(
+        linked,
+        labels=grouped[label_col].astype(str).tolist(),
+        leaf_rotation=45,
+        leaf_font_size=9
+    )
+    ax.set_title(f"{title} ({method.title()} linkage)")
+    ax.set_xlabel(mode)
     ax.set_ylabel("Distance")
     st.pyplot(fig)
 
-    # --- STEP 8: Let user dynamically select number of clusters ---
-    num_clusters = st.slider("Select number of clusters", 2, 10, 3)
-    grouped["Cluster"] = fcluster(linked, num_clusters, criterion="maxclust")
+    # --- Step 6: Optional: cluster cut ---
+    if st.checkbox("Show cluster grouping", value=False):
+        num_clusters = st.slider("Select number of clusters", 2, 10, 3)
+        grouped["Cluster"] = fcluster(linked, num_clusters, criterion="maxclust")
 
-    # --- STEP 9: Display cluster results ---
-    st.markdown(f"### Cluster Assignments (k = {num_clusters})")
-    st.dataframe(grouped.sort_values("Cluster").reset_index(drop=True))
+        st.markdown(f"### Cluster Assignments (k = {num_clusters})")
+        st.dataframe(grouped.sort_values("Cluster").reset_index(drop=True))
 
-    # --- STEP 10: Cluster summary ---
-    summary = (
-        grouped.groupby("Cluster")["Total Fish Landing (Tonnes)"]
-        .mean()
-        .reset_index()
-        .sort_values("Cluster")
-    )
-    st.markdown("### Average Total Fish Landing per Cluster")
-    st.dataframe(summary)
-
+        summary = (
+            grouped.groupby("Cluster")["Total Fish Landing (Tonnes)"]
+            .mean()
+            .reset_index()
+        )
+        st.markdown("### Average Total Fish Landing per Cluster")
+        st.dataframe(summary)
     # --- STEP 11: Optional: CSV download ---
     csv = summary.to_csv(index=False).encode("utf-8")
     st.download_button(
