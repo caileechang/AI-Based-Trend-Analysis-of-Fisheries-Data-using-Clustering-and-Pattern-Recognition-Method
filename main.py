@@ -246,7 +246,7 @@ def hierarchical_clustering(merged_df):
     # --- STEP 6: Compute linkage ---
     linked = linkage(scaled, method=method)
 
-       fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(10, 5))
     dendrogram(
         linked,
         labels=grouped["State"].tolist(),
