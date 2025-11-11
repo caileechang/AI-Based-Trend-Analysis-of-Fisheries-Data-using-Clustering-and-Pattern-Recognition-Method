@@ -274,7 +274,13 @@ def hierarchical_clustering(merged_df):
         )
         st.markdown(f"### Average Values per Cluster ({selected_year})")
         st.dataframe(summary)
-  
+        
+        st.sidebar.header("📊 Dashboard Navigation")
+        page = st.sidebar.radio(
+            "Choose Section:",
+            ["Overview", "Clustering Analysis", "Hierarchical Clustering", "Geospatial Maps"]
+        )
+
     
 def main():
     st.set_page_config(layout='wide')
