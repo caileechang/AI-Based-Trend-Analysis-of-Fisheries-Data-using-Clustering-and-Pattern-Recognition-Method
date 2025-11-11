@@ -448,6 +448,65 @@ def main():
 
 # Make the figure a bit wider to prevent label overlap
        # fig, ax = plt.subplots(figsize=(14, 6))
+    elif plot_option == "Optimal K for Monthly & Yearly":
+        st.subheader("Automatic Determination of Optimal K (Monthly & Yearly)")
+    
+        # --- 📅 Monthly (Month + Total Landing) ---
+        st.markdown("### Monthly Fish Landing (Month + Total Landing)")
+    
+        # Prepare monthly total landings across all states and fish types
+        monthly_totals = (
+            df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)']
+            .sum()
+            .reset_index()
+        )
+    
+        # Ensure numeric months and valid years
+        monthly_totals['Month'] = pd.to_numeric(monthly_totals['Month'], errors='coerce')
+        monthly_totals['Year'] = pd.to_numeric(monthly_totals['Year'], errors='coerce')
+        monthly_totals.dropna(subset=['Month', 'Year'], inplace=True)
+    
+        # Scale features (Month + Total Landing)
+        scaled_monthly = StandardScaler().fit_transform(
+            monthly_totals[['Month', 'Fish Landing (Tonnes)']]
+        )
+    
+        best_k_monthly, best_sil_monthly, best_inertia_monthly = evaluate_kmeans_k(
+            scaled_monthly, "Monthly Fish Landing (Month + Total Landing)", use_streamlit=True
+        )
+    
+        # --- 📈 Yearly (Year + Total Landing) ---
+        st.markdown("### Yearly Fish Landing (Year + Total Landing)")
+    
+        yearly_totals = (
+            df_land.groupby(['Year'])['Fish Landing (Tonnes)']
+            .sum()
+            .reset_index()
+        )
+    
+        yearly_totals['Year'] = pd.to_numeric(yearly_totals['Year'], errors='coerce')
+        yearly_totals.dropna(subset=['Year'], inplace=True)
+    
+        scaled_yearly = StandardScaler().fit_transform(
+            yearly_totals[['Year', 'Fish Landing (Tonnes)']]
+        )
+    
+        best_k_yearly, best_sil_yearly, best_inertia_yearly = evaluate_kmeans_k(
+            scaled_yearly, "Yearly Fish Landing (Year + Total Landing)", use_streamlit=True
+        )
+    
+        # --- 🧾 Summary ---
+        st.markdown("### 🧾 Summary of Optimal K Results")
+        summary = pd.DataFrame({
+            "Dataset": ["Monthly (Month + Total Landing)", "Yearly (Year + Total Landing)"],
+            "Best K": [best_k_monthly, best_k_yearly],
+            "Silhouette Score": [f"{best_sil_monthly:.3f}", f"{best_sil_yearly:.3f}"]
+        })
+        st.table(summary)
+    
+        # Store for reuse
+        st.session_state['best_k_monthly'] = best_k_monthly
+        st.session_state['best_k_yearly'] = best_k_yearly
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         st.subheader("Yearly K-Means Cluster Trends for Marine and Freshwater Fish")
@@ -505,33 +564,7 @@ def main():
 
 
 
-    elif plot_option == "Optimal K for Monthly & Yearly":
-        st.subheader("Automatic Determination of Optimal K (Monthly & Yearly)")
     
-        # --- Prepare Monthly data ---
-        features = ['Freshwater (Tonnes)', 'Marine (Tonnes)']
-        scaled_monthly = StandardScaler().fit_transform(merged_df[features])
-    
-        st.markdown("### 📅 Monthly Fish Landing")
-        best_k_monthly, _, _ = evaluate_kmeans_k(scaled_monthly, "Monthly Fish Landing", use_streamlit=True)
-    
-        # --- Prepare Yearly data ---
-        yearly_df = merged_df.groupby(['Year'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']].mean().reset_index()
-        scaled_yearly = StandardScaler().fit_transform(yearly_df[features])
-    
-        st.markdown("### 📈 Yearly Fish Landing")
-        best_k_yearly, _, _ = evaluate_kmeans_k(scaled_yearly, "Yearly Fish Landing", use_streamlit=True)
-    
-        # --- Store for reuse ---
-        st.session_state['best_k_monthly'] = best_k_monthly
-        st.session_state['best_k_yearly'] = best_k_yearly
-    
-        # --- Display summary table ---
-        st.markdown("### 🧾 Summary of Optimal K Results")
-        st.table({
-            "Dataset": ["Monthly Fish Landing", "Yearly Fish Landing"],
-            "Best K": [best_k_monthly, best_k_yearly]
-        })
 
 
     
