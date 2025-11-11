@@ -1149,9 +1149,6 @@ def main():
             available_states = sorted(merged_df['State'].unique())
             selected_states = st.multiselect("Select State(s)",options=available_states,default=available_states,placeholder="Choose one or more states to display",label_visibility="visible")                   
         
-        
-
-        
             # Filter dataset
             geo_df = merged_df[
                 (merged_df['Year'] == selected_year) &
@@ -1208,61 +1205,32 @@ def main():
 # --- Step 5: Create Base Map ---
 # Compute automatic bounds to include all states tightly (Peninsular + Borneo)
            # --- Step 5: Create Base Map (with Theme Toggle) ---
-            st.sidebar.markdown("### 🗺️ Map Theme")
-            map_theme = st.sidebar.radio(
+            # --- Map Theme Selection (top-left area above map) ---
+            st.markdown("### Map Theme")
+            map_theme = st.radio(
                 "Choose Map Theme:",
-                options=["Light Mode", "Dark Mode", "Satellite", "Default"],
-                index=0,
-                horizontal=True
+                ["Light Mode", "Dark Mode", "Satellite", "Default"],
+                horizontal=True,
+                key="map_theme_radio"
             )
             
-            # Compute automatic bounds to include both Peninsular + Borneo tightly
-            if not geo_df.empty:
-                lat_min = geo_df['Coords'].apply(lambda x: x[0]).min()
-                lat_max = geo_df['Coords'].apply(lambda x: x[0]).max()
-                lon_min = geo_df['Coords'].apply(lambda x: x[1]).min()
-                lon_max = geo_df['Coords'].apply(lambda x: x[1]).max()
+            # Apply tile according to theme
+            tile_map = {
+                "Light Mode": "CartoDB positron",
+                "Dark Mode": "CartoDB dark_matter",
+                "Satellite": "Esri.WorldImagery",
+                "Default": "OpenStreetMap"
+            }
             
-                # Map center between East & West Malaysia
-                m = folium.Map(location=[4.2, 108.0], zoom_start=6.6, tiles=None)
-            
-                # --- Apply theme based on user selection ---
-                if map_theme == "Light Mode":
-                    folium.TileLayer(
-                        "CartoDB positron",
-                        name="Light Mode",
-                        attr="© OpenStreetMap contributors © CARTO"
-                    ).add_to(m)
-                elif map_theme == "Dark Mode":
-                    folium.TileLayer(
-                        "CartoDB DarkMatter",
-                        name="Dark Mode",
-                        attr="© OpenStreetMap contributors © CARTO"
-                    ).add_to(m)
-                elif map_theme == "Satellite":
-                    folium.TileLayer(
-                        "Esri.WorldImagery",
-                        name="Satellite",
-                        attr="Tiles © Esri"
-                    ).add_to(m)
-                else:
-                    folium.TileLayer(
-                        "OpenStreetMap",
-                        name="Default",
-                        attr="© OpenStreetMap contributors"
-                    ).add_to(m)
-            
-                # Optional: allow toggling between multiple layers
-                folium.TileLayer("Stamen Toner",name="Black & White",attr="Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.").add_to(m)
-
-            
-                # Automatically fit both regions (Semenanjung + Sabah/Sarawak)
-                m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]], padding=(10, 10))
-            else:
-                # Default fallback center
-                m = folium.Map(location=[4.5, 109.5], zoom_start=6.5, tiles="CartoDB positron")
-
-            
+        # --- Step 5: Create Base Map ---
+            lat_min = geo_df["Coords"].apply(lambda x: x[0]).min()
+            lat_max = geo_df["Coords"].apply(lambda x: x[0]).max()
+            lon_min = geo_df["Coords"].apply(lambda x: x[1]).min()
+            lon_max = geo_df["Coords"].apply(lambda x: x[1]).max()
+        
+            m = folium.Map(location=[4.2, 108.0], zoom_start=6.7, tiles=tile_map[map_theme])
+            m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]], padding=(10, 10))
+             
             # --- Step 6: Add Color Scale ---
             min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
             max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
