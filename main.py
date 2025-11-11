@@ -265,7 +265,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster","Monthly Trends by Cluster2",
         "Yearly Fish Landing Summary",
-        "Yearly K-Means Cluster Trends","Yearly K-Means Cluster Trends for Marine and Freshwater Fish",
+        "Yearly K-Means Cluster Trends for Marine and Freshwater Fish",
                                   
         #"Yearly Elbow & Silhouette",
         "2D KMeans Scatter","2D KMeans Scatter2",
@@ -414,20 +414,6 @@ def main():
        # fig, ax = plt.subplots(figsize=(14, 6))
 
 # Plot the bars
-
-
-
-
-    elif plot_option == "Yearly K-Means Cluster Trends":
-        features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
-        scaled = StandardScaler().fit_transform(features)
-        merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
-
-        cluster_trends = merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']].mean().reset_index()
-        fig, ax = plt.subplots(figsize=(12, 6))
-        sns.lineplot(data=cluster_trends, x='Year', y='Freshwater (Tonnes)', hue='Cluster', marker='o', ax=ax)
-        ax.set_title("Yearly Freshwater Landing Trends by Cluster")
-        st.pyplot(fig)
 
     elif plot_option == "Yearly K-Means Cluster Trends for Marine and Freshwater Fish":
         features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
