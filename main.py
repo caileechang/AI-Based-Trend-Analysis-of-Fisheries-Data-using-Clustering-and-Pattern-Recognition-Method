@@ -265,9 +265,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
-        "Yearly Cluster Trends for Marine and Freshwater Fish",
-         "Yearly Elbow & Silhouette",                         
-        #"Yearly Elbow & Silhouette",
+        "Yearly Cluster Trends for Marine and Freshwater Fish",                  
         "2D KMeans Scatter",
         "3D KMeans Clustering","3D KMeans Clustering2",
         "3--D KMeans Clustering","DBSCAN Clustering",
