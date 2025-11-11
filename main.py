@@ -216,14 +216,28 @@ def hierarchical_clustering(merged_df):
         st.warning("No valid state records found after filtering.")
         return
 
-    # --- STEP 3: Aggregate by state (average total fish landing) ---
-    grouped = (
-        df.groupby("State")[["Total Fish Landing (Tonnes)"]]
-        .mean()
-        .reset_index()
-    )
 
-    # --- STEP 4: Scale data ---
+     #  User chooses grouping dimension
+    mode = st.radio("Group data by:", ["State", "Year"], horizontal=True)
+
+    if mode == "State":
+        grouped = (
+            df.groupby("State")[["Total Fish Landing (Tonnes)"]]
+            .mean()
+            .reset_index()
+        )
+        label_col = "State"
+        title = "Hierarchical Clustering by State"
+    else:  # Group by Year
+        grouped = (
+            df.groupby("Year")[["Total Fish Landing (Tonnes)"]]
+            .sum()
+            .reset_index()
+        )
+        label_col = "Year"
+        title = "Hierarchical Clustering by Year"
+   
+    # Scale data
     scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
 
     # --- STEP 5: Let user choose linkage method ---
