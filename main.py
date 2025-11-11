@@ -1002,19 +1002,19 @@ def main():
        
         
                 
-        elif plot_option == "Hierarchical Clustering":
+    elif plot_option == "Hierarchical Clustering":
                     
-            st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
+        st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
         
             # Call the hierarchical clustering function
-            hierarchical_clustering(merged_df)
+        hierarchical_clustering(merged_df)
         
                  
             
 
     
 
-        elif plot_option == "Geospatial Map":
+    elif plot_option == "Geospatial Map":
             st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
 
         # Let user choose year
@@ -1117,7 +1117,7 @@ def main():
                 st_folium(m, width=800, height=500)
 
     
-        elif plot_option == "Interactive Geospatial Map":
+    elif plot_option == "Interactive Geospatial Map":
             st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
         
             import re
@@ -1286,9 +1286,6 @@ def main():
                 - 🚢 Total vessels: {geo_df['Total number of fishing vessels'].sum():,}
                 """)
 
-                
-            
-
             with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
                     st.markdown("""
                     **Color Interpretation:**
@@ -1299,12 +1296,5 @@ def main():
                     The heatmap shows **relative fish landing intensity by region**.
                     """, unsafe_allow_html=True)
 
-    
-
-                    
-
-        
-
-   
 if __name__ == "__main__":
     main()
