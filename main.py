@@ -449,56 +449,61 @@ def main():
 # Make the figure a bit wider to prevent label overlap
        # fig, ax = plt.subplots(figsize=(14, 6))
     elif plot_option == "Optimal K for Monthly & Yearly":
-        st.subheader("Automatic Determination of Optimal K (Monthly & Yearly)")
+        st.subheader("Automatic Determination of Optimal K (Freshwater + Marine Composition)")
     
-        # --- 📅 Monthly (Month + Total Landing) ---
-        st.markdown("### Monthly Fish Landing (Month + Total Landing)")
+        # --- 📅 Monthly Composition ---
+        st.markdown("###  Monthly Fish Landing Composition (Freshwater + Marine)")
     
-        # Prepare monthly total landings across all states and fish types
-        monthly_totals = (
-            df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)']
+        # Prepare monthly totals by summing over states for each month
+        monthly_comp = (
+            df_land.groupby(['Year', 'Month', 'Type of Fish'])['Fish Landing (Tonnes)']
             .sum()
+            .reset_index()
+            .pivot_table(index=['Year', 'Month'], columns='Type of Fish', values='Fish Landing (Tonnes)', aggfunc='sum')
+            .fillna(0)
             .reset_index()
         )
     
-        # Ensure numeric months and valid years
-        monthly_totals['Month'] = pd.to_numeric(monthly_totals['Month'], errors='coerce')
-        monthly_totals['Year'] = pd.to_numeric(monthly_totals['Year'], errors='coerce')
-        monthly_totals.dropna(subset=['Month', 'Year'], inplace=True)
+        # Rename columns for clarity
+        monthly_comp.columns.name = None
+        monthly_comp.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
     
-        # Scale features (Month + Total Landing)
+        # Scale based on Freshwater & Marine values
         scaled_monthly = StandardScaler().fit_transform(
-            monthly_totals[['Month', 'Fish Landing (Tonnes)']]
+            monthly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
         )
     
         best_k_monthly, best_sil_monthly, best_inertia_monthly = evaluate_kmeans_k(
-            scaled_monthly, "Monthly Fish Landing (Month + Total Landing)", use_streamlit=True
+            scaled_monthly, "Monthly Fish Landing (Freshwater + Marine Composition)", use_streamlit=True
         )
     
-        # --- 📈 Yearly (Year + Total Landing) ---
-        st.markdown("### Yearly Fish Landing (Year + Total Landing)")
+        # --- 📈 Yearly Composition ---
+        st.markdown("###  Yearly Fish Landing Composition (Freshwater + Marine)")
     
-        yearly_totals = (
-            df_land.groupby(['Year'])['Fish Landing (Tonnes)']
+        yearly_comp = (
+            df_land.groupby(['Year', 'Type of Fish'])['Fish Landing (Tonnes)']
             .sum()
+            .reset_index()
+            .pivot_table(index='Year', columns='Type of Fish', values='Fish Landing (Tonnes)', aggfunc='sum')
+            .fillna(0)
             .reset_index()
         )
     
-        yearly_totals['Year'] = pd.to_numeric(yearly_totals['Year'], errors='coerce')
-        yearly_totals.dropna(subset=['Year'], inplace=True)
+        yearly_comp.columns.name = None
+        yearly_comp.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
     
         scaled_yearly = StandardScaler().fit_transform(
-            yearly_totals[['Year', 'Fish Landing (Tonnes)']]
+            yearly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
         )
     
         best_k_yearly, best_sil_yearly, best_inertia_yearly = evaluate_kmeans_k(
-            scaled_yearly, "Yearly Fish Landing (Year + Total Landing)", use_streamlit=True
+            scaled_yearly, "Yearly Fish Landing (Freshwater + Marine Composition)", use_streamlit=True
         )
     
         # --- 🧾 Summary ---
-        st.markdown("### 🧾 Summary of Optimal K Results")
+        st.markdown("### 🧾 Summary of Optimal K Results (Composition-Based)")
         summary = pd.DataFrame({
-            "Dataset": ["Monthly (Month + Total Landing)", "Yearly (Year + Total Landing)"],
+            "Dataset": ["Monthly (Freshwater + Marine)", "Yearly (Freshwater + Marine)"],
             "Best K": [best_k_monthly, best_k_yearly],
             "Silhouette Score": [f"{best_sil_monthly:.3f}", f"{best_sil_yearly:.3f}"]
         })
