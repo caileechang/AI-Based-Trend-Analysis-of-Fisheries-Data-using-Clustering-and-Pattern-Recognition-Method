@@ -449,6 +449,59 @@ def main():
 # Make the figure a bit wider to prevent label overlap
        # fig, ax = plt.subplots(figsize=(14, 6))
 
+    elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
+        st.subheader("Yearly K-Means Cluster Trends for Marine and Freshwater Fish")
+    
+        # --- Prepare features ---
+        features = ['Freshwater (Tonnes)', 'Marine (Tonnes)']
+        scaled = StandardScaler().fit_transform(merged_df[features])
+    
+        # --- Use stored best_k from session state, or default to 3 ---
+        best_k_yearly = st.session_state.get('best_k_yearly', 3)
+    
+        # --- Run clustering ---
+        merged_df['Cluster'] = KMeans(n_clusters=best_k_yearly, random_state=42).fit_predict(scaled)
+    
+        # --- Compute yearly mean per cluster ---
+        cluster_trends = (
+            merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+            .mean()
+            .reset_index()
+        )
+    
+        # --- Let user choose which trend to visualize ---
+        trend_option = st.radio(
+            "Select trend to display:",
+            ("Freshwater", "Marine", "Both")
+        )
+    
+        # --- Plot freshwater trends ---
+        if trend_option in ("Freshwater", "Both"):
+            fig1, ax1 = plt.subplots(figsize=(12, 6))
+            sns.lineplot(
+                data=cluster_trends,
+                x='Year',
+                y='Freshwater (Tonnes)',
+                hue='Cluster',
+                marker='o',
+                ax=ax1
+            )
+            ax1.set_title(f"Yearly Freshwater Landing Trends (k={best_k_yearly})")
+            st.pyplot(fig1)
+    
+        # --- Plot marine trends ---
+        if trend_option in ("Marine", "Both"):
+            fig2, ax2 = plt.subplots(figsize=(12, 6))
+            sns.lineplot(
+                data=cluster_trends,
+                x='Year',
+                y='Marine (Tonnes)',
+                hue='Cluster',
+                marker='o',
+                ax=ax2
+            )
+            ax2.set_title(f"Yearly Marine Landing Trends (k={best_k_yearly})")
+            st.pyplot(fig2)
 
 
 
