@@ -17,17 +17,8 @@ import time
 import plotly.express as px
 from clustering import (prepare_monthly, monthly_trends_by_cluster,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
 
-
-
-
-
 # Import your clustering modules
 #from clustering_method import hierarchical_clustering
-
-
-
-
-
 @st.cache_data
 def load_data():
     url = 'https://www.dropbox.com/scl/fi/4cl5zaor1l32ikyudvf2e/Fisheries-Dataset-vessels-fish-landing.xlsx?rlkey=q2ewpeuzj288ewd17rcqxeuie&st=6h4zijb8&dl=1'
@@ -273,7 +264,7 @@ def main():
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster","Monthly Trends by Cluster2",
-        "Yearly Fish Landing Summary",,
+        "Yearly Fish Landing Summary",
         "Yearly K-Means Cluster Trends","Yearly K-Means Cluster Trends for Marine and Freshwater Fish",
                                   
         #"Yearly Elbow & Silhouette",
