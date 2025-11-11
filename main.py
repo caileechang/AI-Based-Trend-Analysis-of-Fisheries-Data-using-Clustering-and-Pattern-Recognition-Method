@@ -303,7 +303,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster",
         "Yearly Fish Landing Summary",
-        "Yearly Cluster Trends for Marine and Freshwater Fish",                  
+        "Yearly Cluster Trends for Marine and Freshwater Fish","Automatic Determination of Optimal K (Monthly & Yearly)",                  
         "2D KMeans Scatter",
         "3D KMeans Clustering","3D KMeans Clustering2",
         "3--D KMeans Clustering","DBSCAN Clustering",
@@ -439,7 +439,7 @@ def main():
 
 
     # --- MAIN section ---
-    elif plot_option == "Determine Optimal K for Monthly & Yearly":
+    elif plot_option == "Automatic Determination of Optimal K (Monthly & Yearly)":
         st.subheader("Automatic Determination of Optimal K (Monthly & Yearly)")
 
         features = ['Freshwater (Tonnes)', 'Marine (Tonnes)']
