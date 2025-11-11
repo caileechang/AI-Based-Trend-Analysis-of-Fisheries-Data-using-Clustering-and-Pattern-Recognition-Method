@@ -217,26 +217,26 @@ def hierarchical_clustering(merged_df):
         return
 
 
-     #  User chooses grouping dimension
-    mode = st.radio("Group data by:", ["State", "Year"], horizontal=True)
-
-    if mode == "State":
-        grouped = (
-            df.groupby("State")[["Total Fish Landing (Tonnes)"]]
-            .mean()
-            .reset_index()
-        )
-        label_col = "State"
-        title = "Hierarchical Clustering by State"
-    else:  # Group by Year
-        grouped = (
-            df.groupby("Year")[["Total Fish Landing (Tonnes)"]]
-            .sum()
-            .reset_index()
-        )
-        label_col = "Year"
-        title = "Hierarchical Clustering by Year"
    
+
+    # --- Step 2: Let user choose the year ---
+    available_years = sorted(df["Year"].dropna().unique())
+    selected_year = st.selectbox("Select Year to Cluster:", available_years, index=len(available_years) - 1)
+
+    df_year = df[df["Year"] == selected_year]
+    if df_year.empty:
+        st.warning("No data available for the selected year.")
+        return
+
+    # --- Step 3: Aggregate by state for that year ---
+    grouped = (
+        df_year.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        .sum()
+        .reset_index()
+    )
+
+    features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
+
     # Scale data
     scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
 
@@ -246,33 +246,33 @@ def hierarchical_clustering(merged_df):
     # --- STEP 6: Compute linkage ---
     linked = linkage(scaled, method=method)
 
-    # --- STEP 7: Dendrogram plot ---
-    fig, ax = plt.subplots(figsize=(10, 5))
+       fig, ax = plt.subplots(figsize=(10, 5))
     dendrogram(
         linked,
-        labels=grouped[label_col].astype(str).tolist(),
+        labels=grouped["State"].tolist(),
         leaf_rotation=45,
         leaf_font_size=9
     )
-    ax.set_title(f"{title} ({method.title()} linkage)")
-    ax.set_xlabel(mode)
+    ax.set_title(f"Hierarchical Clustering of States – {selected_year} ({method.title()} linkage)")
+    ax.set_xlabel("State")
     ax.set_ylabel("Distance")
     st.pyplot(fig)
 
-    # --- Step 6: Optional: cluster cut ---
+    # --- Step 7: Optional: allow user to cut dendrogram into clusters ---
     if st.checkbox("Show cluster grouping", value=False):
         num_clusters = st.slider("Select number of clusters", 2, 10, 3)
         grouped["Cluster"] = fcluster(linked, num_clusters, criterion="maxclust")
 
-        st.markdown(f"### Cluster Assignments (k = {num_clusters})")
+        st.markdown(f"### Cluster Assignments for {selected_year} (k = {num_clusters})")
         st.dataframe(grouped.sort_values("Cluster").reset_index(drop=True))
 
+        # --- Summary ---
         summary = (
-            grouped.groupby("Cluster")["Total Fish Landing (Tonnes)"]
+            grouped.groupby("Cluster")[features]
             .mean()
             .reset_index()
         )
-        st.markdown("### Average Total Fish Landing per Cluster")
+        st.markdown(f"### Average Values per Cluster ({selected_year})")
         st.dataframe(summary)
   
     
