@@ -902,6 +902,7 @@ def main():
 
     elif plot_option == "Automatic DBSCAN":
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
+         from scipy.spatial import ConvexHull 
 
         # --- Step 1: Keep only valid Malaysian states ---
         valid_states = [
