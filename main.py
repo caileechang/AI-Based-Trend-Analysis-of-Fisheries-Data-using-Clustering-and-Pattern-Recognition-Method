@@ -1205,104 +1205,106 @@ def main():
         
                 # --- Step 5: Create Base Map ---
             # m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles="CartoDB positron")
-
-            m = folium.Map(location=[4.5, 109.5], zoom_start=6, tiles=None)
-            #folium.TileLayer("CartoDB positron", name=None, control=False).add_to(m)
-            folium.TileLayer("OpenStreetMap", name="Default Map").add_to(m)
-            folium.TileLayer("CartoDB positron", name="Light Mode",
-                            attr="© OpenStreetMap contributors © CARTO").add_to(m)
+# --- Step 5: Create Base Map ---
+# Compute automatic bounds to include all states tightly (Peninsular + Borneo)
+            if not geo_df.empty:
+                lat_min = geo_df['Coords'].apply(lambda x: x[0]).min()
+                lat_max = geo_df['Coords'].apply(lambda x: x[0]).max()
+                lon_min = geo_df['Coords'].apply(lambda x: x[1]).min()
+                lon_max = geo_df['Coords'].apply(lambda x: x[1]).max()
             
-                
-
-                
-                # --- Step 6: Add Color Scale ---
+                # Initialize map centered between both regions, with tighter zoom
+                m = folium.Map(location=[4.2, 108.0], zoom_start=6.7, tiles=None)
+                folium.TileLayer("CartoDB positron", name="Base Map").add_to(m)
+            
+                # Fit bounds automatically to all markers (brings Peninsular + Borneo closer)
+                m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]], padding=(10, 10))
+            else:
+                # Default fallback (Malaysia center)
+                m = folium.Map(location=[4.5, 109.5], zoom_start=6.5, tiles="CartoDB positron")
+            
+            # --- Step 6: Add Color Scale ---
             min_val = float(geo_df['Total Fish Landing (Tonnes)'].min())
             max_val = float(geo_df['Total Fish Landing (Tonnes)'].max())
-                    
-            colormap = cm.LinearColormap(
-                    colors=['blue', 'lime', 'yellow', 'orange', 'red'],
-                    vmin=min_val, vmax=max_val, caption = f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
-                )
-                
-
-    # Force legend to show exact min & max numbers
             
+            colormap = cm.LinearColormap(
+                colors=['blue', 'lime', 'yellow', 'orange', 'red'],
+                vmin=min_val,
+                vmax=max_val,
+                caption=f"Fish Landing (Tonnes)\nMin: {min_val:,.0f}  |  Max: {max_val:,.0f}"
+            )
             colormap.add_to(m)
             
-        
-
-            # colormap = cm.linear.YlGnBu_09.scale(min_val, max_val)
-            # colormap.caption = "Fish Landing (Tonnes)"
-            # colormap.add_to(m)
-
-                # --- Step 7: Add Circle Markers (clickable points) ---
+            # --- Step 7: Add Circle Markers ---
             for _, row in geo_df.iterrows():
-                    popup_html = (
-                        f"<b>{row['State']}</b><br>"
-                        f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                        f"Fish Vessels: {row['Total number of fishing vessels']:.0f}"
-                    )
-
-                    color = colormap(row['Total Fish Landing (Tonnes)'])
-
-                    folium.CircleMarker(
-                        location=row['Coords'],
-                        radius=10,
-                        color=color,
-                        fill=True,
-                        fill_color=color,
-                        fill_opacity=0.9,
-                        popup=folium.Popup(popup_html, max_width=250),
-                        tooltip=row['State']
-                    ).add_to(m)
-                    
-
-            geo_df['HeatValue']=np.log1p(geo_df['Total Fish Landing (Tonnes)'])
+                popup_html = (
+                    f"<b>{row['State']}</b><br>"
+                    f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                    f"Fish Vessels: {row['Total number of fishing vessels']:.0f}"
+                )
+                color = colormap(row['Total Fish Landing (Tonnes)'])
+                folium.CircleMarker(
+                    location=row['Coords'],
+                    radius=9,
+                    color="black",
+                    weight=1,
+                    fill=True,
+                    fill_color=color,
+                    fill_opacity=0.85,
+                    popup=folium.Popup(popup_html, max_width=250),
+                    tooltip=row["State"],
+                ).add_to(m)
             
-                # --- Step 8: Heatmap Layer ---
+            # --- Step 8: Add Heatmap Layer ---
+            geo_df['HeatValue'] = np.log1p(geo_df['Total Fish Landing (Tonnes)'])
             heat_data = [
-                    [row['Coords'][0], row['Coords'][1], row['HeatValue']]
-                    for _, row in geo_df.iterrows()
-                ]
-                
+                [row['Coords'][0], row['Coords'][1], row['HeatValue']]
+                for _, row in geo_df.iterrows()
+            ]
             gradient = {
-                    0.0: 'blue',
-                    0.3: 'lime',
-                    0.5: 'yellow',
-                    0.7: 'orange',
-                    1.0: 'red'
-                }
-
-            min_val = geo_df['Total Fish Landing (Tonnes)'].min()
-            max_val = geo_df['Total Fish Landing (Tonnes)'].max()
-                
-            HeatMap(heat_data, name="Fish Landing Heatmap", radius=15, blur=8, min_opacity=0.5,max_opacity=0.95,gradient=gradient,max_val=max_val).add_to(m)
-
+                0.0: 'blue',
+                0.3: 'lime',
+                0.5: 'yellow',
+                0.7: 'orange',
+                1.0: 'red'
+            }
+            HeatMap(
+                heat_data,
+                name="Fish Landing Heatmap",
+                radius=15,
+                blur=8,
+                min_opacity=0.5,
+                max_opacity=0.95,
+                gradient=gradient,
+                max_val=geo_df["Total Fish Landing (Tonnes)"].max(),
+            ).add_to(m)
             
-                # --- Step 9: Map Controls ---
-            MiniMap(toggle_display=True).add_to(m)
+            # --- Step 9: Map Controls ---
+            MiniMap(toggle_display=True, zoom_level_fixed=6).add_to(m)
             Fullscreen(position='topright').add_to(m)
             folium.LayerControl(collapsed=False).add_to(m)
-        
-                # --- Step 10: Display Map ---
-            st_folium(m, use_container_width=True, height=600, returned_objects=[])
-
+            
+            # --- Step 10: Display Map ---
+            st_folium(m, use_container_width=True, height=600)
+            
+            # --- Step 11: Summary Section ---
             st.markdown(f"""
-                **Summary for {selected_year}:**
-                - 🟢 States displayed: {len(selected_states)}
-                - ⚓ Total fish landing: {geo_df['Total Fish Landing (Tonnes)'].sum():,.0f} tonnes
-                - 🚢 Total vessels: {geo_df['Total number of fishing vessels'].sum():,}
-                """)
-
+            **Summary for {selected_year}:**
+            - 🟢 States displayed: {len(selected_states)}
+            - ⚓ Total fish landing: {geo_df['Total Fish Landing (Tonnes)'].sum():,.0f} tonnes
+            - 🚢 Total vessels: {geo_df['Total number of fishing vessels'].sum():,}
+            """)
+            
             with st.expander("ℹ️ Color Legend for Fish Landing Intensity", expanded=True):
-                    st.markdown("""
-                    **Color Interpretation:**
-                    - 🟥 **Red / Orange** → High fish landing states  
-                    - 🟨 **Yellow / Lime** → Medium fish landing  
-                    - 🟦 **Blue / Green** → Low fish landing  
-                    <br>
-                    The heatmap shows **relative fish landing intensity by region**.
-                    """, unsafe_allow_html=True)
+                st.markdown("""
+                **Color Interpretation:**
+                - 🟥 **Red / Orange** → High fish landing states  
+                - 🟨 **Yellow / Lime** → Medium fish landing  
+                - 🟦 **Blue / Green** → Low fish landing  
+                <br>
+                The heatmap shows **relative fish landing intensity by region**.
+                """, unsafe_allow_html=True)
 
+           
 if __name__ == "__main__":
     main()
