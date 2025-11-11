@@ -15,7 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
-from clustering import (prepare_monthly, monthly_trends_by_cluster,yearly_summary,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
+from clustering import (prepare_monthly, monthly_trends_by_cluster,yearly_kmeans_trends,kmeans_2d,kmeans_3d,hierarchical_clustering,dbscan_analysis)
 
 
 
@@ -273,8 +273,9 @@ def main():
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
         "Monthly Trends by Cluster","Monthly Trends by Cluster2",
-        "Yearly Fish Landing Summary","Yearly Summary",
-        "Yearly K-Means Cluster Trends","Yearly KMeans Trends",
+        "Yearly Fish Landing Summary",,
+        "Yearly K-Means Cluster Trends","Yearly K-Means Cluster Trends for Marine and Freshwater Fish",
+                                  
         #"Yearly Elbow & Silhouette",
         "2D KMeans Scatter","2D KMeans Scatter2",
         "3D KMeans Clustering","3D KMeans Clustering2",
@@ -288,18 +289,15 @@ def main():
 
     if plot_option == "Monthly Trends by Cluster2":
         monthly_trends_by_cluster(merged_monthly)
-    elif plot_option == "Yearly Summary":
-        yearly_summary(merged_df)
-    elif plot_option == "Yearly KMeans Trends":
-        yearly_kmeans_trends(merged_df)
+   
+   
     elif plot_option == "2D KMeans Scatter2":
         kmeans_2d(merged_df)
     elif plot_option == "3D KMeans Clustering2":
         kmeans_3d(merged_df)
     elif plot_option == "Hierarchical Clustering2":
         hierarchical_clustering(merged_df)
-    elif plot_option == "DBSCAN Analysis":
-        dbscan_analysis(merged_df)
+  
    
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
@@ -439,6 +437,48 @@ def main():
         sns.lineplot(data=cluster_trends, x='Year', y='Freshwater (Tonnes)', hue='Cluster', marker='o', ax=ax)
         ax.set_title("Yearly Freshwater Landing Trends by Cluster")
         st.pyplot(fig)
+
+    elif plot_option == "Yearly K-Means Cluster Trends for Marine and Freshwater Fish":
+        features = merged_df[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+        scaled = StandardScaler().fit_transform(features)
+        merged_df['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(scaled)
+    
+        cluster_trends = (
+            merged_df.groupby(['Year', 'Cluster'])[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+            .mean()
+            .reset_index()
+        )
+    
+        # --- Freshwater plot ---
+        fig1, ax1 = plt.subplots(figsize=(12, 6))
+        sns.lineplot(
+            data=cluster_trends,
+            x='Year',
+            y='Freshwater (Tonnes)',
+            hue='Cluster',
+            marker='o',
+            ax=ax1
+        )
+        ax1.set_title("Yearly Freshwater Landing Trends by Cluster")
+        ax1.set_xlabel("Year")
+        ax1.set_ylabel("Freshwater (Tonnes)")
+        st.pyplot(fig1)
+    
+        # --- Marine plot ---
+        fig2, ax2 = plt.subplots(figsize=(12, 6))
+        sns.lineplot(
+            data=cluster_trends,
+            x='Year',
+            y='Marine (Tonnes)',
+            hue='Cluster',
+            marker='o',
+            ax=ax2
+        )
+        ax2.set_title("Yearly Marine Landing Trends by Cluster")
+        ax2.set_xlabel("Year")
+        ax2.set_ylabel("Marine (Tonnes)")
+        st.pyplot(fig2)
+
 
     elif plot_option == "Yearly Elbow & Silhouette":
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
