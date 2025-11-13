@@ -893,17 +893,16 @@ def main():
                     ma = safe_month_value(monthly, latest_date, "Marine (Tonnes)")
                     ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
             
-                   st.markdown(
+                    st.markdown(
                         f"""
                         <div style="{card_style}">
-                            <h3 style="color:white;">Freshwater Landing</h3>
-                            <h1 style="color:white; font-size:42px;"><b>{fw:,.0f} tonnes</b></h1>
-                            {calc_growth_month_html(fw, fw_prev)}
+                            <h3 style="color:white;">Marine Landing</h3>
+                            <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
+                            {calc_growth_month_html(ma, ma_prev)}
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
-
 
 
     
@@ -1237,11 +1236,6 @@ def main():
             # Call the hierarchical clustering function
         hierarchical_clustering(merged_df)
         
-                 
-            
-
-    
-
     elif plot_option == "Geospatial Map":
             st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
 
@@ -1270,11 +1264,8 @@ def main():
                 "SELANGOR": [3.0738, 101.5183],
             # Pahang
                 "PAHANG": [3.8126, 103.3256],
-            # Terengganu
                 "TERENGGANU": [5.3302, 103.1408],
-            # Kelantan
                 "KELANTAN": [6.1254, 102.2381],
-            # Perak
                 "PERAK": [4.5921, 101.0901],
             # Pulau Pinang
                 "PULAU PINANG": [5.4164, 100.3327],
@@ -1282,11 +1273,8 @@ def main():
                 "KEDAH": [6.1184, 100.3685],
             # Perlis
                 "PERLIS": [6.4449, 100.2048],
-            # Sabah & Sarawak regions
                 "SABAH": [5.9788, 116.0753],
-            
                 "SARAWAK": [1.5533, 110.3592],
-            # Labuan
                 "W.P. LABUAN": [5.2831, 115.2308]
         }
 
