@@ -603,7 +603,6 @@ def main():
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         st.subheader("Yearly K-Means Cluster Trends for Marine and Freshwater Fish")
-
         # --- Let user choose level (Monthly or Yearly) ---
         period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
     
@@ -613,9 +612,12 @@ def main():
             ("Freshwater", "Marine", "Both"),
             horizontal=True
         )
-    
-        # --- YEARLY COMPOSITION ----------------------------------------------------
+        # =======================================================================
+        #                           YEARLY VIEW
+        # =======================================================================
         if period_choice == "Yearly":
+    
+            # --- Build yearly composition ---
             yearly_comp = (
                 df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
                 .sum()
@@ -634,40 +636,78 @@ def main():
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly_comp[features])
     
-            # --- Use stored best_k from session state ---
             best_k_yearly = st.session_state.get("best_k_yearly", 3)
             yearly_comp["Cluster"] = KMeans(
                 n_clusters=best_k_yearly, random_state=42
             ).fit_predict(scaled)
     
-            # --- Plot yearly trends ---
-            cluster_trends = yearly_comp.melt(
-                id_vars=["Year", "Cluster"],
-                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
-                var_name="Type", value_name="Landing"
-            )
-    
             st.markdown(f"**Optimal clusters used:** {best_k_yearly}")
     
-            if trend_option in ("Freshwater", "Both"):
-                fig1, ax1 = plt.subplots(figsize=(12, 6))
-                sns.lineplot(
-                    data=cluster_trends[cluster_trends["Type"] == "Freshwater (Tonnes)"],
-                    x="Year", y="Landing", hue="Cluster", marker="o", ax=ax1
-                )
-                ax1.set_title(f"Yearly Freshwater Landing Trends (k={best_k_yearly})")
-                st.pyplot(fig1)
+            # --- Allow the user to expand each year separately ---
+            years = yearly_comp["Year"].unique()
     
-            if trend_option in ("Marine", "Both"):
-                fig2, ax2 = plt.subplots(figsize=(12, 6))
-                sns.lineplot(
-                    data=cluster_trends[cluster_trends["Type"] == "Marine (Tonnes)"],
-                    x="Year", y="Landing", hue="Cluster", marker="o", ax=ax2
-                )
-                ax2.set_title(f"Yearly Marine Landing Trends (k={best_k_yearly})")
-                st.pyplot(fig2)
+            for year in years:
+                with st.expander(f"📌 Year {year} — Click to View"):
+                    df_y = yearly_comp[yearly_comp["Year"] == year].copy()
     
-        # --- MONTHLY COMPOSITION ---------------------------------------------------
+                    # Prepare melted format
+                    temp = df_y.melt(
+                        id_vars=["Year", "Cluster"],
+                        value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+                        var_name="Type", value_name="Landing"
+                    )
+    
+                    # ---------------------------
+                    # Freshwater only
+                    # ---------------------------
+                    if trend_option == "Freshwater":
+                        fig, ax = plt.subplots(figsize=(10, 5))
+                        sns.lineplot(
+                            data=temp[temp["Type"] == "Freshwater (Tonnes)"],
+                            x="Year", y="Landing", hue="Cluster", marker="o", ax=ax
+                        )
+                        ax.set_title(f"Freshwater Landing Trend for {year}")
+                        st.pyplot(fig)
+    
+                    # ---------------------------
+                    # Marine only
+                    # ---------------------------
+                    elif trend_option == "Marine":
+                        fig, ax = plt.subplots(figsize=(10, 5))
+                        sns.lineplot(
+                            data=temp[temp["Type"] == "Marine (Tonnes)"],
+                            x="Year", y="Landing", hue="Cluster", marker="o", ax=ax
+                        )
+                        ax.set_title(f"Marine Landing Trend for {year}")
+                        st.pyplot(fig)
+    
+                    # ---------------------------
+                    # BOTH (side-by-side)
+                    # ---------------------------
+                    else:
+                        col1, col2 = st.columns(2)
+    
+                        with col1:
+                            fig1, ax1 = plt.subplots(figsize=(10, 5))
+                            sns.lineplot(
+                                data=temp[temp["Type"] == "Freshwater (Tonnes)"],
+                                x="Year", y="Landing", hue="Cluster", marker="o", ax=ax1
+                            )
+                            ax1.set_title("Freshwater")
+                            st.pyplot(fig1)
+    
+                        with col2:
+                            fig2, ax2 = plt.subplots(figsize=(10, 5))
+                            sns.lineplot(
+                                data=temp[temp["Type"] == "Marine (Tonnes)"],
+                                x="Year", y="Landing", hue="Cluster", marker="o", ax=ax2
+                            )
+                            ax2.set_title("Marine")
+                            st.pyplot(fig2)
+    
+        # =======================================================================
+        #                           MONTHLY VIEW
+        # =======================================================================
         else:
             monthly_comp = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
@@ -687,45 +727,73 @@ def main():
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(monthly_comp[features])
     
-            # --- Use stored best_k from session state ---
             best_k_monthly = st.session_state.get("best_k_monthly", 3)
             monthly_comp["Cluster"] = KMeans(
                 n_clusters=best_k_monthly, random_state=42
             ).fit_predict(scaled)
     
             monthly_comp["MonthYear"] = pd.to_datetime(
-                monthly_comp["Year"].astype(int).astype(str)
-                + "-" + monthly_comp["Month"].astype(int).astype(str)
-                + "-01"
+                monthly_comp["Year"].astype(str) + "-" +
+                monthly_comp["Month"].astype(str) + "-01"
             )
     
-            cluster_trends = monthly_comp.melt(
+            st.markdown(f"**Optimal clusters used:** {best_k_monthly}")
+    
+            # --- Monthly selection for cleaner UI ---
+            month_list = sorted(monthly_comp["MonthYear"].unique())
+    
+            selected_month = st.selectbox("Select Month/Year:", month_list)
+    
+            df_m = monthly_comp[monthly_comp["MonthYear"] == selected_month].copy()
+    
+            temp = df_m.melt(
                 id_vars=["MonthYear", "Cluster"],
                 value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
                 var_name="Type", value_name="Landing"
             )
     
-            st.markdown(f"**Optimal clusters used:** {best_k_monthly}")
-    
-            if trend_option in ("Freshwater", "Both"):
-                fig1, ax1 = plt.subplots(figsize=(12, 6))
-                sns.lineplot(
-                    data=cluster_trends[cluster_trends["Type"] == "Freshwater (Tonnes)"],
-                    x="MonthYear", y="Landing", hue="Cluster", marker="o", ax=ax1
+            # ---------------------------
+            # Display based on selection
+            # ---------------------------
+            if trend_option == "Freshwater":
+                fig, ax = plt.subplots(figsize=(12, 6))
+                sns.scatterplot(
+                    data=temp[temp["Type"] == "Freshwater (Tonnes)"],
+                    x="MonthYear", y="Landing", hue="Cluster", ax=ax
                 )
-                ax1.set_title(f"Monthly Freshwater Landing Trends (k={best_k_monthly})")
-                plt.xticks(rotation=45)
-                st.pyplot(fig1)
+                ax.set_title(f"Freshwater Landing — {selected_month.date()}")
+                st.pyplot(fig)
     
-            if trend_option in ("Marine", "Both"):
-                fig2, ax2 = plt.subplots(figsize=(12, 6))
-                sns.lineplot(
-                    data=cluster_trends[cluster_trends["Type"] == "Marine (Tonnes)"],
-                    x="MonthYear", y="Landing", hue="Cluster", marker="o", ax=ax2
+            elif trend_option == "Marine":
+                fig, ax = plt.subplots(figsize=(12, 6))
+                sns.scatterplot(
+                    data=temp[temp["Type"] == "Marine (Tonnes)"],
+                    x="MonthYear", y="Landing", hue="Cluster", ax=ax
                 )
-                ax2.set_title(f"Monthly Marine Landing Trends (k={best_k_monthly})")
-                plt.xticks(rotation=45)
-                st.pyplot(fig2)
+                ax.set_title(f"Marine Landing — {selected_month.date()}")
+                st.pyplot(fig)
+    
+            else:  # BOTH
+                col1, col2 = st.columns(2)
+    
+                with col1:
+                    fig1, ax1 = plt.subplots(figsize=(12, 6))
+                    sns.scatterplot(
+                        data=temp[temp["Type"] == "Freshwater (Tonnes)"],
+                        x="MonthYear", y="Landing", hue="Cluster", ax=ax1
+                    )
+                    ax1.set_title("Freshwater")
+                    st.pyplot(fig1)
+    
+                with col2:
+                    fig2, ax2 = plt.subplots(figsize=(12, 6))
+                    sns.scatterplot(
+                        data=temp[temp["Type"] == "Marine (Tonnes)"],
+                        x="MonthYear", y="Landing", hue="Cluster", ax=ax2
+                    )
+                    ax2.set_title("Marine")
+                    st.pyplot(fig2)
+
 
     
     elif plot_option == "2D KMeans Scatter":
