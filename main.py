@@ -887,12 +887,11 @@ def main():
                         f"""
                         <div style="{card_style}">
                             <h3 style="color:white;">Freshwater Landing</h3>
-                            <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
-                            {calc_growth_month_html(ma, ma_prev)}
+                            <h1 style="color:white; font-size:42px;"><b>{fw:,.0f}</b> tonnes</h1>
+                            {calc_growth_month_html(fw, fw_prev)}
                         </div>
                         """,
-                        unsafe_allow_html=True
-                    )
+                         unsafe_allow_html=True)
             # -------- Marine Summary --------
             if trend_option in ("Marine", "Both"):
                 with col2:
