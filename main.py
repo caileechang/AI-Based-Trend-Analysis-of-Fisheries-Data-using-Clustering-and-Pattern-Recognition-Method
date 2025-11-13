@@ -705,11 +705,30 @@ def main():
             st.markdown(f"## Landing Summary in {latest_year}")
     
             col1, col2 = st.columns(2)
+            card_style = """
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            margin-bottom: 15px;
+            """
     
             def calc_growth(curr, prev):
                 if prev is None or prev == 0:
                     return "–"
                 return f"↑ {curr/prev:.2f}x" if curr >= prev else f"↓ {curr/prev:.2f}x"
+
+            def growth_html(curr, prev):
+                if prev is None or prev == 0:
+                    return "<span style='color:gray;'>–</span>"
+
+                ratio = curr / prev
+            
+                if ratio >= 1:
+                    return f"<span style='color:lightgreen; font-size:20px;'>↑ {ratio:.2f}x</span>"
+                else:
+                    return f"<span style='color:#ff4d4d; font-size:20px;'>↓ {ratio:.2f}x</span>"
+
 
             def safe_get_value(df, year, column):
                 row = df.loc[df["Year"] == year, column]
