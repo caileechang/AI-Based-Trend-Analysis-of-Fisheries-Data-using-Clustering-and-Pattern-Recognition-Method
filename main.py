@@ -694,6 +694,7 @@ def main():
     
             ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)
             st.pyplot(fig)
+            
     
             # ------------------------------
             # Summary Cards
@@ -709,6 +710,11 @@ def main():
                 if prev is None or prev == 0:
                     return "–"
                 return f"↑ {curr/prev:.2f}x" if curr >= prev else f"↓ {curr/prev:.2f}x"
+
+            def safe_get_value(df, year, column):
+                row = df.loc[df["Year"] == year, column]
+                return row.values[0] if len(row) else 0
+
     
             if trend_option in ("Freshwater", "Both"):
                 fw = safe_get_value(yearly, latest_year, "Freshwater (Tonnes)")
