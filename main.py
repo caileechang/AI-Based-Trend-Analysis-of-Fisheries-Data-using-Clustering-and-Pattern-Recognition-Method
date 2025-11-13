@@ -611,12 +611,12 @@ def main():
             ("Freshwater", "Marine", "Both"),
             horizontal=True
         )
-    
-        # =======================================================================
-        #                           YEARLY VIEW
-        # =======================================================================
+
+        # ============================
+#     YEARLY VISUALIZATION
+# ============================
         if period_choice == "Yearly":
-    
+        
             # Aggregate yearly totals
             yearly_comp = (
                 df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
@@ -627,62 +627,78 @@ def main():
                 .fillna(0)
                 .reset_index()
             )
-    
+        
             yearly_comp.columns.name = None
             yearly_comp.rename(columns={
                 "Freshwater": "Freshwater (Tonnes)",
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
-    
-            # Clustering
+        
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly_comp[features])
-    
+        
             best_k_yearly = st.session_state.get("best_k_yearly", 3)
             yearly_comp["Cluster"] = KMeans(
                 n_clusters=best_k_yearly, random_state=42
             ).fit_predict(scaled)
-    
+        
             st.markdown(f"**Optimal clusters used:** {best_k_yearly}")
-    
-            # Melt for plotting
+        
+            # Melt for consistent plotting format
             df_plot = yearly_comp.melt(
                 id_vars=["Year", "Cluster"],
                 value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
                 var_name="Type", value_name="Landing"
             )
-    
-            # ------------------------------
-            #   PLOT YEARLY LINE CHART
-            # ------------------------------
+        
+            # Setup plot styles
+            colors = {
+                "Freshwater (Tonnes)": "tab:blue",
+                "Marine (Tonnes)": "tab:red"
+            }
+            markers = {
+                "Freshwater (Tonnes)": "o",
+                "Marine (Tonnes)": "^"
+            }
+            linestyles = ["solid", "dashed", "dotted", "dashdot"]
+        
             fig, ax = plt.subplots(figsize=(12, 6))
-    
-            # Freshwater Line
-            if trend_option in ("Freshwater", "Both"):
-                sns.lineplot(
-                    data=df_plot[df_plot["Type"] == "Freshwater (Tonnes)"],
-                    x="Year", y="Landing", hue="Cluster",
-                    marker="o", ax=ax
+        
+            # Loop through both fish types
+            for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
+                show_this = (
+                    trend_option == "Both" or
+                    trend_option.lower() in fish_type.lower()
                 )
-    
-            # Marine Line
-            if trend_option in ("Marine", "Both"):
-                sns.lineplot(
-                    data=df_plot[df_plot["Type"] == "Marine (Tonnes)"],
-                    x="Year", y="Landing", hue="Cluster",
-                    marker="o", ax=ax
-                )
-    
+        
+                if show_this:
+                    for cluster_id in sorted(df_plot["Cluster"].unique()):
+                        cluster_df = df_plot[
+                            (df_plot["Type"] == fish_type) &
+                            (df_plot["Cluster"] == cluster_id)
+                        ]
+        
+                        sns.lineplot(
+                            data=cluster_df,
+                            x="Year", y="Landing",
+                            color=colors[fish_type],
+                            marker=markers[fish_type],
+                            linestyle=linestyles[cluster_id % len(linestyles)],
+                            ax=ax,
+                            label=f"{fish_type.replace('(Tonnes)', '').strip()} – Cluster {cluster_id}"
+                        )
+        
             # Title
             if trend_option == "Freshwater":
                 ax.set_title(f"Yearly Freshwater Landing Trends (k={best_k_yearly})")
             elif trend_option == "Marine":
                 ax.set_title(f"Yearly Marine Landing Trends (k={best_k_yearly})")
             else:
-                ax.set_title(f"Yearly Freshwater & Marine Landing Trends (k={best_k_yearly})")
-    
+                ax.set_title(f"Yearly Marine & Freshwater Landing Trends (k={best_k_yearly})")
+        
+            ax.set_ylabel("Landing")
             st.pyplot(fig)
-    
+
     
         # =======================================================================
         #                           MONTHLY VIEW
