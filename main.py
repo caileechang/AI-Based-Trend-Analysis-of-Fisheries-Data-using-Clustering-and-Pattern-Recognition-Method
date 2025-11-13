@@ -604,114 +604,240 @@ def main():
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         st.subheader("Yearly K-Means Cluster Trends for Marine and Freshwater Fish")
 
-     
-
-        # --- Clustering Setup ---
-        yearly = (
-            df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
-            .sum()
-            .reset_index()
-            .pivot(index="Year", columns="Type of Fish",
-                   values="Fish Landing (Tonnes)")
-            .fillna(0)
-            .reset_index()
+        # --- User options ---
+        period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
+        trend_option = st.radio(
+            "Select trend to display:",
+            ("Freshwater", "Marine", "Both"),
+            horizontal=True
         )
     
-        yearly.rename(columns={
-            "Freshwater": "Freshwater (Tonnes)",
-            "Marine": "Marine (Tonnes)"
-        }, inplace=True)
+        # ======================================================================================
+        #                               YEARLY VIEW
+        # ======================================================================================
+        if period_choice == "Yearly":
     
-        features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
-        scaled = StandardScaler().fit_transform(yearly[features])
+            # ------------------------------
+            # Aggregate yearly data
+            # ------------------------------
+            yearly = (
+                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
+                .fillna(0)
+                .reset_index()
+            )
     
-        best_k = st.session_state.get("best_k_yearly", 3)
-        yearly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
+            yearly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
     
-        st.markdown(f"**Optimal clusters used:** {best_k}")
+            # ------------------------------
+            # Clustering
+            # ------------------------------
+            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaled = StandardScaler().fit_transform(yearly[features])
+            best_k = st.session_state.get("best_k_yearly", 3)
     
-        # =============================
-        #   COMBINED LINE CHART
-        # =============================
-        fig, ax = plt.subplots(figsize=(14, 6))
+            yearly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
     
-        # Define clean colors
-        colors = {
-            "Freshwater (Tonnes)": "tab:blue",
-            "Marine (Tonnes)": "tab:red"
-        }
-        markers = {
-            "Freshwater (Tonnes)": "o",
-            "Marine (Tonnes)": "^"
-        }
-        linestyles = ["solid", "dashed", "dotted", "dashdot"]
+            st.markdown(f"**Optimal clusters used:** {best_k}")
     
-        melted = yearly.melt(
-            id_vars=["Year", "Cluster"],
-            value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
-            var_name="Type", value_name="Landing"
-        )
+            # Melt for plotting
+            melted = yearly.melt(
+                id_vars=["Year", "Cluster"],
+                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+                var_name="Type", value_name="Landing"
+            )
     
-        # Draw clean modern lines
-        for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
-            for cl in sorted(melted["Cluster"].unique()):
-                subset = melted[
-                    (melted["Type"] == fish_type) &
-                    (melted["Cluster"] == cl)
-                ]
+            # ------------------------------
+            # Chart styles
+            # ------------------------------
+            colors = {"Freshwater (Tonnes)": "tab:blue",
+                      "Marine (Tonnes)": "tab:red"}
+            markers = {"Freshwater (Tonnes)": "o",
+                       "Marine (Tonnes)": "^"}
+            linestyles = ["solid", "dashed", "dotted", "dashdot"]
     
-                sns.lineplot(
-                    data=subset,
-                    x="Year", y="Landing",
-                    color=colors[fish_type],
-                    linestyle=linestyles[cl % len(linestyles)],
-                    marker=markers[fish_type],
-                    ax=ax,
-                    label=f"{fish_type.replace('(Tonnes)', '')} – Cluster {cl}"
-                )
+            # ------------------------------
+            # Create line chart
+            # ------------------------------
+            fig, ax = plt.subplots(figsize=(14, 6))
     
-        plt.xticks(rotation=0)
-        ax.set_title(f"Yearly Freshwater & Marine Landing Trends (k={best_k})")
-        ax.set_ylabel("Landing (Tonnes)")
-        ax.grid(True, alpha=0.3)
+            for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
     
-        # Move legend below chart
-        ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)
+                show_this = (trend_option == "Both" or
+                             trend_option.lower() in fish_type.lower())
     
-        st.pyplot(fig)
+                if show_this:
+                    for cl in sorted(melted["Cluster"].unique()):
+                        subset = melted[
+                            (melted["Type"] == fish_type) &
+                            (melted["Cluster"] == cl)
+                        ]
     
-        # =============================
-        #   SUMMARY CARDS (Latest Year)
-        # =============================
-        latest_year = yearly["Year"].max()
-        prev_year = latest_year - 1
+                        sns.lineplot(
+                            data=subset,
+                            x="Year", y="Landing",
+                            color=colors[fish_type],
+                            linestyle=linestyles[cl % len(linestyles)],
+                            marker=markers[fish_type],
+                            ax=ax,
+                            label=f"{fish_type.replace('(Tonnes)','')} – Cluster {cl}"
+                        )
     
-        st.markdown(f"## Fish Landing Summary in {latest_year}")
+            ax.set_title(f"Yearly Fish Landing Trends (k={best_k})")
+            ax.set_ylabel("Landing (Tonnes)")
+            ax.grid(True, alpha=0.3)
     
-        col1, col2 = st.columns(2)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)
+            st.pyplot(fig)
     
-        def calc_growth(curr, prev):
-            if prev == 0:
-                return "–"
-            return f"↑ {curr/prev:.2f}x" if curr >= prev else f"↓ {curr/prev:.2f}x"
+            # ------------------------------
+            # Summary Cards
+            # ------------------------------
+            latest_year = yearly["Year"].max()
+            prev_year = latest_year - 1
     
-        # Freshwater
-        with col1:
-            fw = yearly.loc[yearly["Year"] == latest_year, "Freshwater (Tonnes)"].values[0]
-            fw_prev = yearly.loc[yearly["Year"] == prev_year, "Freshwater (Tonnes)"].values[0]
-            st.markdown("### Freshwater Landing")
-            st.markdown(f"**{fw:,.0f} tonnes**")
-            st.markdown(f"**{calc_growth(fw, fw_prev)}**")
+            st.markdown(f"## Landing Summary in {latest_year}")
     
-        # Marine
-        with col2:
-            ma = yearly.loc[yearly["Year"] == latest_year, "Marine (Tonnes)"].values[0]
-            ma_prev = yearly.loc[yearly["Year"] == prev_year, "Marine (Tonnes)"].values[0]
-            st.markdown("### Marine Landing")
-            st.markdown(f"**{ma:,.0f} tonnes**")
-            st.markdown(f"**{calc_growth(ma, ma_prev)}**")
+            col1, col2 = st.columns(2)
     
-          
+            def calc_growth(curr, prev):
+                if prev == 0:
+                    return "–"
+                return f"↑ {curr/prev:.2f}x" if curr >= prev else f"↓ {curr/prev:.2f}x"
+    
+            # Freshwater Card
+            if trend_option in ("Freshwater", "Both"):
+                with col1:
+                    fw = yearly.loc[yearly["Year"] == latest_year, "Freshwater (Tonnes)"].values[0]
+                    fw_prev = yearly.loc[yearly["Year"] == prev_year, "Freshwater (Tonnes)"].values[0]
+                    st.markdown("### Freshwater Landing")
+                    st.markdown(f"**{fw:,.0f} tonnes**")
+                    st.markdown(f"**{calc_growth(fw, fw_prev)}**")
+    
+            # Marine Card
+            if trend_option in ("Marine", "Both"):
+                with col2:
+                    ma = yearly.loc[yearly["Year"] == latest_year, "Marine (Tonnes)"].values[0]
+                    ma_prev = yearly.loc[yearly["Year"] == prev_year, "Marine (Tonnes)"].values[0]
+                    st.markdown("### Marine Landing")
+                    st.markdown(f"**{ma:,.0f} tonnes**")
+                    st.markdown(f"**{calc_growth(ma, ma_prev)}**")
+    
+    
+        # ======================================================================================
+        #                               MONTHLY VIEW
+        # ======================================================================================
+        else:
+    
+            # Monthly aggregation
+            monthly = (
+                df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot(index=["Year", "Month"], columns="Type of Fish",
+                       values="Fish Landing (Tonnes)")
+                .fillna(0)
+                .reset_index()
+            )
+    
+            monthly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
+    
+            monthly["MonthYear"] = pd.to_datetime(
+                monthly["Year"].astype(str) + "-" +
+                monthly["Month"].astype(str) + "-01"
+            )
+    
+            # Clustering
+            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaled = StandardScaler().fit_transform(monthly[features])
+            best_k_m = st.session_state.get("best_k_monthly", 3)
+    
+            monthly["Cluster"] = KMeans(n_clusters=best_k_m, random_state=42).fit_predict(scaled)
+    
+            st.markdown(f"**Optimal clusters used:** {best_k_m}")
+    
+            melted = monthly.melt(
+                id_vars=["MonthYear", "Cluster"],
+                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+                var_name="Type", value_name="Landing"
+            )
+    
+            # Chart styles
+            colors = {"Freshwater (Tonnes)": "tab:blue",
+                      "Marine (Tonnes)": "tab:red"}
+            markers = {"Freshwater (Tonnes)": "o",
+                       "Marine (Tonnes)": "^"}
+            linestyles = ["solid", "dashed", "dotted", "dashdot"]
+    
+            # Plot
+            fig, ax = plt.subplots(figsize=(14, 6))
+    
+            for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
+    
+                show_this = (trend_option == "Both" or
+                             trend_option.lower() in fish_type.lower())
+    
+                if show_this:
+                    for cl in sorted(melted["Cluster"].unique()):
+                        subset = melted[
+                            (melted["Type"] == fish_type) &
+                            (melted["Cluster"] == cl)
+                        ]
+    
+                        sns.lineplot(
+                            data=subset,
+                            x="MonthYear", y="Landing",
+                            color=colors[fish_type],
+                            linestyle=linestyles[cl % len(linestyles)],
+                            marker=markers[fish_type],
+                            ax=ax,
+                            label=f"{fish_type.replace('(Tonnes)','')} – Cluster {cl}"
+                        )
+    
+            plt.xticks(rotation=45)
+            ax.set_title(f"Monthly Fish Landing Trends (k={best_k_m})")
+            ax.set_ylabel("Landing (Tonnes)")
+            ax.grid(True, alpha=0.3)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)
+    
+            st.pyplot(fig)
+    
+            # Summary Cards (last month)
+            latest_date = monthly["MonthYear"].max()
+            prev_date = latest_date - pd.DateOffset(months=1)
+    
+            st.markdown(f"## Landing Summary in {latest_date.strftime('%B %Y')}")
+    
+            col1, col2 = st.columns(2)
+    
+            def value_or_zero(x):
+                return 0 if len(x) == 0 else x.values[0]
+    
+            # Freshwater
+            if trend_option in ("Freshwater", "Both"):
+                with col1:
+                    fw = value_or_zero(monthly.loc[monthly["MonthYear"] == latest_date, "Freshwater (Tonnes)"])
+                    fw_prev = value_or_zero(monthly.loc[monthly["MonthYear"] == prev_date, "Freshwater (Tonnes)"])
+                    st.markdown("### Freshwater Landing")
+                    st.markdown(f"**{fw:,.0f} tonnes**")
+                    st.markdown(f"**{calc_growth(fw, fw_prev)}**")
+    
+            # Marine
+            if trend_option in ("Marine", "Both"):
+                with col2:
+                    ma = value_or_zero(monthly.loc[monthly["MonthYear"] == latest_date, "Marine (Tonnes)"])
+                    ma_prev = value_or_zero(monthly.loc[monthly["MonthYear"] == prev_date, "Marine (Tonnes)"])
+                    st.markdown("### Marine Landing")
+                    st.markdown(f"**{ma:,.0f} tonnes**")
+                    st.markdown(f"**{calc_growth(ma, ma_prev)}**")
 
     
     elif plot_option == "2D KMeans Scatter":
