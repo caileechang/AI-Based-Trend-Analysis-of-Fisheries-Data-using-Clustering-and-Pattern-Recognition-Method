@@ -852,6 +852,13 @@ def main():
             # ===========================
 # MONTHLY SUMMARY (Safe Version)
 # ===========================
+            card_style = """
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            margin-bottom: 15px;
+            """
 
             latest_date = monthly["MonthYear"].max()
             prev_date = latest_date - pd.DateOffset(months=1)
@@ -860,13 +867,7 @@ def main():
             
             col1, col2 = st.columns(2)
             
-            card_style = """
-            background-color: #1e1e1e;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #444;
-            margin-bottom: 15px;
-            """
+           
                     
             def safe_month_value(df, date, column):
                 v = df.loc[df["MonthYear"] == date, column]
