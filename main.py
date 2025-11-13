@@ -820,19 +820,20 @@ def main():
             st.markdown(f"## Landing Summary in {latest_date.strftime('%B %Y')}")
             
             col1, col2 = st.columns(2)
-            
+                    
             def safe_month_value(df, date, column):
-                """Return 0 if date is missing in dataset."""
                 v = df.loc[df["MonthYear"] == date, column]
                 return v.values[0] if len(v) else 0
             
-            def calc_growth_month(curr, prev):
-                """Safe monthly growth calculation."""
+            def calc_growth_month_html(curr, prev):
+                """Return colored HTML growth text."""
                 if prev == 0:
-                    return "–"
+                    return "<span style='color:gray'>–</span>"
                 ratio = curr / prev
-                arrow = "↑" if ratio >= 1 else "↓"
-                return f"{arrow} {ratio:.2f}x"
+                if ratio >= 1:
+                    return f"<span style='color:green'>↑ {ratio:.2f}x</span>"
+                else:
+                    return f"<span style='color:red'>↓ {ratio:.2f}x</span>"
             
             # -------- Freshwater Summary --------
             if trend_option in ("Freshwater", "Both"):
@@ -841,8 +842,8 @@ def main():
                     fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
             
                     st.markdown("### Freshwater Landing")
-                    st.markdown(f"**{fw:,.0f} tonnes**")
-                    st.markdown(f"**{calc_growth_month(fw, fw_prev)}**")
+                    st.markdown(f"<h2><b>{fw:,.0f} tonnes</b></h2>", unsafe_allow_html=True)
+                    st.markdown(calc_growth_month_html(fw, fw_prev), unsafe_allow_html=True)
             
             # -------- Marine Summary --------
             if trend_option in ("Marine", "Both"):
@@ -851,8 +852,9 @@ def main():
                     ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
             
                     st.markdown("### Marine Landing")
-                    st.markdown(f"**{ma:,.0f} tonnes**")
-                    st.markdown(f"**{calc_growth_month(ma, ma_prev)}**")
+                    st.markdown(f"<h2><b>{ma:,.0f} tonnes</b></h2>", unsafe_allow_html=True)
+                    st.markdown(calc_growth_month_html(ma, ma_prev), unsafe_allow_html=True)
+
 
     
     elif plot_option == "2D KMeans Scatter":
