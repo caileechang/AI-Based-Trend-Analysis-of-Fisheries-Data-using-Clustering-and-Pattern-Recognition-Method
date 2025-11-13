@@ -883,9 +883,16 @@ def main():
                     fw = safe_month_value(monthly, latest_date, "Freshwater (Tonnes)")
                     fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
             
-                    st.markdown("### Freshwater Landing")
-                    st.markdown(f"<h2><b>{fw:,.0f} tonnes</b></h2>", unsafe_allow_html=True)
-                    st.markdown(calc_growth_month_html(fw, fw_prev), unsafe_allow_html=True)
+                    st.markdown(
+                        f"""
+                        <div style="{card_style}">
+                            <h3 style="color:white;">Freshwater Landing</h3>
+                            <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
+                            {calc_growth_month_html(ma, ma_prev)}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
             
             # -------- Marine Summary --------
             if trend_option in ("Marine", "Both"):
