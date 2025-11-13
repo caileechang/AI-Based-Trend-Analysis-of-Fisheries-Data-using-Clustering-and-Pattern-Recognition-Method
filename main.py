@@ -706,28 +706,42 @@ def main():
             col1, col2 = st.columns(2)
     
             def calc_growth(curr, prev):
-                if prev == 0:
+                if prev is None or prev == 0:
                     return "–"
                 return f"↑ {curr/prev:.2f}x" if curr >= prev else f"↓ {curr/prev:.2f}x"
     
-            # Freshwater Card
             if trend_option in ("Freshwater", "Both"):
+                fw = safe_get_value(yearly, latest_year, "Freshwater (Tonnes)")
+                fw_prev = safe_get_value(yearly, prev_year, "Freshwater (Tonnes)")
+            
                 with col1:
-                    fw = yearly.loc[yearly["Year"] == latest_year, "Freshwater (Tonnes)"].values[0]
-                    fw_prev = yearly.loc[yearly["Year"] == prev_year, "Freshwater (Tonnes)"].values[0]
-                    st.markdown("### Freshwater Landing")
-                    st.markdown(f"**{fw:,.0f} tonnes**")
-                    st.markdown(f"**{calc_growth(fw, fw_prev)}**")
-    
-            # Marine Card
+                    st.markdown(
+                        f"""
+                        <div style='{card_style}'>
+                            <h3 style='color:white;'>Freshwater Landing</h3>
+                            <h1 style='color:white; font-size:42px;'><b>{fw:,.0f}</b> tonnes</h1>
+                            {growth_html(fw, fw_prev)}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+            
+            # Marine
             if trend_option in ("Marine", "Both"):
+                ma = safe_get_value(yearly, latest_year, "Marine (Tonnes)")
+                ma_prev = safe_get_value(yearly, prev_year, "Marine (Tonnes)")
+            
                 with col2:
-                    ma = yearly.loc[yearly["Year"] == latest_year, "Marine (Tonnes)"].values[0]
-                    ma_prev = yearly.loc[yearly["Year"] == prev_year, "Marine (Tonnes)"].values[0]
-                    st.markdown("### Marine Landing")
-                    st.markdown(f"**{ma:,.0f} tonnes**")
-                    st.markdown(f"**{calc_growth(ma, ma_prev)}**")
-    
+                    st.markdown(
+                        f"""
+                        <div style='{card_style}'>
+                            <h3 style='color:white;'>Marine Landing</h3>
+                            <h1 style='color:white; font-size:42px;'><b>{ma:,.0f}</b> tonnes</h1>
+                            {growth_html(ma, ma_prev)}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
     
         # ======================================================================================
         #                               MONTHLY VIEW
