@@ -767,7 +767,7 @@ def main():
                         """,
                         unsafe_allow_html=True
                     )
-    
+           
         # ======================================================================================
         #                               MONTHLY VIEW
         # ======================================================================================
@@ -893,9 +893,17 @@ def main():
                     ma = safe_month_value(monthly, latest_date, "Marine (Tonnes)")
                     ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
             
-                    st.markdown("### Marine Landing")
-                    st.markdown(f"<h2><b>{ma:,.0f} tonnes</b></h2>", unsafe_allow_html=True)
-                    st.markdown(calc_growth_month_html(ma, ma_prev), unsafe_allow_html=True)
+                   st.markdown(
+                        f"""
+                        <div style="{card_style}">
+                            <h3 style="color:white;">Freshwater Landing</h3>
+                            <h1 style="color:white; font-size:42px;"><b>{fw:,.0f} tonnes</b></h1>
+                            {calc_growth_month_html(fw, fw_prev)}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
 
 
     
