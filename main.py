@@ -893,7 +893,6 @@ def main():
                         """,
                         unsafe_allow_html=True
                     )
-            
             # -------- Marine Summary --------
             if trend_option in ("Marine", "Both"):
                 with col2:
