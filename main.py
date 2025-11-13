@@ -732,34 +732,43 @@ def main():
             #   PLOT MONTHLY LINE CHART
             # ------------------------------
             fig, ax = plt.subplots(figsize=(14, 6))
-    
-            # Freshwater Line
-            if trend_option in ("Freshwater", "Both"):
-                sns.lineplot(
-                    data=df_plot[df_plot["Type"] == "Freshwater (Tonnes)"],
-                    x="MonthYear", y="Landing", hue="Cluster",
-                    marker="o", ax=ax
-                )
-    
-            # Marine Line
-            if trend_option in ("Marine", "Both"):
-                sns.lineplot(
-                    data=df_plot[df_plot["Type"] == "Marine (Tonnes)"],
-                    x="MonthYear", y="Landing", hue="Cluster",
-                    marker="o", ax=ax
-                )
-    
-            # Rotate dates
+
+            # Define clear visual styles
+            colors = {
+                "Freshwater (Tonnes)": "tab:blue",
+                "Marine (Tonnes)": "tab:red"
+            }
+            markers = {
+                "Freshwater (Tonnes)": "o",
+                "Marine (Tonnes)": "^"
+            }
+            linestyles = ["solid", "dashed", "dotted", "dashdot"]  # For up to 4 clusters
+            
+            # Loop through 2 types (freshwater/marine)
+            for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
+                if trend_option in ("Both", fish_type.split()[0]):   # Freshwater / Marine / Both condition
+                    
+                    for cluster_id in sorted(df_plot["Cluster"].unique()):
+                        cluster_data = df_plot[
+                            (df_plot["Type"] == fish_type) &
+                            (df_plot["Cluster"] == cluster_id)
+                        ]
+            
+                        sns.lineplot(
+                            data=cluster_data,
+                            x="MonthYear", y="Landing",
+                            color=colors[fish_type],
+                            marker=markers[fish_type],
+                            linestyle=linestyles[cluster_id % len(linestyles)],
+                            ax=ax,
+                            label=f"{fish_type.replace('(Tonnes)','').strip()} – Cluster {cluster_id}"
+                        )
+            
+            # Legend & formatting
             plt.xticks(rotation=45)
-    
-            # Title
-            if trend_option == "Freshwater":
-                ax.set_title(f"Monthly Freshwater Landing Trends (k={best_k_monthly})")
-            elif trend_option == "Marine":
-                ax.set_title(f"Monthly Marine Landing Trends (k={best_k_monthly})")
-            else:
-                ax.set_title(f"Monthly Freshwater & Marine Landing Trends (k={best_k_monthly})")
-    
+            ax.set_title(f"Monthly Freshwater & Marine Landing Trends (k={best_k_monthly})")
+            ax.set_ylabel("Landing")
+            
             st.pyplot(fig)
 
       
