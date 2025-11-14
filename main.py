@@ -446,54 +446,55 @@ def main():
     ])
 
     
+   
+   
+   
+  
  
-   
-   
+    if plot_option == "Monthly Trends by Cluster":
+       # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
+       
+        # --- Use merged dataset (always latest) ---
+        monthly = st.session_state.base_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
+                # --- Ensure Year/Month are numeric ---
+        monthly['Year'] = pd.to_numeric(monthly['Year'], errors='coerce')
+        monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
+        # --- Dynamically filter realistic range ---
+        latest_year = int(monthly['Year'].max())
+        monthly = monthly[
+            (monthly['Year'].between(2000, latest_year)) &
+            (monthly['Month'].between(1, 12))
+        ]
+        # --- Convert to datetime safely ---
+        monthly['MonthYear'] = pd.to_datetime(
+            monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
+            errors='coerce'
+        )
+        monthly = monthly.dropna(subset=['MonthYear'])
+        # Ensure numeric month and valid values only
+        #monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
+        #monthly = monthly.dropna(subset=['Year', 'Month'])
+        
+        # Convert to first day of month safely
+       # monthly['MonthYear'] = pd.to_datetime(
+         #   monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
+            #errors='coerce'
+        #)
+        #monthly = monthly.dropna(subset=['MonthYear'])
 
-        if plot_option == "Monthly Trends by Cluster":
-           # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
-           
-            # --- Use merged dataset (always latest) ---
-            monthly = st.session_state.base_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
-                    # --- Ensure Year/Month are numeric ---
-            monthly['Year'] = pd.to_numeric(monthly['Year'], errors='coerce')
-            monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
-            # --- Dynamically filter realistic range ---
-            latest_year = int(monthly['Year'].max())
-            monthly = monthly[
-                (monthly['Year'].between(2000, latest_year)) &
-                (monthly['Month'].between(1, 12))
-            ]
-            # --- Convert to datetime safely ---
-            monthly['MonthYear'] = pd.to_datetime(
-                monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
-                errors='coerce'
-            )
-            monthly = monthly.dropna(subset=['MonthYear'])
-            # Ensure numeric month and valid values only
-            #monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
-            #monthly = monthly.dropna(subset=['Year', 'Month'])
-            
-            # Convert to first day of month safely
-           # monthly['MonthYear'] = pd.to_datetime(
-             #   monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
-                #errors='coerce'
-            #)
-            #monthly = monthly.dropna(subset=['MonthYear'])
-    
-            #monthly['MonthYear'] = pd.to_datetime(monthly['Year'].astype(str) + '-' + monthly['Month'].astype(str).str.zfill(2))
-            X = StandardScaler().fit_transform(monthly[['Month', 'Fish Landing (Tonnes)']])
-            monthly['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(X)
-    
-            fig, ax = plt.subplots(figsize=(12, 6))
-            sns.lineplot(data=monthly.sort_values('MonthYear'), x='MonthYear', y='Fish Landing (Tonnes)', hue='Cluster', marker='o', ax=ax, sort=False, linewidth=1.5, style='Cluster')
-    
-            #sns.lineplot(data=monthly.sort_values('MonthYear'), x='MonthYear', y='Fish Landing (Tonnes)', hue='Cluster', marker='o', ax=ax)
-            ax.set_title("Monthly Fish Landing Trends by Cluster")
-            ax.set_xlabel("Month-Year")
-            ax.set_ylabel("Fish Landing (Tonnes)")
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
+        #monthly['MonthYear'] = pd.to_datetime(monthly['Year'].astype(str) + '-' + monthly['Month'].astype(str).str.zfill(2))
+        X = StandardScaler().fit_transform(monthly[['Month', 'Fish Landing (Tonnes)']])
+        monthly['Cluster'] = KMeans(n_clusters=3, random_state=42).fit_predict(X)
+
+        fig, ax = plt.subplots(figsize=(12, 6))
+        sns.lineplot(data=monthly.sort_values('MonthYear'), x='MonthYear', y='Fish Landing (Tonnes)', hue='Cluster', marker='o', ax=ax, sort=False, linewidth=1.5, style='Cluster')
+
+        #sns.lineplot(data=monthly.sort_values('MonthYear'), x='MonthYear', y='Fish Landing (Tonnes)', hue='Cluster', marker='o', ax=ax)
+        ax.set_title("Monthly Fish Landing Trends by Cluster")
+        ax.set_xlabel("Month-Year")
+        ax.set_ylabel("Fish Landing (Tonnes)")
+        plt.xticks(rotation=45)
+        st.pyplot(fig)
 
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
