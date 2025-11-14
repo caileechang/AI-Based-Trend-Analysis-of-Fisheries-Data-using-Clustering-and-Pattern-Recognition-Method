@@ -869,50 +869,50 @@ def main():
     
             col1, col2 = st.columns(2)
     
-        def safe_month_value(df, date, col):
-            v = df.loc[df["MonthYear"] == date, col]
-            return v.values[0] if len(v) else 0
+            def safe_month_value(df, date, col):
+                v = df.loc[df["MonthYear"] == date, col]
+                return v.values[0] if len(v) else 0
+        
+            def calc_growth_month_html(curr, prev):
+                if prev is None or prev == 0 or curr == 0:
+                    return "<span style='color:gray'>–</span>"
+                ratio = curr / prev
+                if ratio >= 1:
+                    return f"<span style='color:lightgreen'>↑ {ratio:.2f}x</span>"
+                else:
+                    return f"<span style='color:#ff4d4d'>↓ {ratio:.2f}x</span>"
     
-        def calc_growth_month_html(curr, prev):
-            if prev is None or prev == 0 or curr == 0:
-                return "<span style='color:gray'>–</span>"
-            ratio = curr / prev
-            if ratio >= 1:
-                return f"<span style='color:lightgreen'>↑ {ratio:.2f}x</span>"
-            else:
-                return f"<span style='color:#ff4d4d'>↓ {ratio:.2f}x</span>"
-    
-        # Freshwater
-        if trend_option in ("Freshwater", "Both"):
-            fw = safe_month_value(monthly, latest_date, "Freshwater (Tonnes)")
-            fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
-            with col1:
-                st.markdown(
-                    f"""
-                    <div style="{card_style}">
-                        <h3 style="color:white;">Freshwater Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{fw:,.0f}</b> tonnes</h1>
-                        {calc_growth_month_html(fw, fw_prev)}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-    
-        # Marine
-        if trend_option in ("Marine", "Both"):
-            ma = safe_month_value(monthly, latest_date, "Marine (Tonnes)")
-            ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
-            with col2:
-                st.markdown(
-                    f"""
-                    <div style="{card_style}">
-                        <h3 style="color:white;">Marine Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
-                        {calc_growth_month_html(ma, ma_prev)}
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            # Freshwater
+            if trend_option in ("Freshwater", "Both"):
+                fw = safe_month_value(monthly, latest_date, "Freshwater (Tonnes)")
+                fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
+                with col1:
+                    st.markdown(
+                        f"""
+                        <div style="{card_style}">
+                            <h3 style="color:white;">Freshwater Landing</h3>
+                            <h1 style="color:white; font-size:42px;"><b>{fw:,.0f}</b> tonnes</h1>
+                            {calc_growth_month_html(fw, fw_prev)}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+        
+            # Marine
+            if trend_option in ("Marine", "Both"):
+                ma = safe_month_value(monthly, latest_date, "Marine (Tonnes)")
+                ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
+                with col2:
+                    st.markdown(
+                        f"""
+                        <div style="{card_style}">
+                            <h3 style="color:white;">Marine Landing</h3>
+                            <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
+                            {calc_growth_month_html(ma, ma_prev)}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
 
 
