@@ -434,7 +434,7 @@ def main():
     
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
-        "Monthly Trends by Cluster",
+        
         "Yearly Fish Landing Summary",
         "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
         "2D KMeans Scatter",
@@ -446,7 +446,7 @@ def main():
     ])
 
     
-  ''' 
+ 
    
    
 
@@ -494,7 +494,7 @@ def main():
             ax.set_ylabel("Fish Landing (Tonnes)")
             plt.xticks(rotation=45)
             st.pyplot(fig)
-'''
+
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
 
