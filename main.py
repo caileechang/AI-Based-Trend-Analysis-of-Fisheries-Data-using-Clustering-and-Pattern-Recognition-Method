@@ -311,10 +311,6 @@ def main():
     st.set_page_config(layout='wide')
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
-    #df_land, df_vess = load_data()
-    
-
-
     # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
         st.session_state.base_land, st.session_state.base_vess = load_data()
@@ -329,12 +325,9 @@ def main():
         df_land = st.session_state.base_land.copy()
         df_vess = st.session_state.base_vess.copy()
 
-
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
-  
-    
 
     if uploaded_file:
             try:
@@ -407,22 +400,6 @@ def main():
                     st.cache_data.clear()
                     st.sidebar.success("New dataset merged. Visualizations will refresh automatically.")
 
-
-                  
-        
-                    # --- Now analyze both datasets together ---
-                   # merged_df = prepare_yearly(df_land, df_vess)
-        
-                   # st.write("Merged Yearly Fish Landing Data")
-                   # st.dataframe(merged_df, use_container_width=True, height=300)
-        
-                  #  years = sorted(merged_df['Year'].unique())
-                    #selected_year = st.selectbox("Select a year to view state-level details:", years, index=len(years)-1)
-                 #   filtered_year = merged_df[merged_df['Year'] == selected_year]
-        
-                   # st.subheader(f"Fish Landing by State for {selected_year}")
-                   # st.dataframe(filtered_year, use_container_width=True)
-                    #st.bar_chart(filtered_year, x="State", y="Total Fish Landing (Tonnes)", use_container_width=True)
         
             except Exception as e:
                 st.error(f"Error reading uploaded file: {e}")
@@ -430,8 +407,6 @@ def main():
     merged_df = prepare_yearly(df_land, df_vess)
     merged_monthly = prepare_monthly(df_land, df_vess)
 
-
-    
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
@@ -445,12 +420,6 @@ def main():
         "Interactive Geospatial Map"
     ])
 
-    
-   
-   
-   
-  
- 
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
        
@@ -471,16 +440,6 @@ def main():
             errors='coerce'
         )
         monthly = monthly.dropna(subset=['MonthYear'])
-        # Ensure numeric month and valid values only
-        #monthly['Month'] = pd.to_numeric(monthly['Month'], errors='coerce')
-        #monthly = monthly.dropna(subset=['Year', 'Month'])
-        
-        # Convert to first day of month safely
-       # monthly['MonthYear'] = pd.to_datetime(
-         #   monthly['Year'].astype(int).astype(str) + '-' + monthly['Month'].astype(int).astype(str) + '-01',
-            #errors='coerce'
-        #)
-        #monthly = monthly.dropna(subset=['MonthYear'])
 
         #monthly['MonthYear'] = pd.to_datetime(monthly['Year'].astype(str) + '-' + monthly['Month'].astype(str).str.zfill(2))
         X = StandardScaler().fit_transform(monthly[['Month', 'Fish Landing (Tonnes)']])
@@ -533,7 +492,7 @@ def main():
     
         # --- Visualize as bar chart ---
         filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
-        fig, ax = plt.subplots(figsize=(14, 6))
+        fig, ax = plt.subplots(figsize=(18, 6))
         sns.barplot(
             data=filtered_sorted,
             x='State',
@@ -542,6 +501,9 @@ def main():
             palette='Blues_d',
             ax=ax
         )
+        # FIXED SPACING: force equal-width category spacing
+        ax.set_xticks(range(len(filtered_sorted)))
+        ax.set_xticklabels(filtered_sorted['State'], rotation=45, ha='right')
     
         # Labels & design
         ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=15)
