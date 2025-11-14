@@ -603,47 +603,107 @@ def main():
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         st.subheader("Yearly K-Means Cluster Trends for Marine and Freshwater Fish")
-
-        # --- User options ---
-        period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
-        trend_option = st.radio(
-            "Select trend to display:",
-            ("Freshwater", "Marine", "Both"),
-            horizontal=True
-        )
-        
+        # ======================================
+        #           CARD STYLE (GLOBAL)
+        # ======================================
         card_style = """
         background-color: #1e1e1e;
         padding: 20px;
         border-radius: 12px;
         border: 1px solid #444;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
         """
-        # ======================================================================================
-        #                               YEARLY VIEW
-        # ======================================================================================
-        if period_choice == "Yearly":
     
-            # ------------------------------
-            # Aggregate yearly data
-            # ------------------------------
-            yearly = (
-                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
-                .sum()
-                .reset_index()
-                .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
-                .fillna(0)
-                .reset_index()
+        # ======================================
+        #     TOP SUMMARY (BEFORE SELECTION)
+        # ======================================
+    
+        # --- Prepare yearly summary ---
+        yearly_summary = (
+            df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+            .sum()
+            .reset_index()
+            .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
+            .fillna(0)
+            .reset_index()
+        )
+    
+        yearly_summary.rename(columns={
+            "Freshwater": "Freshwater (Tonnes)",
+            "Marine": "Marine (Tonnes)"
+        }, inplace=True)
+    
+        latest_year = yearly_summary["Year"].max()
+        prev_year = latest_year - 1
+    
+        def safe_get(df, year, col):
+            row = df.loc[df["Year"] == year, col]
+            return row.values[0] if len(row) else 0
+    
+        def growth_html(curr, prev):
+            if prev == 0:
+                return "<span style='color:gray;'>–</span>"
+            ratio = curr / prev
+            if ratio >= 1:
+                return f"<span style='color:lightgreen; font-size:20px;'>↑ {ratio:.2f}x</span>"
+            else:
+                return f"<span style='color:#ff4d4d; font-size:20px;'>↓ {ratio:.2f}x</span>"
+    
+        fw_latest = safe_get(yearly_summary, latest_year, "Freshwater (Tonnes)")
+        fw_prev = safe_get(yearly_summary, prev_year, "Freshwater (Tonnes)")
+        ma_latest = safe_get(yearly_summary, latest_year, "Marine (Tonnes)")
+        ma_prev = safe_get(yearly_summary, prev_year, "Marine (Tonnes)")
+    
+        # ---- Display summary ----
+        st.markdown(f"## Landing Summary in {latest_year}")
+    
+        colA, colB = st.columns(2)
+    
+        with colA:
+            st.markdown(
+                f"""
+                <div style="{card_style}">
+                    <h3 style="color:white;">Freshwater Landing</h3>
+                    <h1 style="color:white; font-size:42px;"><b>{fw_latest:,.0f}</b> tonnes</h1>
+                    {growth_html(fw_latest, fw_prev)}
+                </div>
+                """,
+                unsafe_allow_html=True
             )
     
-            yearly.rename(columns={
-                "Freshwater": "Freshwater (Tonnes)",
-                "Marine": "Marine (Tonnes)"
-            }, inplace=True)
+        with colB:
+            st.markdown(
+                f"""
+                <div style="{card_style}">
+                    <h3 style="color:white;">Marine Landing</h3>
+                    <h1 style="color:white; font-size:42px;"><b>{ma_latest:,.0f}</b> tonnes</h1>
+                    {growth_html(ma_latest, ma_prev)}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
     
-            # ------------------------------
+        st.markdown("---")
+    
+        # ========================================================
+        #             USER OPTIONS (AFTER SUMMARY)
+        # ========================================================
+        period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
+    
+        trend_option = st.radio(
+            "Select trend to display:",
+            ("Freshwater", "Marine", "Both"),
+            horizontal=True
+        )
+    
+        # ========================================================
+        #                   YEARLY VIEW
+        # ========================================================
+        if period_choice == "Yearly":
+    
+            yearly = yearly_summary.copy()
+    
             # Clustering
-            # ------------------------------
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly[features])
             best_k = st.session_state.get("best_k_yearly", 3)
@@ -652,31 +712,25 @@ def main():
     
             st.markdown(f"**Optimal clusters used:** {best_k}")
     
-            # Melt for plotting
             melted = yearly.melt(
                 id_vars=["Year", "Cluster"],
                 value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
                 var_name="Type", value_name="Landing"
             )
     
-            # ------------------------------
-            # Chart styles
-            # ------------------------------
-            colors = {"Freshwater (Tonnes)": "tab:blue",
-                      "Marine (Tonnes)": "tab:red"}
-            markers = {"Freshwater (Tonnes)": "o",
-                       "Marine (Tonnes)": "^"}
+            # Chart Styles
+            colors = {
+                "Freshwater (Tonnes)": "tab:blue",
+                "Marine (Tonnes)": "tab:red"
+            }
+            markers = {"Freshwater (Tonnes)": "o", "Marine (Tonnes)": "^"}
             linestyles = ["solid", "dashed", "dotted", "dashdot"]
     
-            # ------------------------------
-            # Create line chart
-            # ------------------------------
             fig, ax = plt.subplots(figsize=(14, 6))
     
             for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
     
-                show_this = (trend_option == "Both" or
-                             trend_option.lower() in fish_type.lower())
+                show_this = (trend_option == "Both" or trend_option.lower() in fish_type.lower())
     
                 if show_this:
                     for cl in sorted(melted["Cluster"].unique()):
@@ -698,82 +752,15 @@ def main():
             ax.set_title(f"Yearly Fish Landing Trends (k={best_k})")
             ax.set_ylabel("Landing (Tonnes)")
             ax.grid(True, alpha=0.3)
-    
             ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)
+    
             st.pyplot(fig)
-            
     
-            # ------------------------------
-            # Summary Cards
-            # ------------------------------
-            latest_year = yearly["Year"].max()
-            prev_year = latest_year - 1
-    
-            st.markdown(f"## Landing Summary in {latest_year}")
-    
-            col1, col2 = st.columns(2)
-    
-            def calc_growth(curr, prev):
-                if prev is None or prev == 0:
-                    return "–"
-                return f"↑ {curr/prev:.2f}x" if curr >= prev else f"↓ {curr/prev:.2f}x"
-
-            def growth_html(curr, prev):
-                if prev is None or prev == 0:
-                    return "<span style='color:gray;'>–</span>"
-
-                ratio = curr / prev
-            
-                if ratio >= 1:
-                    return f"<span style='color:lightgreen; font-size:20px;'>↑ {ratio:.2f}x</span>"
-                else:
-                    return f"<span style='color:#ff4d4d; font-size:20px;'>↓ {ratio:.2f}x</span>"
-
-
-            def safe_get_value(df, year, column):
-                row = df.loc[df["Year"] == year, column]
-                return row.values[0] if len(row) else 0
-
-    
-            if trend_option in ("Freshwater", "Both"):
-                fw = safe_get_value(yearly, latest_year, "Freshwater (Tonnes)")
-                fw_prev = safe_get_value(yearly, prev_year, "Freshwater (Tonnes)")
-            
-                with col1:
-                    st.markdown(
-                        f"""
-                        <div style='{card_style}'>
-                            <h3 style='color:white;'>Freshwater Landing</h3>
-                            <h1 style='color:white; font-size:42px;'><b>{fw:,.0f}</b> tonnes</h1>
-                            {growth_html(fw, fw_prev)}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-            
-            # Marine
-            if trend_option in ("Marine", "Both"):
-                ma = safe_get_value(yearly, latest_year, "Marine (Tonnes)")
-                ma_prev = safe_get_value(yearly, prev_year, "Marine (Tonnes)")
-            
-                with col2:
-                    st.markdown(
-                        f"""
-                        <div style='{card_style}'>
-                            <h3 style='color:white;'>Marine Landing</h3>
-                            <h1 style='color:white; font-size:42px;'><b>{ma:,.0f}</b> tonnes</h1>
-                            {growth_html(ma, ma_prev)}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-           
-        # ======================================================================================
-        #                               MONTHLY VIEW
-        # ======================================================================================
+        # ========================================================
+        #                   MONTHLY VIEW
+        # ========================================================
         else:
     
-            # Monthly aggregation
             monthly = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
                 .sum()
@@ -810,19 +797,11 @@ def main():
             )
     
             # Chart styles
-            colors = {"Freshwater (Tonnes)": "tab:blue",
-                      "Marine (Tonnes)": "tab:red"}
-            markers = {"Freshwater (Tonnes)": "o",
-                       "Marine (Tonnes)": "^"}
-            linestyles = ["solid", "dashed", "dotted", "dashdot"]
-    
-            # Plot
             fig, ax = plt.subplots(figsize=(14, 6))
     
             for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
     
-                show_this = (trend_option == "Both" or
-                             trend_option.lower() in fish_type.lower())
+                show_this = (trend_option == "Both" or trend_option.lower() in fish_type.lower())
     
                 if show_this:
                     for cl in sorted(melted["Cluster"].unique()):
@@ -850,64 +829,60 @@ def main():
             st.pyplot(fig)
     
             # ===========================
-# MONTHLY SUMMARY (Safe Version)
-# ===========================
-          
-
+            #        MONTHLY SUMMARY
+            # ===========================
             latest_date = monthly["MonthYear"].max()
             prev_date = latest_date - pd.DateOffset(months=1)
-            
+    
             st.markdown(f"## Landing Summary in {latest_date.strftime('%B %Y')}")
-            
+    
             col1, col2 = st.columns(2)
-            
-           
-                    
-            def safe_month_value(df, date, column):
-                v = df.loc[df["MonthYear"] == date, column]
-                return v.values[0] if len(v) else 0
-            
-            def calc_growth_month_html(curr, prev):
-                """Return colored HTML growth text."""
-                if prev is None or prev == 0 or curr==0:
-                    return "<span style='color:gray'>–</span>"
-                ratio = curr / prev
-                if ratio >= 1:
-                    return f"<span style='color:green'>↑ {ratio:.2f}x</span>"
-                else:
-                    return f"<span style='color:red'>↓ {ratio:.2f}x</span>"
-            
-            # -------- Freshwater Summary --------
-            if trend_option in ("Freshwater", "Both"):
-                with col1:
-                    fw = safe_month_value(monthly, latest_date, "Freshwater (Tonnes)")
-                    fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
-            
-                    st.markdown(
-                        f"""
-                        <div style="{card_style}">
-                            <h3 style="color:white;">Freshwater Landing</h3>
-                            <h1 style="color:white; font-size:42px;"><b>{fw:,.0f}</b> tonnes</h1>
-                            {calc_growth_month_html(fw, fw_prev)}
-                        </div>
-                        """,
-                         unsafe_allow_html=True)
-            # -------- Marine Summary --------
-            if trend_option in ("Marine", "Both"):
-                with col2:
-                    ma = safe_month_value(monthly, latest_date, "Marine (Tonnes)")
-                    ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
-            
-                    st.markdown(
-                        f"""
-                        <div style="{card_style}">
-                            <h3 style="color:white;">Marine Landing</h3>
-                            <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
-                            {calc_growth_month_html(ma, ma_prev)}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+    
+        def safe_month_value(df, date, col):
+            v = df.loc[df["MonthYear"] == date, col]
+            return v.values[0] if len(v) else 0
+    
+        def calc_growth_month_html(curr, prev):
+            if prev == 0:
+                return "<span style='color:gray'>–</span>"
+            ratio = curr / prev
+            if ratio >= 1:
+                return f"<span style='color:lightgreen'>↑ {ratio:.2f}x</span>"
+            else:
+                return f"<span style='color:#ff4d4d'>↓ {ratio:.2f}x</span>"
+    
+        # Freshwater
+        if trend_option in ("Freshwater", "Both"):
+            fw = safe_month_value(monthly, latest_date, "Freshwater (Tonnes)")
+            fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
+            with col1:
+                st.markdown(
+                    f"""
+                    <div style="{card_style}">
+                        <h3 style="color:white;">Freshwater Landing</h3>
+                        <h1 style="color:white; font-size:42px;"><b>{fw:,.0f}</b> tonnes</h1>
+                        {calc_growth_month_html(fw, fw_prev)}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+    
+        # Marine
+        if trend_option in ("Marine", "Both"):
+            ma = safe_month_value(monthly, latest_date, "Marine (Tonnes)")
+            ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
+            with col2:
+                st.markdown(
+                    f"""
+                    <div style="{card_style}">
+                        <h3 style="color:white;">Marine Landing</h3>
+                        <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
+                        {calc_growth_month_html(ma, ma_prev)}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
 
 
     
