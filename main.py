@@ -874,7 +874,7 @@ def main():
             return v.values[0] if len(v) else 0
     
         def calc_growth_month_html(curr, prev):
-            if prev == 0:
+            if prev is None or prev == 0 or curr == 0:
                 return "<span style='color:gray'>–</span>"
             ratio = curr / prev
             if ratio >= 1:
