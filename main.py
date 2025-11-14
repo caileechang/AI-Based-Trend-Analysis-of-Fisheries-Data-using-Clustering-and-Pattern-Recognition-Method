@@ -492,28 +492,46 @@ def main():
     
         # --- Visualize as bar chart ---
         filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
+       
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(
             data=filtered_sorted,
             x='State',
             y='Total Fish Landing (Tonnes)',
-            order=filtered_sorted['State'],
+            #order=filtered_sorted['State'],
             palette='Blues_d',
             ax=ax
         )
-        # FIXED SPACING: force equal-width category spacing
-        ax.set_xticks(range(len(filtered_sorted)))
-        ax.set_xticklabels(filtered_sorted['State'], rotation=45, ha='right')
+        # --- Chart Labels & Design ---
+        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=16, pad=15)
+        ax.set_xlabel("Total Fish Landing (Tonnes)", fontsize=12)
+        ax.set_ylabel("State", fontsize=12)
+        
+        # Add value labels on the bars (optional)
+        for i, v in enumerate(filtered_sorted['Total Fish Landing (Tonnes)']):
+            ax.text(
+                v + (v * 0.01),   # place slightly outside bar
+                i,
+                f"{v:,.0f}",
+                va='center',
+                fontsize=10
+            )
+        
+        plt.tight_layout()
+        
+        # Display in Streamlit
+        st.pyplot(fig)
+       # ax.set_xticklabels(filtered_sorted['State'], rotation=45, ha='right')
     
         # Labels & design
-        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=15)
-        ax.set_xlabel("State", fontsize=12)
-        ax.set_ylabel("Total Fish Landing (Tonnes)", fontsize=12)
-        plt.xticks(rotation=45, ha='center')
-        plt.tight_layout()
+        #ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=15)
+        #ax.set_xlabel("State", fontsize=12)
+        #ax.set_ylabel("Total Fish Landing (Tonnes)", fontsize=12)
+        #plt.xticks(rotation=45, ha='center')
+        #plt.tight_layout()
     
         # Display bar chart
-        st.pyplot(fig)
+        #st.pyplot(fig)
     
        
     # Allow filtering by year
