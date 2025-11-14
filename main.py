@@ -309,7 +309,7 @@ st.markdown("""
     
 def main():
     st.set_page_config(layout='wide')
-    st.title("Fisheries Clustering & Pattern Recognition Dashboard")
+    #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
     #df_land, df_vess = load_data()
     
