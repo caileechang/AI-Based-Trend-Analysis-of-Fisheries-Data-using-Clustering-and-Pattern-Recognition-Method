@@ -717,7 +717,8 @@ def main():
         # ========================================================
         #             USER OPTIONS (AFTER SUMMARY)
         # ========================================================
-        st.subheader("Fish Landing Trends (Cluster-Based Analysis)")
+        st.markdown("## Fish Landing Trends (Cluster-Based Analysis)")
+
         period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
     
         trend_option = st.radio(
