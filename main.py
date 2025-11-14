@@ -78,6 +78,7 @@ def prepare_yearly(df_land, df_vess):
         return matches[0] if matches else np.nan
 
     land['State'] = land['State'].apply(match_state)
+    land = land.dropna(subset=['State'])
     land = land[land['State'].isin(valid_states)]
 
     # --- Group & Pivot directly by Type of Fish ---
