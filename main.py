@@ -881,6 +881,13 @@ def main():
                     return f"<span style='color:lightgreen'>↑ {ratio:.2f}x</span>"
                 else:
                     return f"<span style='color:#ff4d4d'>↓ {ratio:.2f}x</span>"
+
+            colors = {
+                "Freshwater (Tonnes)": "tab:blue",
+                "Marine (Tonnes)": "tab:red"
+            }
+            markers = {"Freshwater (Tonnes)": "o", "Marine (Tonnes)": "^"}
+            linestyles = ["solid", "dashed", "dotted", "dashdot"]
     
             # Freshwater
             if trend_option in ("Freshwater", "Both"):
