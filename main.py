@@ -496,7 +496,7 @@ def main():
         )
         
         # SAFE figure size for Streamlit Cloud
-        fig, ax = plt.subplots(figsize=(9, 7))
+        fig, ax = plt.subplots(figsize=(10, 7))
         
         sns.barplot(
             data=filtered_sorted,
