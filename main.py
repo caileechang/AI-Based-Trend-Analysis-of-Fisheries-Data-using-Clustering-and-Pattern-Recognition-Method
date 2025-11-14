@@ -492,7 +492,7 @@ def main():
     
         # --- Visualize as bar chart ---
         filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
-        fig, ax = plt.subplots(figsize=(16, 6))
+        fig, ax = plt.subplots(figsize=(12, 10))
         sns.barplot(
             data=filtered_sorted,
             x='State',
