@@ -275,6 +275,35 @@ def hierarchical_clustering(merged_df):
         st.markdown(f"### Average Values per Cluster ({selected_year})")
         st.dataframe(summary)
         
+# ===========================
+# Sticky Dashboard Header
+# ===========================
+st.markdown("""
+<style>
+
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: #0e1117;   /* Streamlit dark background */
+    padding: 25px 10px 20px 10px;
+    z-index: 999;
+    border-bottom: 1px solid #333;
+}
+
+.sticky-header h1 {
+    font-size: 44px;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+}
+
+</style>
+
+<div class="sticky-header">
+    <h1>Fisheries Clustering & Pattern Recognition Dashboard</h1>
+</div>
+
+""", unsafe_allow_html=True)
 
 
     
