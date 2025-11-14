@@ -457,47 +457,40 @@ def main():
 
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
-
-        # If user uploaded a new dataset, re-prepare merged_df dynamically
+        # --- ALWAYS use cleaned yearly summary from prepare_yearly ---
         if uploaded_file:
-            merged_df = prepare_yearly(df_land, df_vess)
-
-        # --- Summarize yearly totals ---
-        yearly_summary = (
-            merged_df.groupby(['Year', 'State'])[
-                ['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']
-            ]
-            .sum()
-            .reset_index()
-            .sort_values(['Year', 'State'])
-        )
-        #yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
+            yearly_summary = prepare_yearly(df_land, df_vess)
+        else:
+            yearly_summary = st.session_state.get("yearly_summary", prepare_yearly(df_land, df_vess))
+    
+        # Store globally for other visualisations
+        st.session_state.yearly_summary = yearly_summary
+    
+        # --- SHOW CLEAN TABLE ---
         st.dataframe(yearly_summary, use_container_width=True, height=400)
-
-       
-    # Dynamically include newly uploaded years in dropdown
+    
+        # --- Year selector ---
         available_years = sorted([int(y) for y in yearly_summary['Year'].unique()])
-        #selected_year = st.selectbox("Select a year to view state-level details:", available_years, index=len(available_years) - 1)
+    
         selected_year = st.selectbox(
             "Select a year to view state-level details:",
             available_years,
             index=len(available_years) - 1,
             key="yearly_summary_selectbox"
         )
-
+    
+        # --- Filter for selected year ---
         filtered = yearly_summary[yearly_summary['Year'] == selected_year]
-        
+    
         st.write(f"### Fish Landing by State for {selected_year}")
         st.dataframe(filtered, use_container_width=True, height=300)
-        
-        # Sort data
-        filtered_sorted = filtered.sort_values(
-            'Total Fish Landing (Tonnes)', ascending=True
-        )
-        
-        # SAFE figure size for Streamlit Cloud
+    
+        # --- Sort states for chart ---
+        filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=True)
+    
+        # --- Horizontal bar chart (Safe size for Streamlit Cloud) ---
         fig, ax = plt.subplots(figsize=(10, 7))
-        
+    
         sns.barplot(
             data=filtered_sorted,
             x='Total Fish Landing (Tonnes)',
@@ -505,13 +498,12 @@ def main():
             palette='Blues_d',
             ax=ax
         )
-        
-        # Titles
+    
         ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=12)
         ax.set_xlabel("Total Fish Landing (Tonnes)", fontsize=12)
         ax.set_ylabel("State", fontsize=12)
-        
-        # Optional value labels
+    
+        # Value labels
         for i, v in enumerate(filtered_sorted['Total Fish Landing (Tonnes)']):
             ax.text(
                 v + (0.01 * v), i,
@@ -519,9 +511,29 @@ def main():
                 va='center',
                 fontsize=9
             )
-        
+    
         plt.tight_layout()
         st.pyplot(fig)
+
+        # If user uploaded a new dataset, re-prepare merged_df dynamically
+        #if uploaded_file:
+           # merged_df = prepare_yearly(df_land, df_vess)
+
+        # --- Summarize yearly totals ---
+        #yearly_summary = (
+           # merged_df.groupby(['Year', 'State'])[
+               # ['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']
+            #]
+            #.sum()
+           # .reset_index()
+            #.sort_values(['Year', 'State'])
+       # )
+        #yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
+        #st.dataframe(yearly_summary, use_container_width=True, height=400)
+
+       
+    # Dynamically include newly uploaded years in dropdown
+      
 
        # ax.set_xticklabels(filtered_sorted['State'], rotation=45, ha='right')
     
