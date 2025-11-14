@@ -69,6 +69,7 @@ def prepare_yearly(df_land, df_vess):
         .str.replace(r'\s+', ' ', regex=True)
         .str.strip()
     )
+    land = land[~land['State'].str.startswith("MALAYSIA")]
 
     # --- Fuzzy match state names ---
     def match_state(name):
