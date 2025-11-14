@@ -485,42 +485,44 @@ def main():
             key="yearly_summary_selectbox"
         )
 
-        # --- Filter and show selected year ---
         filtered = yearly_summary[yearly_summary['Year'] == selected_year]
+        
         st.write(f"### Fish Landing by State for {selected_year}")
         st.dataframe(filtered, use_container_width=True, height=300)
-    
-        # --- Visualize as bar chart ---
-        filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
-       
-        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Sort data
+        filtered_sorted = filtered.sort_values(
+            'Total Fish Landing (Tonnes)', ascending=True
+        )
+        
+        # SAFE figure size for Streamlit Cloud
+        fig, ax = plt.subplots(figsize=(9, 7))
+        
         sns.barplot(
             data=filtered_sorted,
-            x='State',
-            y='Total Fish Landing (Tonnes)',
-           # order=filtered_sorted['State'],
+            x='Total Fish Landing (Tonnes)',
+            y='State',
             palette='Blues_d',
             ax=ax
         )
-        # --- Chart Labels & Design ---
-        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=16, pad=15)
+        
+        # Titles
+        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=12)
         ax.set_xlabel("Total Fish Landing (Tonnes)", fontsize=12)
         ax.set_ylabel("State", fontsize=12)
         
-        # Add value labels on the bars (optional)
+        # Optional value labels
         for i, v in enumerate(filtered_sorted['Total Fish Landing (Tonnes)']):
             ax.text(
-                v + (v * 0.01),   # place slightly outside bar
-                i,
+                v + (0.01 * v), i,
                 f"{v:,.0f}",
                 va='center',
-                fontsize=10
+                fontsize=9
             )
         
         plt.tight_layout()
-        
-        # Display in Streamlit
         st.pyplot(fig)
+
        # ax.set_xticklabels(filtered_sorted['State'], rotation=45, ha='right')
     
         # Labels & design
