@@ -48,45 +48,49 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
-    import numpy as np
-    import pandas as pd
-    from difflib import get_close_matches
-
+    # ========================
+    # VALID MALAYSIAN STATES
+    # ========================
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
         "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
         "SABAH", "SARAWAK", "W.P. LABUAN"
     ]
+    valid_states = [s.upper().strip() for s in valid_states]
 
-    # --- Clean and standardize base dataframe ---
+    # ======================================================
+    # 1) CLEAN df_land (FISH LANDING)
+    # ======================================================
     land = df_land.copy()
     land['State'] = (
         land['State']
-        .astype(str)
-        .str.upper()
-        .str.replace(r'\s*/\s*', '/', regex=True)
-        .str.replace(r'\s+', ' ', regex=True)
-        .str.strip()
+            .astype(str)
+            .str.upper()
+            .str.replace(r"\s*/\s*", "/", regex=True)
+            .str.replace(r"\s+", " ", regex=True)
+            .str.strip()
     )
+
+    # REMOVE MALAYSIA-level rows BEFORE fuzzy match
     land = land[~land['State'].str.startswith("MALAYSIA")]
 
-    # --- Fuzzy match state names ---
-    def match_state(name):
-        #if not isinstance(name, str) or name.strip() == "":
-            #return np.nan
-        matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.75)
+    # Fuzzy matching for df_land
+    def match_state_land(name):
+        matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.90)
         return matches[0] if matches else np.nan
 
-    land['State'] = land['State'].apply(match_state)
+    land['State'] = land['State'].apply(match_state_land)
     land = land.dropna(subset=['State'])
     land = land[land['State'].isin(valid_states)]
 
-    # --- Group & Pivot directly by Type of Fish ---
+    # ======================================================
+    # 2) GROUP df_land → yearly freshwater/marine totals
+    # ======================================================
     yearly_totals = (
         land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
-        .sum()
-        .reset_index()
+            .sum()
+            .reset_index()
     )
 
     yearly_pivot = yearly_totals.pivot_table(
@@ -102,37 +106,56 @@ def prepare_yearly(df_land, df_vess):
         'Marine': 'Marine (Tonnes)'
     }, inplace=True)
 
-    # --- Add Total column (always works even if Marine or Freshwater missing) ---
-    yearly_pivot['Total Fish Landing (Tonnes)'] = (
-        yearly_pivot.get('Freshwater (Tonnes)', 0)
-        + yearly_pivot.get('Marine (Tonnes)', 0)
+    yearly_pivot['Total Fish Landing (Tonnes)'] = \
+        yearly_pivot.get('Freshwater (Tonnes)', 0) + \
+        yearly_pivot.get('Marine (Tonnes)', 0)
+
+    # ======================================================
+    # 3) CLEAN df_vess DIRECTLY (no new variable)
+    # ======================================================
+    df_vess = df_vess.copy()  # overwrite original safely
+
+    df_vess['State'] = (
+        df_vess['State']
+            .astype(str)
+            .str.upper()
+            .str.replace(r"\s*/\s*", "/", regex=True)
+            .str.replace(r"\s+", " ", regex=True)
+            .str.strip()
     )
 
-    # --- Vessel totals ---
+    # REMOVE MALAYSIA-level rows
+    df_vess = df_vess[~df_vess['State'].str.startswith("MALAYSIA")]
+
+    # Fuzzy match for df_vess
+    def match_state_vess(name):
+        matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.90)
+        return matches[0] if matches else np.nan
+
+    df_vess['State'] = df_vess['State'].apply(match_state_vess)
+    df_vess = df_vess.dropna(subset=['State'])
+    df_vess = df_vess[df_vess['State'].isin(valid_states)]
+
+    # Clean numeric vessel values
     for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
         df_vess[col] = pd.to_numeric(df_vess[col], errors='coerce').fillna(0)
-    df_vess['Total number of fishing vessels'] = (
-        df_vess['Inboard Powered']
-        + df_vess['Outboard Powered']
-        + df_vess['Non-Powered']
-    )
-    df_vess['State'] = df_vess['State'].str.upper().str.strip()
-    #df_vess['Year'] = df_vess['Year'].astype(int)
-    # Convert to numeric safely first
+
+    df_vess['Total number of fishing vessels'] = \
+        df_vess['Inboard Powered'] + df_vess['Outboard Powered'] + df_vess['Non-Powered']
+
     df_vess['Year'] = pd.to_numeric(df_vess['Year'], errors='coerce')
-    # Drop rows where Year is missing (NaN) to avoid casting error
     df_vess = df_vess.dropna(subset=['Year'])
     df_vess['Year'] = df_vess['Year'].astype(int)
 
-
-    # --- Merge fish landing with vessel data ---
+    # ======================================================
+    # 4) MERGE CLEAN df_land + CLEAN df_vess
+    # ======================================================
     merged = pd.merge(
         yearly_pivot,
         df_vess[['State', 'Year', 'Total number of fishing vessels']],
         on=['State', 'Year'],
-        how='outer'   # full outer join — keep all states
+        how='left'   # IMPORTANT: do NOT use outer join
     ).fillna(0)
-
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
