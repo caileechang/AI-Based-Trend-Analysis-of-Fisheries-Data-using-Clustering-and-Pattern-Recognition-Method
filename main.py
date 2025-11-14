@@ -631,7 +631,7 @@ def main():
         st.session_state['best_k_yearly'] = best_k_yearly
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
-        st.subheader("Fish Landing Trends (Cluster-Based Analysis)")
+        
         # ======================================
         #           CARD STYLE (GLOBAL)
         # ======================================
@@ -717,6 +717,7 @@ def main():
         # ========================================================
         #             USER OPTIONS (AFTER SUMMARY)
         # ========================================================
+        st.subheader("Fish Landing Trends (Cluster-Based Analysis)")
         period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
     
         trend_option = st.radio(
