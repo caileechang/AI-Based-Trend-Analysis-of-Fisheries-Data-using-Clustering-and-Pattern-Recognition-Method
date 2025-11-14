@@ -450,7 +450,7 @@ def main():
    
    
   
-   
+   '''
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
        
@@ -495,7 +495,7 @@ def main():
         ax.set_ylabel("Fish Landing (Tonnes)")
         plt.xticks(rotation=45)
         st.pyplot(fig)
-
+'''
     elif plot_option == "Yearly Fish Landing Summary":
         st.subheader("Total Yearly Fish Landing by State")
 
