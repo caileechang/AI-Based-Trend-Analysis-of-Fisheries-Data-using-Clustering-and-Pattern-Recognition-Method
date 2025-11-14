@@ -602,7 +602,7 @@ def main():
         st.session_state['best_k_yearly'] = best_k_yearly
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
-        st.subheader("Yearly K-Means Cluster Trends for Marine and Freshwater Fish")
+        st.subheader("Fish Landing Trends (Cluster-Based Analysis)")
         # ======================================
         #           CARD STYLE (GLOBAL)
         # ======================================
@@ -655,7 +655,7 @@ def main():
         ma_prev = safe_get(yearly_summary, prev_year, "Marine (Tonnes)")
     
         # ---- Display summary ----
-        st.markdown(f"## Landing Summary in {latest_year}")
+        st.markdown(f"## Fisheries Landing Summary in {latest_year}")
     
         colA, colB = st.columns(2)
     
