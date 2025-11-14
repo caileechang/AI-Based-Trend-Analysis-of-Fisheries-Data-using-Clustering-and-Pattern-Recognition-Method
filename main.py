@@ -498,7 +498,7 @@ def main():
             data=filtered_sorted,
             x='State',
             y='Total Fish Landing (Tonnes)',
-            #order=filtered_sorted['State'],
+            order=filtered_sorted['State'],
             palette='Blues_d',
             ax=ax
         )
