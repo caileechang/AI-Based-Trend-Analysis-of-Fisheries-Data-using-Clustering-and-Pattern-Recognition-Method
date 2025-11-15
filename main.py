@@ -212,11 +212,12 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
 
 def hierarchical_clustering(merged_df):
 
-    from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+    from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, leaves_list
     from sklearn.preprocessing import StandardScaler
     import matplotlib.pyplot as plt
+    import numpy as np
 
-    st.subheader("Hierarchical Clustering")
+    st.subheader("Hierarchical Clustering (Tier-Colored)")
 
     # ----------------------------
     # Clean Valid States
@@ -241,8 +242,9 @@ def hierarchical_clustering(merged_df):
         st.warning("No valid state records after filtering.")
         return
 
+    # ----------------------------
     # User selects year
-  
+    # ----------------------------
     available_years = sorted(df["Year"].unique())
     selected_year = st.selectbox("Select Year:", available_years, index=len(available_years)-1)
 
@@ -251,11 +253,12 @@ def hierarchical_clustering(merged_df):
         st.warning("No data available for the selected year.")
         return
 
-    # Aggregate Data
- 
+    # ----------------------------
+    # Aggregate Data (Average)
+    # ----------------------------
     grouped = (
         df_year.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
-        .sum()
+        .mean()
         .reset_index()
     )
 
@@ -264,110 +267,116 @@ def hierarchical_clustering(merged_df):
     # Scale landing only
     scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
 
-    # WARD LINKAGE ONLY
- 
+    # ----------------------------
+    # Ward Linkage
+    # ----------------------------
     Z = linkage(scaled, method="ward")
 
-    # Plot dendrogram
-   
-    label_map = {
-        "JOHOR TIMUR/EAST JOHORE": "Johor Timur",
-        "JOHOR BARAT/WEST JOHORE": "Johor Barat",
-        "W.P. LABUAN": "Labuan",
-        "PULAU PINANG": "Penang",
-        "NEGERI SEMBILAN": "NS",
-    }
-    
-    grouped["ShortLabel"] = grouped["State"].replace(label_map).str.title()
-    fig, ax = plt.subplots(figsize=(16, 6))
-    dendrogram(
-        Z,
-        labels=grouped["State"].tolist(),
-        leaf_rotation=45,
-        leaf_font_size=10
-    )
-
-    # Force labels to align horizontally
-    plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
-    ax.set_title(f"State Similarity Dendrogram – {selected_year}")
-    ax.set_ylabel("Distance")
-    st.pyplot(fig)
-
-    # Cluster grouping
- 
-    st.markdown("""
-    <style>
-    div.stSlider > div[data-baseweb="slider"] {
-        width: 300px !important;    
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
+    # ----------------------------
+    # Slider for clusters
+    # ----------------------------
     num_clusters = st.slider("Number of clusters:", 2, 6, 3)
-    grouped["Cluster"] = fcluster(Z, num_clusters, criterion="maxclust")
+    raw_cluster = fcluster(Z, num_clusters, criterion="maxclust")
+    grouped["RawCluster"] = raw_cluster
 
+    # ----------------------------
     # Compute cluster summary
+    # ----------------------------
     cluster_summary = (
-        grouped.groupby("Cluster")[features]
+        grouped.groupby("RawCluster")[features]
         .mean()
         .reset_index()
     )
 
-    # Step 1: Sort clusters by Avg Landing
-    cluster_summary = cluster_summary.sort_values(
-        "Total Fish Landing (Tonnes)"
-    ).reset_index(drop=True)
+    # Sort clusters by landing
+    cluster_summary = cluster_summary.sort_values("Total Fish Landing (Tonnes)").reset_index(drop=True)
 
-    # Step 2: Assign rank-based Low/Medium/High labels
+    # Assign new cluster numbers
+    cluster_summary["Cluster"] = cluster_summary.index + 1
+
+    # Tier labeling
     n = len(cluster_summary)
 
-    def assign_label(i, n):
+    def assign_tier(i, n):
         if i < n * (1/3):
-            return "Low-Production Zone"
+            return "Low"
         elif i < n * (2/3):
-            return "Medium Output Zone"
+            return "Medium"
         else:
-            return "High-Production Zone"
+            return "High"
 
-    cluster_summary["Cluster Label"] = [
-        assign_label(i, n) for i in range(n)
-    ]
+    cluster_summary["Tier"] = [assign_tier(i, n) for i in range(n)]
 
-    # Step 3: Map labels back to original clusters
-    cluster_label_map = {
-        row["Cluster"]: row["Cluster Label"] 
-        for _, row in cluster_summary.iterrows()
-    }
+    # Map new cluster numbers and tiers back to grouped
+    cluster_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Cluster"]))
+    tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
 
-    grouped["Cluster Label"] = grouped["Cluster"].map(cluster_label_map)
+    grouped["Cluster"] = grouped["RawCluster"].map(cluster_map)
+    grouped["Tier"] = grouped["Cluster"].map(tier_map)
 
-    # Interpretation
     # ----------------------------
-# Improved Interpretation (with ranges)
-# ----------------------------
-    st.markdown("### Interpretation of Clusters")
+    # Reorder dendrogram leaves by tier
+    # ----------------------------
+    leaf_order = leaves_list(Z)
 
+    ordered_states = grouped.iloc[leaf_order].copy()
+
+    # Sort by tier: Low → Medium → High
+    ordered_states = ordered_states.sort_values("Tier")
+
+    new_order = ordered_states.index.values
+
+    # ----------------------------
+    # Color mapping for tiers
+    # ----------------------------
+    tier_colors = {"Low": "blue", "Medium": "orange", "High": "red"}
+    leaf_colors = [tier_colors[t] for t in ordered_states["Tier"]]
+
+    # ----------------------------
+    # Plot dendrogram with new order + colors
+    # ----------------------------
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    dendrogram(
+        Z,
+        labels=ordered_states["State"].tolist(),
+        leaf_rotation=45,
+        leaf_font_size=10,
+        color_threshold=0,
+        leaf_font_color=leaf_colors,
+        link_color_func=lambda k: 'grey', 
+        orientation="top",
+        reorder=new_order
+    )
+
+    ax.set_title(f"Tier-Colored Dendrogram – {selected_year}")
+    ax.set_ylabel("Distance")
+
+    st.pyplot(fig)
+
+    # ----------------------------
+    # Interpretation (with ranges)
+    # ----------------------------
+    st.markdown("### Interpretation of Clusters")
     interpretation = ""
 
     for _, row in cluster_summary.iterrows():
         cluster_id = int(row["Cluster"])
+        tier = row["Tier"]
+        states_in_cluster = grouped[grouped["Cluster"] == cluster_id]
 
-        # Filter states in this cluster
-        cluster_states = grouped[grouped["Cluster"] == cluster_id]
+        min_land = states_in_cluster["Total Fish Landing (Tonnes)"].min()
+        max_land = states_in_cluster["Total Fish Landing (Tonnes)"].max()
 
-        # Compute ranges for meaningful interpretation
-        min_landing = cluster_states["Total Fish Landing (Tonnes)"].min()
-        max_landing = cluster_states["Total Fish Landing (Tonnes)"].max()
-
-        min_vessel = cluster_states["Total number of fishing vessels"].min()
-        max_vessel = cluster_states["Total number of fishing vessels"].max()
+        min_ves = states_in_cluster["Total number of fishing vessels"].min()
+        max_ves = states_in_cluster["Total number of fishing vessels"].max()
 
         interpretation += (
-            f"### Cluster {cluster_id} – {row['Cluster Label']}\n"
+            f"### Cluster {cluster_id} – {tier}-Production Zone\n"
             f"- **Avg Landing:** {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
-            f"- **Landing Range:** {min_landing:.2f} → {max_landing:.2f} tonnes\n"
+            f"- **Landing Range:** {min_land:.2f} → {max_land:.2f} tonnes\n"
             f"- **Avg Vessels:** {row['Total number of fishing vessels']:.0f}\n"
-            f"- **Vessel Range:** {min_vessel:.0f} → {max_vessel:.0f}\n\n"
+            f"- **Vessel Range:** {min_ves:.0f} → {max_ves:.0f}\n\n"
         )
 
     st.info(interpretation)
