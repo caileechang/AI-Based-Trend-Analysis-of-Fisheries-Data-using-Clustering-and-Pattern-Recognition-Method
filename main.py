@@ -219,10 +219,10 @@ def hierarchical_clustering(merged_df):
     from sklearn.preprocessing import StandardScaler
     import matplotlib.pyplot as plt
 
-    st.subheader("Hierarchical Clustering (State Similarity Based on Fish Landing)")
+    st.subheader("Hierarchical Clustering (Ward Linkage – Recommended)")
 
     # ----------------------------
-    # STEP 1 — Clean Valid States
+    # Clean Valid States
     # ----------------------------
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
@@ -245,7 +245,7 @@ def hierarchical_clustering(merged_df):
         return
 
     # ----------------------------
-    # STEP 2 — User selects year
+    # User selects year
     # ----------------------------
     available_years = sorted(df["Year"].unique())
     selected_year = st.selectbox("Select Year:", available_years, index=len(available_years)-1)
@@ -256,7 +256,7 @@ def hierarchical_clustering(merged_df):
         return
 
     # ----------------------------
-    # STEP 3 — Aggregate Data
+    # Aggregate Data
     # ----------------------------
     grouped = (
         df_year.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
@@ -266,39 +266,37 @@ def hierarchical_clustering(merged_df):
 
     features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
 
-    # Scale fish landing only
+    # Scale landing only
     scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
 
     # ----------------------------
-    # STEP 4 — Linkage selection
-    # (Removed single linkage – useless)
+    # WARD LINKAGE ONLY
     # ----------------------------
-    method = st.selectbox("Linkage method:",
-                          ["ward", "average", "complete"],
-                          index=0)
-
-    Z = linkage(scaled, method=method)
+    Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # STEP 5 — Plot dendrogram
+    # Plot dendrogram
     # ----------------------------
     fig, ax = plt.subplots(figsize=(10, 5))
-    dendrogram(Z, labels=grouped["State"].tolist(), leaf_rotation=45, leaf_font_size=9)
-    ax.set_title(f"State Similarity Dendrogram – {selected_year} ({method.title()} Linkage)")
+    dendrogram(
+        Z,
+        labels=grouped["State"].tolist(),
+        leaf_rotation=45,
+        leaf_font_size=9
+    )
+    ax.set_title(f"State Similarity Dendrogram – {selected_year} (Ward Linkage)")
     ax.set_ylabel("Distance")
     st.pyplot(fig)
 
     # ----------------------------
-    # STEP 6 — Cluster grouping (Meaningful)
+    # Cluster grouping
     # ----------------------------
     if st.checkbox("Show cluster grouping", value=True):
 
         num_clusters = st.slider("Number of clusters:", 2, 6, 3)
         grouped["Cluster"] = fcluster(Z, num_clusters, criterion="maxclust")
 
-        # -------------------------
-        # AUTO LABEL CLUSTER MEANING
-        # -------------------------
+        # Auto naming clusters based on landing volume
         def name_cluster(mean_val):
             if mean_val > grouped["Total Fish Landing (Tonnes)"].quantile(0.75):
                 return "High-Production Zone"
@@ -312,12 +310,9 @@ def hierarchical_clustering(merged_df):
             .mean()
             .reset_index()
         )
-
         cluster_summary["Cluster Label"] = cluster_summary["Total Fish Landing (Tonnes)"].apply(name_cluster)
 
-        # -------------------------
-        # DISPLAY GROUPS
-        # -------------------------
+        # Display group table
         st.markdown(f"### 📌 Cluster Assignments ({selected_year})")
         st.dataframe(
             grouped[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]]
@@ -325,17 +320,12 @@ def hierarchical_clustering(merged_df):
             .reset_index(drop=True)
         )
 
-        # -------------------------
-        # SHOW SUMMARY WITH LABELS
-        # -------------------------
-        st.markdown("### ⭐ Cluster Summary (Meaningful Labels)")
+        # Display cluster summary
+        st.markdown("### ⭐ Cluster Summary (With Labels)")
         st.dataframe(cluster_summary)
 
-        # -------------------------
-        # STEP 7 — INTERPRETATION BOX
-        # -------------------------
-        st.markdown("### 🧠 Interpretation (Auto-generated insights)")
-
+        # Auto-generated interpretations
+        st.markdown("### 🧠 Interpretation of Clusters")
         interpretation = ""
         for _, row in cluster_summary.iterrows():
             interpretation += (
@@ -343,14 +333,12 @@ def hierarchical_clustering(merged_df):
                 f"- Avg Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
                 f"- Avg Vessels: {row['Total number of fishing vessels']:.0f}\n\n"
             )
-
         st.info(interpretation)
 
-        # -------------------------
-        # STEP 8 — Detect Outliers
-        # -------------------------
+        # ----------------------------
+        # Outlier Detection (IQR)
+        # ----------------------------
         st.markdown("### 🔍 Outlier Detection")
-
         Q1 = grouped["Total Fish Landing (Tonnes)"].quantile(0.25)
         Q3 = grouped["Total Fish Landing (Tonnes)"].quantile(0.75)
         IQR = Q3 - Q1
@@ -361,9 +349,9 @@ def hierarchical_clustering(merged_df):
         ]
 
         if outliers.empty:
-            st.success("No outlier states detected.")
+            st.success("No outliers detected for this year.")
         else:
-            st.warning("Outlier States (Unusual Fish Landing Patterns):")
+            st.warning("Outlier States Detected:")
             st.dataframe(outliers)
 
 
