@@ -310,21 +310,41 @@ def hierarchical_clustering(merged_df):
         "k": cand_k,
         "Silhouette Score": [sil_scores[k] for k in cand_k],
     }))
+# ----------------------------
+# SIDE-BY-SIDE LAYOUT
+# ----------------------------
+    col1, col2 = st.columns([1, 1.2])  # adjust ratio here
 
-    # ----------------------------
-    # Silhouette Diagram
-    # ----------------------------
-    fig, ax = plt.subplots(figsize=(7, 4))
-    ax.plot(cand_k, [sil_scores[k] for k in cand_k], marker="o")
-    ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
-    ax.set_xlabel("Number of Clusters (k)")
-    ax.set_ylabel("Silhouette Score")
-    ax.set_title("Silhouette Score vs Number of Clusters")
-    ax.legend()
-    st.pyplot(fig)
+    # Table (Left side)
+    with col1:
+        st.write("#### Silhouette Scores Table")
+        st.dataframe(
+            pd.DataFrame({
+                "k": cand_k,
+                "Silhouette Score": [sil_scores[k] for k in cand_k],
+            }),
+            use_container_width=True,
+            height=230   # adjust table height
+        )
+
+    # Plot (Right side)
+    with col2:
+        st.write("#### Silhouette Score Curve")
+
+        fig, ax = plt.subplots(figsize=(5, 3))     # 🔥 Make diagram smaller
+
+        ax.plot(cand_k, [sil_scores[k] for k in cand_k], marker="o")
+        ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
+
+        ax.set_xlabel("Number of Clusters (k)")
+        ax.set_ylabel("Silhouette Score")
+        ax.set_title("Silhouette Score vs Number of Clusters")
+        ax.legend()
+
+        st.pyplot(fig)
 
     st.success(f"**Optimal number of clusters selected: k = {best_k} (Silhouette = {best_sil:.4f})**")
-
+   
     # ----------------------------
     # Final Clustering using best_k
     # ----------------------------
