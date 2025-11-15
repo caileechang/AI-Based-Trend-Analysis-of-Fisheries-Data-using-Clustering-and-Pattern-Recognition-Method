@@ -213,8 +213,6 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
 
 def hierarchical_clustering(merged_df):
 
-    import numpy as np
-    import pandas as pd
     from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
     from sklearn.preprocessing import StandardScaler
     import matplotlib.pyplot as plt
@@ -277,13 +275,16 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Plot dendrogram
     # ----------------------------
-    fig, ax = plt.subplots(figsize=(10, 5))
+    fig, ax = plt.subplots(figsize=(14, 6))
     dendrogram(
         Z,
         labels=grouped["State"].tolist(),
-        leaf_rotation=45,
-        leaf_font_size=9
+        leaf_rotation=0,
+        leaf_font_size=10
     )
+
+    # Force labels to align horizontally
+    plt.setp(ax.get_xticklabels(), rotation=0, ha='center')
     ax.set_title(f"State Similarity Dendrogram – {selected_year} (Ward Linkage)")
     ax.set_ylabel("Distance")
     st.pyplot(fig)
@@ -312,20 +313,8 @@ def hierarchical_clustering(merged_df):
         )
         cluster_summary["Cluster Label"] = cluster_summary["Total Fish Landing (Tonnes)"].apply(name_cluster)
 
-        # Display group table
-        st.markdown(f"### 📌 Cluster Assignments ({selected_year})")
-        st.dataframe(
-            grouped[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]]
-            .sort_values("Cluster")
-            .reset_index(drop=True)
-        )
-
-        # Display cluster summary
-        st.markdown("### ⭐ Cluster Summary (With Labels)")
-        st.dataframe(cluster_summary)
-
-        # Auto-generated interpretations
-        st.markdown("### 🧠 Interpretation of Clusters")
+         # Auto-generated interpretations
+        st.markdown("### Interpretation of Clusters")
         interpretation = ""
         for _, row in cluster_summary.iterrows():
             interpretation += (
@@ -334,6 +323,19 @@ def hierarchical_clustering(merged_df):
                 f"- Avg Vessels: {row['Total number of fishing vessels']:.0f}\n\n"
             )
         st.info(interpretation)
+        # Display group table
+        st.markdown(f"### Cluster Assignments ({selected_year})")
+        st.dataframe(
+            grouped[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]]
+            .sort_values("Cluster")
+            .reset_index(drop=True)
+        )
+
+        # Display cluster summary
+        st.markdown("### Cluster Summary (With Labels)")
+        st.dataframe(cluster_summary)
+
+       
 
         # ----------------------------
         # Outlier Detection (IQR)
