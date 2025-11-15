@@ -48,9 +48,8 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
-    # ========================
-    # VALID MALAYSIAN STATES
-    # ========================
+
+
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
