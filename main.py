@@ -217,7 +217,7 @@ def hierarchical_clustering(merged_df):
     from sklearn.preprocessing import StandardScaler
     import matplotlib.pyplot as plt
 
-    st.subheader("Hierarchical Clustering (Ward Linkage – Recommended)")
+    st.subheader("Hierarchical Clustering")
 
     # ----------------------------
     # Clean Valid States
@@ -275,17 +275,27 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Plot dendrogram
     # ----------------------------
-    fig, ax = plt.subplots(figsize=(14, 6))
+    # Shorten labels for cleaner display
+    label_map = {
+        "JOHOR TIMUR/EAST JOHORE": "Johor Timur",
+        "JOHOR BARAT/WEST JOHORE": "Johor Barat",
+        "W.P. LABUAN": "Labuan",
+        "PULAU PINANG": "Penang",
+        "NEGERI SEMBILAN": "NS",
+    }
+    
+    grouped["ShortLabel"] = grouped["State"].replace(label_map).str.title()
+    fig, ax = plt.subplots(figsize=(16, 6))
     dendrogram(
         Z,
         labels=grouped["State"].tolist(),
-        leaf_rotation=0,
+        leaf_rotation=45,
         leaf_font_size=10
     )
 
     # Force labels to align horizontally
-    plt.setp(ax.get_xticklabels(), rotation=0, ha='center')
-    ax.set_title(f"State Similarity Dendrogram – {selected_year} (Ward Linkage)")
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+    ax.set_title(f"State Similarity Dendrogram – {selected_year}")
     ax.set_ylabel("Distance")
     st.pyplot(fig)
 
