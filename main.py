@@ -212,12 +212,18 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
 
 
 def hierarchical_clustering(merged_df):
-  
+
+    import numpy as np
+    import pandas as pd
     from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+    from sklearn.preprocessing import StandardScaler
+    import matplotlib.pyplot as plt
 
-    st.subheader("Hierarchical Clustering (Total Fish Landing)")
+    st.subheader("Hierarchical Clustering (State Similarity Based on Fish Landing)")
 
-    # --- STEP 1: Define valid Malaysian states ---
+    # ----------------------------
+    # STEP 1 — Clean Valid States
+    # ----------------------------
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -225,35 +231,33 @@ def hierarchical_clustering(merged_df):
         "SABAH", "SARAWAK", "W.P. LABUAN"
     ]
 
-    # --- STEP 2: Clean data and filter for valid states ---
     df = merged_df.copy()
     df["State"] = (
-        df["State"]
-        .astype(str)
-        .str.upper()
+        df["State"].astype(str).str.upper()
         .str.strip()
         .str.replace(r"\s*/\s*", "/", regex=True)
         .str.replace(r"\s+", " ", regex=True)
     )
-
     df = df[df["State"].isin(valid_states)]
+
     if df.empty:
-        st.warning("No valid state records found after filtering.")
+        st.warning("No valid state records after filtering.")
         return
 
-
-   
-
-    # --- Step 2: Let user choose the year ---
-    available_years = sorted(df["Year"].dropna().unique())
-    selected_year = st.selectbox("Select Year to Cluster:", available_years, index=len(available_years) - 1)
+    # ----------------------------
+    # STEP 2 — User selects year
+    # ----------------------------
+    available_years = sorted(df["Year"].unique())
+    selected_year = st.selectbox("Select Year:", available_years, index=len(available_years)-1)
 
     df_year = df[df["Year"] == selected_year]
     if df_year.empty:
         st.warning("No data available for the selected year.")
         return
 
-    # --- Step 3: Aggregate by state for that year ---
+    # ----------------------------
+    # STEP 3 — Aggregate Data
+    # ----------------------------
     grouped = (
         df_year.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         .sum()
@@ -262,73 +266,105 @@ def hierarchical_clustering(merged_df):
 
     features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
 
-    # Scale data
+    # Scale fish landing only
     scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
 
-    # --- STEP 5: Let user choose linkage method ---
-    method = st.selectbox("Select linkage method:", ["ward", "complete", "average", "single"], index=0)
+    # ----------------------------
+    # STEP 4 — Linkage selection
+    # (Removed single linkage – useless)
+    # ----------------------------
+    method = st.selectbox("Linkage method:",
+                          ["ward", "average", "complete"],
+                          index=0)
 
-    # --- STEP 6: Compute linkage ---
-    linked = linkage(scaled, method=method)
+    Z = linkage(scaled, method=method)
 
+    # ----------------------------
+    # STEP 5 — Plot dendrogram
+    # ----------------------------
     fig, ax = plt.subplots(figsize=(10, 5))
-    dendrogram(
-        linked,
-        labels=grouped["State"].tolist(),
-        leaf_rotation=45,
-        leaf_font_size=9
-    )
-    ax.set_title(f"Hierarchical Clustering of States – {selected_year} ({method.title()} linkage)")
-    ax.set_xlabel("State")
+    dendrogram(Z, labels=grouped["State"].tolist(), leaf_rotation=45, leaf_font_size=9)
+    ax.set_title(f"State Similarity Dendrogram – {selected_year} ({method.title()} Linkage)")
     ax.set_ylabel("Distance")
     st.pyplot(fig)
 
-    # --- Step 7: Optional: allow user to cut dendrogram into clusters ---
-    if st.checkbox("Show cluster grouping", value=False):
-        num_clusters = st.slider("Select number of clusters", 2, 10, 3)
-        grouped["Cluster"] = fcluster(linked, num_clusters, criterion="maxclust")
+    # ----------------------------
+    # STEP 6 — Cluster grouping (Meaningful)
+    # ----------------------------
+    if st.checkbox("Show cluster grouping", value=True):
 
-        st.markdown(f"### Cluster Assignments for {selected_year} (k = {num_clusters})")
-        st.dataframe(grouped.sort_values("Cluster").reset_index(drop=True))
+        num_clusters = st.slider("Number of clusters:", 2, 6, 3)
+        grouped["Cluster"] = fcluster(Z, num_clusters, criterion="maxclust")
 
-        # --- Summary ---
-        summary = (
+        # -------------------------
+        # AUTO LABEL CLUSTER MEANING
+        # -------------------------
+        def name_cluster(mean_val):
+            if mean_val > grouped["Total Fish Landing (Tonnes)"].quantile(0.75):
+                return "High-Production Zone"
+            elif mean_val > grouped["Total Fish Landing (Tonnes)"].quantile(0.40):
+                return "Medium Output Zone"
+            else:
+                return "Low-Production Zone"
+
+        cluster_summary = (
             grouped.groupby("Cluster")[features]
             .mean()
             .reset_index()
         )
-        st.markdown(f"### Average Values per Cluster ({selected_year})")
-        st.dataframe(summary)
-        
-# ===========================
-# Sticky Dashboard Header
-# ===========================
-st.markdown("""
-<style>
 
-.sticky-header {
-    position: sticky;
-    top: 0;
-    background-color: #0e1117;   /* Streamlit dark background */
-    padding: 25px 10px 20px 10px;
-    z-index: 999;
-    border-bottom: 1px solid #333;
-}
+        cluster_summary["Cluster Label"] = cluster_summary["Total Fish Landing (Tonnes)"].apply(name_cluster)
 
-.sticky-header h1 {
-    font-size: 44px;
-    font-weight: 800;
-    color: white;
-    margin: 0;
-}
+        # -------------------------
+        # DISPLAY GROUPS
+        # -------------------------
+        st.markdown(f"### 📌 Cluster Assignments ({selected_year})")
+        st.dataframe(
+            grouped[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]]
+            .sort_values("Cluster")
+            .reset_index(drop=True)
+        )
 
-</style>
+        # -------------------------
+        # SHOW SUMMARY WITH LABELS
+        # -------------------------
+        st.markdown("### ⭐ Cluster Summary (Meaningful Labels)")
+        st.dataframe(cluster_summary)
 
-<div class="sticky-header">
-    <h1>Fisheries Clustering & Pattern Recognition Dashboard</h1>
-</div>
+        # -------------------------
+        # STEP 7 — INTERPRETATION BOX
+        # -------------------------
+        st.markdown("### 🧠 Interpretation (Auto-generated insights)")
 
-""", unsafe_allow_html=True)
+        interpretation = ""
+        for _, row in cluster_summary.iterrows():
+            interpretation += (
+                f"**Cluster {int(row['Cluster'])} – {row['Cluster Label']}**\n"
+                f"- Avg Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
+                f"- Avg Vessels: {row['Total number of fishing vessels']:.0f}\n\n"
+            )
+
+        st.info(interpretation)
+
+        # -------------------------
+        # STEP 8 — Detect Outliers
+        # -------------------------
+        st.markdown("### 🔍 Outlier Detection")
+
+        Q1 = grouped["Total Fish Landing (Tonnes)"].quantile(0.25)
+        Q3 = grouped["Total Fish Landing (Tonnes)"].quantile(0.75)
+        IQR = Q3 - Q1
+
+        outliers = grouped[
+            (grouped["Total Fish Landing (Tonnes)"] < (Q1 - 1.5 * IQR)) |
+            (grouped["Total Fish Landing (Tonnes)"] > (Q3 + 1.5 * IQR))
+        ]
+
+        if outliers.empty:
+            st.success("No outlier states detected.")
+        else:
+            st.warning("Outlier States (Unusual Fish Landing Patterns):")
+            st.dataframe(outliers)
 
 
     
