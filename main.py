@@ -83,9 +83,9 @@ def prepare_yearly(df_land, df_vess):
     land = land.dropna(subset=['State'])
     land = land[land['State'].isin(valid_states)]
 
-    # ======================================================
-    # 2) GROUP df_land → yearly freshwater/marine totals
-    # ======================================================
+   
+    # GROUP df_land → yearly freshwater/marine totals
+   
     yearly_totals = (
         land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
             .sum()
@@ -146,9 +146,9 @@ def prepare_yearly(df_land, df_vess):
     df_vess = df_vess.dropna(subset=['Year'])
     df_vess['Year'] = df_vess['Year'].astype(int)
 
-    # ======================================================
-    # 4) MERGE CLEAN df_land + CLEAN df_vess
-    # ======================================================
+   
+    # MERGE CLEAN df_land + CLEAN df_vess
+
     merged = pd.merge(
         yearly_pivot,
         df_vess[['State', 'Year', 'Total number of fishing vessels']],
@@ -241,9 +241,8 @@ def hierarchical_clustering(merged_df):
         st.warning("No valid state records after filtering.")
         return
 
-    # ----------------------------
     # User selects year
-    # ----------------------------
+  
     available_years = sorted(df["Year"].unique())
     selected_year = st.selectbox("Select Year:", available_years, index=len(available_years)-1)
 
@@ -252,9 +251,8 @@ def hierarchical_clustering(merged_df):
         st.warning("No data available for the selected year.")
         return
 
-    # ----------------------------
     # Aggregate Data
-    # ----------------------------
+ 
     grouped = (
         df_year.groupby("State")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         .sum()
@@ -266,15 +264,12 @@ def hierarchical_clustering(merged_df):
     # Scale landing only
     scaled = StandardScaler().fit_transform(grouped[["Total Fish Landing (Tonnes)"]])
 
-    # ----------------------------
     # WARD LINKAGE ONLY
-    # ----------------------------
+ 
     Z = linkage(scaled, method="ward")
 
-    # ----------------------------
     # Plot dendrogram
-    # ----------------------------
-    # Shorten labels for cleaner display
+   
     label_map = {
         "JOHOR TIMUR/EAST JOHORE": "Johor Timur",
         "JOHOR BARAT/WEST JOHORE": "Johor Barat",
@@ -298,16 +293,23 @@ def hierarchical_clustering(merged_df):
     ax.set_ylabel("Distance")
     st.pyplot(fig)
 
-    # ----------------------------
     # Cluster grouping
-    # ----------------------------
-    if st.checkbox("Show cluster grouping", value=True):
+ 
+    st.markdown("""
+    <style>
+    div.stSlider > div[data-baseweb="slider"] {
+        width: 300px !important;    
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-        num_clusters = st.slider("Number of clusters:", 2, 6, 3)
-        grouped["Cluster"] = fcluster(Z, num_clusters, criterion="maxclust")
+    
+
+    num_clusters = st.slider("Number of clusters:", 2, 6, 3)
+    grouped["Cluster"] = fcluster(Z, num_clusters, criterion="maxclust")
 
         # Auto naming clusters based on landing volume
-        def name_cluster(mean_val):
+    def name_cluster(mean_val):
             if mean_val > grouped["Total Fish Landing (Tonnes)"].quantile(0.75):
                 return "High-Production Zone"
             elif mean_val > grouped["Total Fish Landing (Tonnes)"].quantile(0.40):
@@ -315,53 +317,53 @@ def hierarchical_clustering(merged_df):
             else:
                 return "Low-Production Zone"
 
-        cluster_summary = (
+    cluster_summary = (
             grouped.groupby("Cluster")[features]
             .mean()
             .reset_index()
         )
-        cluster_summary["Cluster Label"] = cluster_summary["Total Fish Landing (Tonnes)"].apply(name_cluster)
+    cluster_summary["Cluster Label"] = cluster_summary["Total Fish Landing (Tonnes)"].apply(name_cluster)
 
          # Auto-generated interpretations
-        st.markdown("### Interpretation of Clusters")
-        interpretation = ""
-        for _, row in cluster_summary.iterrows():
+    st.markdown("### Interpretation of Clusters")
+    interpretation = ""
+    for _, row in cluster_summary.iterrows():
             interpretation += (
                 f"**Cluster {int(row['Cluster'])} – {row['Cluster Label']}**\n"
                 f"- Avg Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
                 f"- Avg Vessels: {row['Total number of fishing vessels']:.0f}\n\n"
             )
-        st.info(interpretation)
+    st.info(interpretation)
         # Display group table
-        st.markdown(f"### Cluster Assignments ({selected_year})")
-        st.dataframe(
+    st.markdown(f"### Cluster Assignments ({selected_year})")
+    st.dataframe(
             grouped[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]]
             .sort_values("Cluster")
             .reset_index(drop=True)
         )
 
         # Display cluster summary
-        st.markdown("### Cluster Summary (With Labels)")
-        st.dataframe(cluster_summary)
+    st.markdown("### Cluster Summary (With Labels)")
+    st.dataframe(cluster_summary)
 
        
 
         # ----------------------------
         # Outlier Detection (IQR)
         # ----------------------------
-        st.markdown("### 🔍 Outlier Detection")
-        Q1 = grouped["Total Fish Landing (Tonnes)"].quantile(0.25)
-        Q3 = grouped["Total Fish Landing (Tonnes)"].quantile(0.75)
-        IQR = Q3 - Q1
+    st.markdown("### 🔍 Outlier Detection")
+    Q1 = grouped["Total Fish Landing (Tonnes)"].quantile(0.25)
+    Q3 = grouped["Total Fish Landing (Tonnes)"].quantile(0.75)
+    IQR = Q3 - Q1
 
-        outliers = grouped[
+    outliers = grouped[
             (grouped["Total Fish Landing (Tonnes)"] < (Q1 - 1.5 * IQR)) |
             (grouped["Total Fish Landing (Tonnes)"] > (Q3 + 1.5 * IQR))
         ]
 
-        if outliers.empty:
+    if outliers.empty:
             st.success("No outliers detected for this year.")
-        else:
+    else:
             st.warning("Outlier States Detected:")
             st.dataframe(outliers)
 
