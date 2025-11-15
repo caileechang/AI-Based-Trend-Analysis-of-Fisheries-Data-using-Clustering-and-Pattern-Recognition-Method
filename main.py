@@ -303,55 +303,80 @@ def hierarchical_clustering(merged_df):
     </style>
     """, unsafe_allow_html=True)
 
-    
-
     num_clusters = st.slider("Number of clusters:", 2, 6, 3)
     grouped["Cluster"] = fcluster(Z, num_clusters, criterion="maxclust")
 
-        # Auto naming clusters based on landing volume
-    def name_cluster(mean_val):
-            if mean_val > grouped["Total Fish Landing (Tonnes)"].quantile(0.75):
-                return "High-Production Zone"
-            elif mean_val > grouped["Total Fish Landing (Tonnes)"].quantile(0.40):
-                return "Medium Output Zone"
-            else:
-                return "Low-Production Zone"
-
+    # Compute cluster summary
     cluster_summary = (
-            grouped.groupby("Cluster")[features]
-            .mean()
-            .reset_index()
-        )
-    cluster_summary["Cluster Label"] = cluster_summary["Total Fish Landing (Tonnes)"].apply(name_cluster)
+        grouped.groupby("Cluster")[features]
+        .mean()
+        .reset_index()
+    )
 
-         # Auto-generated interpretations
+    # Step 1: Sort clusters by Avg Landing
+    cluster_summary = cluster_summary.sort_values(
+        "Total Fish Landing (Tonnes)"
+    ).reset_index(drop=True)
+
+    # Step 2: Assign rank-based Low/Medium/High labels
+    n = len(cluster_summary)
+
+    def assign_label(i, n):
+        if i < n * (1/3):
+            return "Low-Production Zone"
+        elif i < n * (2/3):
+            return "Medium Output Zone"
+        else:
+            return "High-Production Zone"
+
+    cluster_summary["Cluster Label"] = [
+        assign_label(i, n) for i in range(n)
+    ]
+
+    # Step 3: Map labels back to original clusters
+    cluster_label_map = {
+        row["Cluster"]: row["Cluster Label"] 
+        for _, row in cluster_summary.iterrows()
+    }
+
+    grouped["Cluster Label"] = grouped["Cluster"].map(cluster_label_map)
+
+    # Interpretation
+    # ----------------------------
+# Improved Interpretation (with ranges)
+# ----------------------------
     st.markdown("### Interpretation of Clusters")
+
     interpretation = ""
+
     for _, row in cluster_summary.iterrows():
-            interpretation += (
-                f"**Cluster {int(row['Cluster'])} – {row['Cluster Label']}**\n"
-                f"- Avg Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
-                f"- Avg Vessels: {row['Total number of fishing vessels']:.0f}\n\n"
-            )
-    st.info(interpretation)
-        # Display group table
-    st.markdown(f"### Cluster Assignments ({selected_year})")
-    st.dataframe(
-            grouped[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels", "Cluster"]]
-            .sort_values("Cluster")
-            .reset_index(drop=True)
+        cluster_id = int(row["Cluster"])
+
+        # Filter states in this cluster
+        cluster_states = grouped[grouped["Cluster"] == cluster_id]
+
+        # Compute ranges for meaningful interpretation
+        min_landing = cluster_states["Total Fish Landing (Tonnes)"].min()
+        max_landing = cluster_states["Total Fish Landing (Tonnes)"].max()
+
+        min_vessel = cluster_states["Total number of fishing vessels"].min()
+        max_vessel = cluster_states["Total number of fishing vessels"].max()
+
+        interpretation += (
+            f"### Cluster {cluster_id} – {row['Cluster Label']}\n"
+            f"- **Avg Landing:** {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
+            f"- **Landing Range:** {min_landing:.2f} → {max_landing:.2f} tonnes\n"
+            f"- **Avg Vessels:** {row['Total number of fishing vessels']:.0f}\n"
+            f"- **Vessel Range:** {min_vessel:.0f} → {max_vessel:.0f}\n\n"
         )
 
-        # Display cluster summary
-    st.markdown("### Cluster Summary (With Labels)")
-    st.dataframe(cluster_summary)
+    st.info(interpretation)
+
+     
 
        
-
-        # ----------------------------
-        # Outlier Detection (IQR)
-        # ----------------------------
-    st.markdown("### 🔍 Outlier Detection")
+    '''
+    st.markdown("### Outlier Detection")
     Q1 = grouped["Total Fish Landing (Tonnes)"].quantile(0.25)
     Q3 = grouped["Total Fish Landing (Tonnes)"].quantile(0.75)
     IQR = Q3 - Q1
@@ -366,6 +391,7 @@ def hierarchical_clustering(merged_df):
     else:
             st.warning("Outlier States Detected:")
             st.dataframe(outliers)
+    '''
 
 
     
