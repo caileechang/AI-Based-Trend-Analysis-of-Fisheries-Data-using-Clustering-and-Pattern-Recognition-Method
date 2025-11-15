@@ -305,11 +305,7 @@ def hierarchical_clustering(merged_df):
     best_k = max(sil_scores, key=sil_scores.get)
     best_sil = sil_scores[best_k]
 
-    # Show scores table
-    st.write(pd.DataFrame({
-        "k": cand_k,
-        "Silhouette Score": [sil_scores[k] for k in cand_k],
-    }))
+   
 # ----------------------------
 # SIDE-BY-SIDE LAYOUT
 # ----------------------------
