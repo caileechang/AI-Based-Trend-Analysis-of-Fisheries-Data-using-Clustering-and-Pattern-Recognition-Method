@@ -215,10 +215,11 @@ def hierarchical_clustering(merged_df):
     import streamlit as st
     from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, leaves_list, optimal_leaf_ordering
     from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import silhouette_score
     import matplotlib.pyplot as plt
     import numpy as np
 
-    st.subheader("Hierarchical Clustering (Tier-Colored)")
+    st.subheader("Hierarchical Clustering (Auto-Optimized Tier System)")
 
     # ----------------------------
     # Clean Valid States
@@ -244,18 +245,18 @@ def hierarchical_clustering(merged_df):
         return
 
     # ----------------------------
-    # Year Selection
+    # User selects year
     # ----------------------------
     available_years = sorted(df["Year"].unique())
     selected_year = st.selectbox("Select Year:", available_years, index=len(available_years)-1)
 
     df_year = df[df["Year"] == selected_year]
     if df_year.empty:
-        st.warning("No data available for selected year.")
+        st.warning("No data available for this year.")
         return
 
     # ----------------------------
-    # Aggregate (Average)
+    # Aggregate (Average Landing & Vessels)
     # ----------------------------
     grouped = (
         df_year.groupby("State")[["Total Fish Landing (Tonnes)",
@@ -275,14 +276,33 @@ def hierarchical_clustering(merged_df):
     Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # Slider for cluster count
+    # AUTOMATIC BEST k (Silhouette Score)
     # ----------------------------
-    num_clusters = st.slider("Number of clusters:", 2, 6, 3)
-    raw_cluster = fcluster(Z, num_clusters, criterion="maxclust")
-    grouped["RawCluster"] = raw_cluster
+    cand_k = [2, 3, 4, 5, 6]
+    sil_scores = {}
+
+    for k in cand_k:
+        labels = fcluster(Z, k, criterion="maxclust")
+        if len(set(labels)) > 1:  # silhouette requires >1 cluster
+            sil_scores[k] = silhouette_score(scaled, labels)
+        else:
+            sil_scores[k] = -1  # invalid
+
+    best_k = max(sil_scores, key=sil_scores.get)
+    best_score = sil_scores[best_k]
+
+    st.markdown("### Optimal Cluster Evaluation (Silhouette Score)")
+    for k, sc in sil_scores.items():
+        st.write(f"k = {k}: Score = {sc:.4f}")
+    st.success(f"**Optimal number of clusters = {best_k} (Score: {best_score:.4f})**")
 
     # ----------------------------
-    # Cluster Summary (Average)
+    # Final Clustering Using Best k
+    # ----------------------------
+    grouped["RawCluster"] = fcluster(Z, best_k, criterion="maxclust")
+
+    # ----------------------------
+    # Cluster Summary (Average values)
     # ----------------------------
     cluster_summary = (
         grouped.groupby("RawCluster")[features]
@@ -290,16 +310,18 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
-    # Sort clusters by average landing
-    cluster_summary = cluster_summary.sort_values("Total Fish Landing (Tonnes)").reset_index(drop=True)
+    # Sort clusters by landing → Low → Medium → High
+    cluster_summary = cluster_summary.sort_values(
+        "Total Fish Landing (Tonnes)"
+    ).reset_index(drop=True)
 
-    # Assign new ordered cluster numbers
+    # Assign ordered cluster IDs
     cluster_summary["Cluster"] = cluster_summary.index + 1
 
-    # Tier labeling
+    # Tier assignment
     n = len(cluster_summary)
 
-    def assign_tier(i, n):
+    def tier(i, n):
         if i < n * (1/3):
             return "Low"
         elif i < n * (2/3):
@@ -307,9 +329,9 @@ def hierarchical_clustering(merged_df):
         else:
             return "High"
 
-    cluster_summary["Tier"] = [assign_tier(i, n) for i in range(n)]
+    cluster_summary["Tier"] = [tier(i, n) for i in range(n)]
 
-    # Mapping back
+    # Map back
     cluster_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Cluster"]))
     tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
 
@@ -317,24 +339,25 @@ def hierarchical_clustering(merged_df):
     grouped["Tier"] = grouped["Cluster"].map(tier_map)
 
     # ----------------------------
-    # Optimal Leaf Ordering (Fixes SciPy reorder errors)
+    # Optimal Leaf Ordering
     # ----------------------------
     Z_ordered = optimal_leaf_ordering(Z, scaled)
 
     # ----------------------------
-    # Reorder states for Low → Medium → High
+    # Reorder leaves by Tier: Low → Medium → High
     # ----------------------------
     leaf_order = leaves_list(Z_ordered)
     ordered_states = grouped.iloc[leaf_order].copy()
-    ordered_states = ordered_states.sort_values("Tier")  # Low → Medium → High
+    ordered_states = ordered_states.sort_values("Tier")
 
-    # Colors
+    # Tier Colors
     tier_colors = {"Low": "blue", "Medium": "orange", "High": "red"}
     leaf_colors = [tier_colors[t] for t in ordered_states["Tier"]]
+
     labels = ordered_states["State"].tolist()
 
     # ----------------------------
-    # Plot dendrogram
+    # PLOT TIER-COLORED DENDROGRAM
     # ----------------------------
     fig, ax = plt.subplots(figsize=(16, 6))
 
@@ -343,43 +366,35 @@ def hierarchical_clustering(merged_df):
         labels=labels,
         leaf_rotation=45,
         leaf_font_size=10,
-        color_threshold=0  # allow manual color control
+        color_threshold=0
     )
 
-    # Apply tier colors to leaf labels
+    # Color leaf labels
     xlbls = ax.get_xmajorticklabels()
     for lbl, col in zip(xlbls, leaf_colors):
         lbl.set_color(col)
 
     ax.set_title(f"Tier-Colored Dendrogram – {selected_year}")
     ax.set_ylabel("Distance")
-
     st.pyplot(fig)
 
     # ----------------------------
-    # Interpretation (Ranges)
+    # Interpretation with ranges
     # ----------------------------
-    st.markdown("### Interpretation of Clusters")
+    st.markdown("### Cluster Interpretation")
     interpretation = ""
 
     for _, row in cluster_summary.iterrows():
         cid = int(row["Cluster"])
-        tier = row["Tier"]
-
-        states = grouped[grouped["Cluster"] == cid]
-
-        min_land = states["Total Fish Landing (Tonnes)"].min()
-        max_land = states["Total Fish Landing (Tonnes)"].max()
-
-        min_ves = states["Total number of fishing vessels"].min()
-        max_ves = states["Total number of fishing vessels"].max()
+        tier_label = row["Tier"]
+        sub = grouped[grouped["Cluster"] == cid]
 
         interpretation += (
-            f"### Cluster {cid} – {tier}-Production Zone\n"
+            f"### Cluster {cid} – {tier_label}-Production Zone\n"
             f"- **Avg Landing:** {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
-            f"- **Landing Range:** {min_land:.2f} → {max_land:.2f} tonnes\n"
+            f"- **Landing Range:** {sub['Total Fish Landing (Tonnes)'].min():.2f} → {sub['Total Fish Landing (Tonnes)'].max():.2f} tonnes\n"
             f"- **Avg Vessels:** {row['Total number of fishing vessels']:.0f}\n"
-            f"- **Vessel Range:** {min_ves:.0f} → {max_ves:.0f}\n\n"
+            f"- **Vessel Range:** {sub['Total number of fishing vessels'].min():.0f} → {sub['Total number of fishing vessels'].max():.0f}\n\n"
         )
 
     st.info(interpretation)
@@ -389,11 +404,12 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     st.markdown("### Cluster Assignments")
     st.dataframe(
-        grouped[["State", "Total Fish Landing (Tonnes)", "Total number of fishing vessels",
-                 "Cluster", "Tier"]]
+        grouped[["State", "Total Fish Landing (Tonnes)",
+                 "Total number of fishing vessels", "Cluster", "Tier"]]
         .sort_values("Cluster")
         .reset_index(drop=True)
     )
+
 
 
        
