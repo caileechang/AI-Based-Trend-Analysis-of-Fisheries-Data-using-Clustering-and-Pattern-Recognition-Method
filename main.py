@@ -59,9 +59,9 @@ def prepare_yearly(df_land, df_vess):
     ]
     valid_states = [s.upper().strip() for s in valid_states]
 
-    # ======================================================
-    # 1) CLEAN df_land (FISH LANDING)
-    # ======================================================
+   
+    # CLEAN df_land (FISH LANDING)
+   
     land = df_land.copy()
     land['State'] = (
         land['State']
