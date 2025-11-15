@@ -375,23 +375,7 @@ def hierarchical_clustering(merged_df):
      
 
        
-    '''
-    st.markdown("### Outlier Detection")
-    Q1 = grouped["Total Fish Landing (Tonnes)"].quantile(0.25)
-    Q3 = grouped["Total Fish Landing (Tonnes)"].quantile(0.75)
-    IQR = Q3 - Q1
-
-    outliers = grouped[
-            (grouped["Total Fish Landing (Tonnes)"] < (Q1 - 1.5 * IQR)) |
-            (grouped["Total Fish Landing (Tonnes)"] > (Q3 + 1.5 * IQR))
-        ]
-
-    if outliers.empty:
-            st.success("No outliers detected for this year.")
-    else:
-            st.warning("Outlier States Detected:")
-            st.dataframe(outliers)
-    '''
+    
 
 
     
