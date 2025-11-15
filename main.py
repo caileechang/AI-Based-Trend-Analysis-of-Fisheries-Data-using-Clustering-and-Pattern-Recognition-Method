@@ -222,11 +222,11 @@ def hierarchical_clustering(merged_df):
         optimal_leaf_ordering,
     )
     from sklearn.preprocessing import StandardScaler
-    from sklearn.metrics import silhouette_score, davies_bouldin_score
+    from sklearn.metrics import silhouette_score
     import matplotlib.pyplot as plt
     import numpy as np
 
-    st.subheader("Hierarchical Clustering (Auto-Optimized Tier System)")
+    st.subheader("Hierarchical Clustering (Silhouette-Optimized)")
 
     # ----------------------------
     # Clean Valid States
@@ -252,15 +252,16 @@ def hierarchical_clustering(merged_df):
         return
 
     # ----------------------------
-    # Year Selection
+    # Year selection
     # ----------------------------
-    available_years = sorted(df["Year"].unique())
-    selected_year = st.selectbox("Select Year:", available_years,
-                                 index=len(available_years) - 1)
+    years = sorted(df["Year"].unique())
+    selected_year = st.selectbox("Select Year:", years,
+                                 index=len(years)-1)
 
     df_year = df[df["Year"] == selected_year]
+
     if df_year.empty:
-        st.warning("No data available for this year.")
+        st.warning("No data available for the selected year.")
         return
 
     # ----------------------------
@@ -281,99 +282,56 @@ def hierarchical_clustering(merged_df):
     )
 
     # ----------------------------
-    # Ward Linkage
+    # Ward linkage
     # ----------------------------
     Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # AUTOMATIC BEST k (Silhouette + Davies–Bouldin Balanced Rule)
+    # Silhouette Validation k = 2–6
     # ----------------------------
+    st.markdown("### Silhouette Validation (k = 2 to 6)")
+
     cand_k = [2, 3, 4, 5, 6]
-    metrics = {}
+    sil_scores = {}
 
     for k in cand_k:
         labels = fcluster(Z, k, criterion="maxclust")
-        # Silhouette & DBI need at least 2 clusters and at most n-1
-        if len(set(labels)) < 2 or len(set(labels)) >= len(labels):
-            continue
+        if len(set(labels)) > 1:
+            sil_scores[k] = silhouette_score(scaled, labels)
+        else:
+            sil_scores[k] = -1
 
-        sil = silhouette_score(scaled, labels)
-        dbi = davies_bouldin_score(scaled, labels)
-        metrics[k] = {
-            "sil": sil,
-            "dbi": dbi,
-        }
+    # Best k = highest silhouette
+    best_k = max(sil_scores, key=sil_scores.get)
+    best_sil = sil_scores[best_k]
 
-    # Rank by silhouette (higher is better)
-    sil_order = sorted(metrics.keys(), key=lambda k: metrics[k]["sil"],
-                       reverse=True)
-    for rank, k in enumerate(sil_order, start=1):
-        metrics[k]["sil_rank"] = rank
-
-    # Rank by DBI (lower is better)
-    dbi_order = sorted(metrics.keys(), key=lambda k: metrics[k]["dbi"])
-    for rank, k in enumerate(dbi_order, start=1):
-        metrics[k]["dbi_rank"] = rank
-
-    # Average rank (Balanced Rule)
-    for k in metrics.keys():
-        metrics[k]["avg_rank"] = (
-            metrics[k]["sil_rank"] + metrics[k]["dbi_rank"]
-        ) / 2.0
-
-    # Choose k with lowest average rank (tie → smaller k)
-    best_k = min(metrics.keys(),
-                 key=lambda k: (metrics[k]["avg_rank"], k))
-    best_sil = metrics[best_k]["sil"]
-    best_dbi = metrics[best_k]["dbi"]
+    # Show scores table
+    st.write(pd.DataFrame({
+        "k": cand_k,
+        "Silhouette Score": [sil_scores[k] for k in cand_k],
+    }))
 
     # ----------------------------
-    # Show validation table + diagrams
+    # Silhouette Diagram
     # ----------------------------
-    st.markdown("### Optimal Cluster Evaluation (Silhouette + Davies–Bouldin)")
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.plot(cand_k, [sil_scores[k] for k in cand_k], marker="o")
+    ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
+    ax.set_xlabel("Number of Clusters (k)")
+    ax.set_ylabel("Silhouette Score")
+    ax.set_title("Silhouette Score vs Number of Clusters")
+    ax.legend()
+    st.pyplot(fig)
 
-    rows = []
-    for k in sorted(metrics.keys()):
-        rows.append({
-            "k": k,
-            "Silhouette": metrics[k]["sil"],
-            "Silhouette Rank (↓)": metrics[k]["sil_rank"],
-            "Davies–Bouldin": metrics[k]["dbi"],
-            "DBI Rank (↓)": metrics[k]["dbi_rank"],
-            "Average Rank (↓)": metrics[k]["avg_rank"],
-        })
-
-    st.dataframe(pd.DataFrame(rows))
-
-    st.success(
-        f"**Balanced best k = {best_k}**  "
-        f"(Silhouette = {best_sil:.4f}, DBI = {best_dbi:.4f})"
-    )
-
-    # Silhouette vs k
-    fig1, ax1 = plt.subplots()
-    ks = sorted(metrics.keys())
-    ax1.plot(ks, [metrics[k]["sil"] for k in ks], marker="o")
-    ax1.set_xlabel("Number of clusters (k)")
-    ax1.set_ylabel("Silhouette Score (higher is better)")
-    ax1.set_title("Silhouette Score vs k")
-    st.pyplot(fig1)
-
-    # DBI vs k
-    fig2, ax2 = plt.subplots()
-    ax2.plot(ks, [metrics[k]["dbi"] for k in ks], marker="o")
-    ax2.set_xlabel("Number of clusters (k)")
-    ax2.set_ylabel("Davies–Bouldin Index (lower is better)")
-    ax2.set_title("Davies–Bouldin Index vs k")
-    st.pyplot(fig2)
+    st.success(f"**Optimal number of clusters selected: k = {best_k} (Silhouette = {best_sil:.4f})**")
 
     # ----------------------------
-    # Final Clustering Using best_k
+    # Final Clustering using best_k
     # ----------------------------
     grouped["RawCluster"] = fcluster(Z, best_k, criterion="maxclust")
 
     # ----------------------------
-    # Cluster Summary (Average values)
+    # Cluster Summary (Average landing levels)
     # ----------------------------
     cluster_summary = (
         grouped.groupby("RawCluster")[features]
@@ -381,14 +339,14 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
-    # Sort clusters by average landing to assign tiers
+    # Sort clusters by landing (Low → Medium → High)
     cluster_summary = cluster_summary.sort_values(
         "Total Fish Landing (Tonnes)"
     ).reset_index(drop=True)
 
     cluster_summary["Cluster"] = cluster_summary.index + 1
 
-    # Tier assignment based on rank: low / medium / high
+    # Tier assignment
     n = len(cluster_summary)
 
     def tier(i, n):
@@ -401,11 +359,9 @@ def hierarchical_clustering(merged_df):
 
     cluster_summary["Tier"] = [tier(i, n) for i in range(n)]
 
-    # Map back to grouped
-    cluster_map = dict(zip(cluster_summary["RawCluster"],
-                           cluster_summary["Cluster"]))
-    tier_map = dict(zip(cluster_summary["Cluster"],
-                        cluster_summary["Tier"]))
+    # Map back
+    cluster_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Cluster"]))
+    tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
 
     grouped["Cluster"] = grouped["RawCluster"].map(cluster_map)
     grouped["Tier"] = grouped["Cluster"].map(tier_map)
@@ -416,7 +372,7 @@ def hierarchical_clustering(merged_df):
     Z_ordered = optimal_leaf_ordering(Z, scaled)
 
     # ----------------------------
-    # Reorder leaves by Tier: Low → Medium → High
+    # Reorder leaves by tier
     # ----------------------------
     leaf_order = leaves_list(Z_ordered)
     ordered_states = grouped.iloc[leaf_order].copy()
@@ -425,12 +381,13 @@ def hierarchical_clustering(merged_df):
     # Tier colors
     tier_colors = {"Low": "blue", "Medium": "orange", "High": "red"}
     leaf_colors = [tier_colors[t] for t in ordered_states["Tier"]]
+
     labels = ordered_states["State"].tolist()
 
     # ----------------------------
-    # Tier-colored Dendrogram
+    # Tier-Colored Dendrogram
     # ----------------------------
-    fig3, ax3 = plt.subplots(figsize=(16, 6))
+    fig2, ax2 = plt.subplots(figsize=(16, 6))
 
     dend = dendrogram(
         Z_ordered,
@@ -440,38 +397,36 @@ def hierarchical_clustering(merged_df):
         color_threshold=0
     )
 
-    # Color leaf labels according to tier
-    xlbls = ax3.get_xmajorticklabels()
+    xlbls = ax2.get_xmajorticklabels()
     for lbl, col in zip(xlbls, leaf_colors):
         lbl.set_color(col)
 
-    ax3.set_title(f"Tier-Colored Dendrogram – {selected_year} "
-                  f"(k = {best_k})")
-    ax3.set_ylabel("Distance")
-    st.pyplot(fig3)
+    ax2.set_title(f"Tier-Colored Dendrogram – {selected_year} (k = {best_k})")
+    ax2.set_ylabel("Distance")
+    st.pyplot(fig2)
 
     # ----------------------------
-    # Interpretation with ranges
+    # Interpretation
     # ----------------------------
-    st.markdown("### Cluster Interpretation")
+    st.markdown("### Interpretation of Clusters")
+
     interpretation = ""
 
     for _, row in cluster_summary.iterrows():
         cid = int(row["Cluster"])
         tier_label = row["Tier"]
-        sub = grouped[grouped["Cluster"] == cid]
+        subset = grouped[grouped["Cluster"] == cid]
 
         interpretation += (
             f"### Cluster {cid} – {tier_label}-Production Zone\n"
             f"- **Avg Landing:** {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
             f"- **Landing Range:** "
-            f"{sub['Total Fish Landing (Tonnes)'].min():.2f} → "
-            f"{sub['Total Fish Landing (Tonnes)'].max():.2f} tonnes\n"
-            f"- **Avg Vessels:** "
-            f"{row['Total number of fishing vessels']:.0f}\n"
+            f"{subset['Total Fish Landing (Tonnes)'].min():.2f} → "
+            f"{subset['Total Fish Landing (Tonnes)'].max():.2f} tonnes\n"
+            f"- **Avg Vessels:** {row['Total number of fishing vessels']:.0f}\n"
             f"- **Vessel Range:** "
-            f"{sub['Total number of fishing vessels'].min():.0f} → "
-            f"{sub['Total number of fishing vessels'].max():.0f}\n\n"
+            f"{subset['Total number of fishing vessels'].min():.0f} → "
+            f"{subset['Total number of fishing vessels'].max():.0f}\n\n"
         )
 
     st.info(interpretation)
