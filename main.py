@@ -1247,9 +1247,9 @@ def main():
 
         df = merged_monthly.copy()
 
-        # ============================================================
-        # 1. YEAR SELECTION
-        # ============================================================
+        # =============================
+        # 1. Select Year
+        # =============================
         years = sorted(df["Year"].unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
@@ -1258,9 +1258,9 @@ def main():
             st.error("No data for selected year.")
             st.stop()
 
-        # ============================================================
-        # 2. MONTH SELECTION
-        # ============================================================
+        # =============================
+        # 2. Select Month
+        # =============================
         month_name = {
             1:"January",2:"February",3:"March",4:"April",5:"May",6:"June",
             7:"July",8:"August",9:"September",10:"October",11:"November",12:"December"
@@ -1276,14 +1276,14 @@ def main():
         df_sel = df_y[df_y["Month"] == sel_month].copy()
 
         if df_sel.empty:
-            st.error("No data available for that month.")
+            st.error("No data for selected month.")
             st.stop()
 
         st.info(f"Analyzing **{month_name[sel_month]} {sel_year}**")
 
-        # ============================================================
-        # 3. PREPARE FEATURES
-        # ============================================================
+        # =============================
+        # 3. Prepare features
+        # =============================
         df_sel = df_sel[[
             "State",
             "Year",
@@ -1292,55 +1292,55 @@ def main():
             "Total number of fishing vessels"
         ]].dropna()
 
+        # Remove duplicated numeric rows (HDBSCAN KDTree crash fix)
+        df_sel = df_sel.drop_duplicates(
+            subset=["Fish Landing (Tonnes)", "Total number of fishing vessels"]
+        )
+
+        # Convert numeric
         df_sel.rename(columns={
             "Fish Landing (Tonnes)": "Landing",
             "Total number of fishing vessels": "Vessels"
         }, inplace=True)
 
-        # Fix missing/infinite numeric values
         df_sel["Landing"] = pd.to_numeric(df_sel["Landing"], errors="coerce").fillna(0)
         df_sel["Vessels"] = pd.to_numeric(df_sel["Vessels"], errors="coerce").fillna(0)
 
-        # ============================================================
-        # 4. SCALING
-        # ============================================================
-        X = StandardScaler().fit_transform(df_sel[["Landing", "Vessels"]])
+        # =============================
+        # 4. MINIMUM SIZE SAFETY CHECK
+        # =============================
+        if len(df_sel) < 5:
+            st.warning("Not enough data points for HDBSCAN (minimum 5). Showing raw values instead.")
+            st.dataframe(df_sel)
+            st.stop()
 
-        # ============================================================
-        # 5. RUN HDBSCAN
-        # ============================================================
-        clusterer = hdbscan.HDBSCAN(
-            min_samples=3,
-            min_cluster_size=3,
-            prediction_data=True
-        ).fit(X)
+        # Add tiny noise to avoid KDTree collapse (HDBSCAN recommended fix)
+        df_sel["Landing_adj"] = df_sel["Landing"] + np.random.normal(0, 1e-6, len(df_sel))
+        df_sel["Vessels_adj"] = df_sel["Vessels"] + np.random.normal(0, 1e-6, len(df_sel))
+
+        # =============================
+        # 5. Scaling
+        # =============================
+        X = StandardScaler().fit_transform(df_sel[["Landing_adj", "Vessels_adj"]])
+
+        # =============================
+        # 6. Run HDBSCAN safely
+        # =============================
+        try:
+            clusterer = hdbscan.HDBSCAN(
+                min_samples=3,
+                min_cluster_size=3,
+                prediction_data=True
+            ).fit(X)
+        except Exception as e:
+            st.error("HDBSCAN failed due to numerical instability.")
+            st.code(str(e))
+            st.stop()
 
         df_sel["Cluster"] = clusterer.labels_
-        df_sel["Outlier_Score"] = clusterer.outlier_scores_
-        df_sel["Outlier_Norm"] = df_sel["Outlier_Score"] / df_sel["Outlier_Score"].max()
-        df_sel["Anomaly"] = df_sel["Outlier_Norm"] >= 0.65   # anomaly threshold
-
-        # ============================================================
-        # 6. EXPLANATION LOGIC
-        # ============================================================
-        avg_land = df_sel["Landing"].mean()
-        avg_ves = df_sel["Vessels"].mean()
-
-        def explain(row):
-            L = row["Landing"]
-            V = row["Vessels"]
-
-            if L > avg_land and V < avg_ves:
-                return "⚡ High landing but few vessels → Highly efficient or exceptional catch"
-            if L < avg_land and V > avg_ves:
-                return "🐟 Low catch per vessel → Possible overfishing / low stock"
-            if L < avg_land and V < avg_ves:
-                return "🛶 Low activity → Seasonal or small fleet"
-            if L > avg_land and V > avg_ves:
-                return "⚓ Large scale fishing → Unusually intensive operations"
-            return "Unusual relationship compared to national average"
-
-        df_sel["Explanation"] = df_sel.apply(explain, axis=1)
+        df_sel["Outlier_Score"] = clusterer.outlier_scores_.fillna(0)
+        df_sel["Outlier_Norm"] = df_sel["Outlier_Score"] / (df_sel["Outlier_Score"].max() + 1e-9)
+        df_sel["Anomaly"] = df_sel["Outlier_Norm"] >= 0.65
 
         # ============================================================
         # 7. OUTLIER TABLE
