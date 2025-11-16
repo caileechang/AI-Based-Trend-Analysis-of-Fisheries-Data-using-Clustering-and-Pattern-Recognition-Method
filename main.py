@@ -1411,6 +1411,7 @@ def main():
 
             # -------------------- MAP --------------------
             st.markdown("### 🗺️ Map of Yearly Outliers")
+
             coords = {
                 "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
                 "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
@@ -1431,7 +1432,7 @@ def main():
             }
 
             df_yearly["Coords"] = df_yearly["State"].map(coords)
-            m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+            m = folium.Map(location=[4.5, 109.5], zoom_start=6)  # ← SAFE NOW
 
             for _, row in df_yearly.iterrows():
                 if row["Coords"] is None:
@@ -1445,6 +1446,7 @@ def main():
                 ).add_to(m)
 
             st_folium(m, height=500, width=800)
+
 
         # =========================================================================
         # 2️⃣ MONTHLY OUTLIERS (Detailed anomalies for each month)
