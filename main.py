@@ -16,6 +16,7 @@ from difflib import get_close_matches
 import time
 import plotly.express as px
 from clustering import prepare_monthly, monthly_trends_by_cluster
+import hdbscan
 
 # Import your clustering modules
 #from clustering_method import hierarchical_clustering
@@ -573,7 +574,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "Automatic DBSCAN",
+        "Automatic DBSCAN","HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Map",
         "Interactive Geospatial Map"
@@ -1252,6 +1253,152 @@ def main():
             )
     
             st.plotly_chart(fig, use_container_width=True)
+
+        
+
+    elif plot_option == "HDBSCAN Outlier Detection":
+        st.markdown("## HDBSCAN Outlier Detection for Fish Landing & Vessels")
+        st.markdown(
+            "<p style='color:#ccc; margin-top:-10px;'>Detect unusual spikes or drops in fish landing and vessel counts using HDBSCAN's outlier scoring.</p>",
+            unsafe_allow_html=True
+        )
+
+        # ============================
+        # USER SELECT YEARLY / MONTHLY
+        # ============================
+        choice = st.radio(
+            "Choose data for outlier detection:",
+            ["Yearly", "Monthly"],
+            horizontal=True
+        )
+
+        # ============================================
+        # PREPARE DATA
+        # ============================================
+
+        if choice == "Yearly":
+            df = (
+                df_land.groupby(["Year", "Type of Fish"])[["Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+                .sum()
+                .reset_index()
+                .pivot(index="Year", columns="Type of Fish", values=["Fish Landing (Tonnes)", "Total number of fishing vessels"])
+                .fillna(0)
+                .reset_index()
+            )
+
+            df.columns = ["_".join(col).strip() if isinstance(col, tuple) else col for col in df.columns]
+            df.rename(columns={"Year_": "Year"}, inplace=True)
+
+            df.rename(columns={
+                "Fish Landing (Tonnes)_Freshwater": "Freshwater",
+                "Fish Landing (Tonnes)_Marine": "Marine",
+                "Total number of fishing vessels_Freshwater": "FW_Vessels",
+                "Total number of fishing vessels_Marine": "MA_Vessels",
+            }, inplace=True)
+
+            df["Label"] = df["Year"].astype(str)
+
+        else:  # Monthly
+            monthly = (
+                df_land.groupby(["Year", "Month", "Type of Fish"])[["Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+                .sum()
+                .reset_index()
+                .pivot(index=["Year", "Month"], columns="Type of Fish",
+                    values=["Fish Landing (Tonnes)", "Total number of fishing vessels"])
+                .fillna(0)
+                .reset_index()
+            )
+
+            monthly.columns = [
+                "_".join(col).strip() if isinstance(col, tuple) else col
+                for col in monthly.columns
+            ]
+
+            monthly.rename(columns={
+                "Fish Landing (Tonnes)_Freshwater": "Freshwater",
+                "Fish Landing (Tonnes)_Marine": "Marine",
+                "Total number of fishing vessels_Freshwater": "FW_Vessels",
+                "Total number of fishing vessels_Marine": "MA_Vessels",
+            }, inplace=True)
+
+            monthly["MonthYear"] = pd.to_datetime(
+                monthly["Year"].astype(str) + "-" + monthly["Month"].astype(str) + "-01"
+            )
+
+            df = monthly
+            df["Label"] = df["MonthYear"].dt.strftime("%b %Y")
+
+        # =============================
+        # SELECT FEATURES
+        # =============================
+        features = ["Freshwater", "Marine", "FW_Vessels", "MA_Vessels"]
+
+        X = StandardScaler().fit_transform(df[features])
+
+        # =============================
+        # RUN HDBSCAN
+        # =============================
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=5,
+            min_samples=5,
+            prediction_data=True
+        ).fit(X)
+
+        df["Cluster"] = clusterer.labels_
+        df["Outlier_Score"] = clusterer.outlier_scores_
+
+        # Normalize outlier scores (optional)
+        df["Outlier_Score_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
+
+        # =============================
+        # ANOMALY DETECTION
+        # =============================
+        threshold = 0.65   # You may adjust based on dataset
+        df["Anomaly"] = df["Outlier_Score_Norm"] >= threshold
+
+        st.markdown("### 🔍 Detected Outliers")
+        st.markdown(
+            "<p style='color:#aaa;'>Higher scores indicate more unusual fish landing or vessel activity.</p>",
+            unsafe_allow_html=True
+        )
+
+        outliers = df[df["Anomaly"] == True][["Label", "Freshwater", "Marine", "FW_Vessels", "MA_Vessels", "Outlier_Score_Norm"]]
+
+        st.dataframe(outliers, use_container_width=True)
+
+        # =============================
+        # PLOT OUTLIER VISUALIZATION
+        # =============================
+        fig, ax = plt.subplots(figsize=(8, 5))
+
+        sns.scatterplot(
+            x=df["Freshwater"],
+            y=df["Marine"],
+            hue=df["Outlier_Score_Norm"],
+            palette="viridis",
+            s=80,
+            ax=ax
+        )
+
+        # Mark anomalies with red border
+        anomalies = df[df["Anomaly"] == True]
+        plt.scatter(
+            anomalies["Freshwater"],
+            anomalies["Marine"],
+            s=150,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Detected Outlier"
+        )
+
+        ax.set_title("HDBSCAN Outlier Detection (Freshwater vs Marine)")
+        ax.set_xlabel("Freshwater Landing (Tonnes)")
+        ax.set_ylabel("Marine Landing (Tonnes)")
+        ax.legend()
+
+        st.pyplot(fig)
+
 
     elif plot_option == "Automatic DBSCAN":
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
