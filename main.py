@@ -1240,144 +1240,187 @@ def main():
 
     elif plot_option == "HDBSCAN Outlier Detection":
 
-        st.subheader("HDBSCAN/DBSCAN Monthly Outlier Detection (State-Level)")
-        st.markdown("Detect unusual landing–vessel relationships for each state in a specific month.")
+        st.subheader("HDBSCAN Outlier Detection (State-Level Landing vs Vessels)")
+        st.markdown("<p style='color:#ccc'>Detect unusual landing–vessel relationships at the state level.</p>",
+                    unsafe_allow_html=True)
 
-        df = merged_monthly.copy()
-
-        # -----------------------------
-        # 1. Year Selector
-        # -----------------------------
-        years = sorted(df["Year"].unique())
+        # --------------------------------------------
+        # 1. Select Year
+        # --------------------------------------------
+        years = sorted(merged_df["Year"].unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
-        df_y = df[df["Year"] == sel_year]
-        if df_y.empty:
-            st.warning("No data available for the selected year.")
+        df = merged_df[merged_df["Year"] == sel_year].copy()
+        if df.empty:
+            st.error("No data for selected year.")
             st.stop()
 
-        # -----------------------------
-        # 2. Month Selector
-        # -----------------------------
-        month_names = {
-            1:"January",2:"February",3:"March",4:"April",5:"May",6:"June",
-            7:"July",8:"August",9:"September",10:"October",11:"November",12:"December"
-        }
-
-        months_available = sorted(df_y["Month"].unique())
-        sel_month_num = st.selectbox(
-            "Select Month:",
-            months_available,
-            format_func=lambda x: month_names.get(x, f"Month {x}")
-        )
-
-        df_sel = df_y[df_y["Month"] == sel_month_num]
-        if df_sel.empty:
-            st.warning("No data for that month.")
-            st.stop()
-
-        st.info(f"Showing data for **{month_names[sel_month_num]} {sel_year}**")
-
-        # ------------------------------------
-        # 3. Extract Features for Clustering
-        # ------------------------------------
-        features = df_sel[[
-            "Fish Landing (Tonnes)",
+        # --------------------------------------------
+        # 2. Prepare features
+        # --------------------------------------------
+        df = df[[
+            "State",
+            "Year",
+            "Total Fish Landing (Tonnes)",
             "Total number of fishing vessels"
+        ]].dropna()
+
+        df.rename(columns={
+            "Total Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
+        # --------------------------------------------
+        # 3. Scaling
+        # --------------------------------------------
+        X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+
+        # --------------------------------------------
+        # 4. Run HDBSCAN
+        # --------------------------------------------
+        clusterer = hdbscan.HDBSCAN(
+            min_samples=3,
+            min_cluster_size=3,
+            prediction_data=True
+        ).fit(X)
+
+        df["Cluster"] = clusterer.labels_
+        df["Outlier_Score"] = clusterer.outlier_scores_
+        df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
+        df["Anomaly"] = df["Outlier_Norm"] >= 0.65   # anomaly threshold
+
+        # --------------------------------------------
+        # 5. Explanation rules
+        # --------------------------------------------
+        avg_land = df["Landing"].mean()
+        avg_ves = df["Vessels"].mean()
+
+        def explain(row):
+            L = row["Landing"]
+            V = row["Vessels"]
+
+            if L > avg_land and V < avg_ves:
+                return "⚡ High landing but few vessels → Highly efficient or exceptional catch"
+            if L < avg_land and V > avg_ves:
+                return "🐟 Low catch per vessel → Possible overfishing / low stock"
+            if L < avg_land and V < avg_ves:
+                return "🛶 Low activity → Small fleet or seasonal downtime"
+            if L > avg_land and V > avg_ves:
+                return "⚓ Large operations → Unusually intensive fishing scale"
+            return "Unusual pattern compared to national averages"
+
+        df["Explanation"] = df.apply(explain, axis=1)
+
+        # --------------------------------------------
+        # 6. Outlier Table
+        # --------------------------------------------
+        st.markdown("### 🔍 Detected State-Level Outliers")
+
+        outliers = df[df["Anomaly"] == True][[
+            "State", "Landing", "Vessels", "Outlier_Norm", "Explanation"
         ]]
 
-        scaled = StandardScaler().fit_transform(features)
+        if outliers.empty:
+            st.success("No significant anomalies detected.")
+        else:
+            st.dataframe(outliers, use_container_width=True)
 
-        # ------------------------------------
-        # 4. AUTO-SELECT DBSCAN PARAMETERS
-        # ------------------------------------
-        n_features = scaled.shape[1]
-        min_samples_auto = max(3, int(np.log(len(scaled))) + n_features)
+        # --------------------------------------------
+        # 7. Scatter Plot Visualization
+        # --------------------------------------------
+        st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
+        fig, ax = plt.subplots(figsize=(9, 5))
 
-        neigh = NearestNeighbors(n_neighbors=min_samples_auto)
-        distances, _ = neigh.fit(scaled).kneighbors(scaled)
-        distances = np.sort(distances[:, min_samples_auto-1])
-
-        kneedle = KneeLocator(
-            range(len(distances)), distances,
-            curve="convex", direction="increasing"
+        sns.scatterplot(
+            data=df,
+            x="Vessels",
+            y="Landing",
+            hue="Outlier_Norm",
+            palette="viridis",
+            s=100,
+            ax=ax
         )
 
-        eps_auto = distances[kneedle.knee] if kneedle.knee is not None else np.percentile(distances, 90)
+        # highlight anomalies
+        ano = df[df["Anomaly"] == True]
+        ax.scatter(
+            ano["Vessels"],
+            ano["Landing"],
+            s=250,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Outlier"
+        )
 
-        st.markdown(f"**Automatic epsilon (ε):** `{eps_auto:.3f}`")
-        st.markdown(f"**Automatic min_samples:** `{min_samples_auto}`")
+        # label states
+        for _, r in ano.iterrows():
+            ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
+                    color="red", fontsize=9, fontweight="bold")
 
-        # 5. Run DBSCAN
-        db = DBSCAN(eps=eps_auto, min_samples=min_samples_auto)
-        labels = db.fit_predict(scaled)
-        df_sel["DBSCAN_Label"] = labels
-
-        unique_clusters = set(labels) - {-1}
-
-        # ------------------------------------
-        # 6. Outlier Count
-        # ------------------------------------
-        n_outliers = (labels == -1).sum()
-        st.success(f"Detected **{n_outliers} state-level outliers** in {month_names[sel_month_num]} {sel_year}")
-
-        # ------------------------------------
-        # 7. Outlier Explanation Table
-        # ------------------------------------
-        if n_outliers > 0:
-            avg_land = df_sel["Fish Landing (Tonnes)"].mean()
-            avg_ves = df_sel["Total number of fishing vessels"].mean()
-
-            def explain(row):
-                L = row["Fish Landing (Tonnes)"]
-                V = row["Total number of fishing vessels"]
-
-                if L > avg_land and V < avg_ves:
-                    return "⚠ High landing but few vessels → Overperformance anomaly"
-                if L < avg_land and V > avg_ves:
-                    return "🐟 Low catch per vessel → Efficiency decline"
-                if L < avg_land and V < avg_ves:
-                    return "🛶 Low activity → seasonal or small fleet"
-                if L > avg_land and V > avg_ves:
-                    return "⚓ Unusually large scale → large operations"
-                return "Atypical pattern"
-
-            outliers = df_sel[labels == -1].copy()
-            outliers["Reason"] = outliers.apply(explain, axis=1)
-
-            st.markdown("### 🚨 Outlier States")
-            st.dataframe(
-                outliers[[
-                    "State",
-                    "Fish Landing (Tonnes)",
-                    "Total number of fishing vessels",
-                    "Reason"
-                ]],
-                use_container_width=True
-            )
-        else:
-            st.info("No outliers detected for this month.")
-
-        # ------------------------------------
-        # 8. Scatter Plot (Landing vs Vessels)
-        # ------------------------------------
-        fig, ax = plt.subplots(figsize=(8,6))
-        palette = sns.color_palette("bright", len(unique_clusters)+1)
-
-        for lab in np.unique(labels):
-            pts = scaled[labels == lab]
-            if lab == -1:
-                ax.scatter(pts[:,1], pts[:,0], c="red", s=80, label="Outliers (-1)", edgecolor="k")
-            else:
-                color = palette[lab % len(palette)]
-                ax.scatter(pts[:,1], pts[:,0], c=[color], s=60, label=f"Cluster {lab}", edgecolor="k")
-
-        ax.set_xlabel("Vessels (scaled)")
-        ax.set_ylabel("Landing (scaled)")
-        ax.set_title(f"DBSCAN Monthly Clustering — {month_names[sel_month_num]} {sel_year}")
+        ax.set_xlabel("Total Vessels")
+        ax.set_ylabel("Total Fish Landing (Tonnes)")
+        ax.set_title(f"Outlier Detection ({sel_year})")
+        ax.grid(alpha=0.3)
         ax.legend()
         st.pyplot(fig)
 
+        # --------------------------------------------
+        # 8. MAP VISUALIZATION
+        # --------------------------------------------
+        st.markdown("### 🗺️ Map of Anomalous States")
+
+        import folium
+        from streamlit_folium import st_folium
+
+        # Coordinates
+        coords = {
+            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+            "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+            "JOHOR": [1.4854, 103.7618],
+            "MELAKA": [2.1896, 102.2501],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "SELANGOR": [3.0738, 101.5183],
+            "PAHANG": [3.8126, 103.3256],
+            "TERENGGANU": [5.3302, 103.1408],
+            "KELANTAN": [6.1254, 102.2381],
+            "PERAK": [4.5921, 101.0901],
+            "PULAU PINANG": [5.4164, 100.3327],
+            "KEDAH": [6.1184, 100.3685],
+            "PERLIS": [6.4449, 100.2048],
+            "SABAH": [5.9788, 116.0753],
+            "SARAWAK": [1.5533, 110.3592],
+            "W.P. LABUAN": [5.2831, 115.2308],
+        }
+
+        df["Coords"] = df["State"].map(coords)
+
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+
+        for _, row in df.iterrows():
+            if row["Coords"] is None:
+                continue
+
+            lat, lon = row["Coords"]
+            color = "red" if row["Anomaly"] else "blue"
+
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=8,
+                color=color,
+                fill=True,
+                fill_color=color,
+                tooltip=row["State"],
+                popup=(
+                    f"<b>{row['State']}</b><br>"
+                    f"Landing: {row['Landing']:.0f} tonnes<br>"
+                    f"Vessels: {row['Vessels']:.0f}<br>"
+                    f"Score: {row['Outlier_Norm']:.2f}<br>"
+                    f"<i>{row['Explanation']}</i>"
+                ),
+            ).add_to(m)
+
+        st_folium(m, height=550, width=800)
 
 
 
