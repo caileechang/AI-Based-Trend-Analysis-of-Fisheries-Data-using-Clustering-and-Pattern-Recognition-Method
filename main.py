@@ -1239,19 +1239,23 @@ def main():
         
 
     elif plot_option == "HDBSCAN Outlier Detection":
-        st.subheader("HDBSCAN Outlier Detection (State-Level Landing vs Vessels)")
-        st.markdown("<p style='color:#ccc'>Detect unusual landing–vessel relationships at the state level.</p>",
+    
+        st.subheader("HDBSCAN Outlier Detection (State-Level Monthly Analysis)")
+        st.markdown("<p style='color:#ccc'>Detect unusual landing–vessel relationships at the state level for a specific month.</p>",
                     unsafe_allow_html=True)
 
         # --------------------------------------------
-        # 1. Select Year
+        # 1. Select Year + Month
         # --------------------------------------------
         years = sorted(merged_df["Year"].unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
-        df = merged_df[merged_df["Year"] == sel_year].copy()
+        months_available = sorted(merged_df[merged_df["Year"] == sel_year]["Month"].unique())
+        sel_month = st.selectbox("Select Month:", months_available, index=len(months_available)-1)
+
+        df = merged_df[(merged_df["Year"] == sel_year) & (merged_df["Month"] == sel_month)].copy()
         if df.empty:
-            st.error("No data for selected year.")
+            st.error("No data available for selected month.")
             st.stop()
 
         # --------------------------------------------
@@ -1260,6 +1264,7 @@ def main():
         df = df[[
             "State",
             "Year",
+            "Month",
             "Total Fish Landing (Tonnes)",
             "Total number of fishing vessels"
         ]].dropna()
@@ -1297,7 +1302,6 @@ def main():
         def explain(row):
             L = row["Landing"]
             V = row["Vessels"]
-
             if L > avg_land and V < avg_ves:
                 return "⚡ High landing but few vessels → Highly efficient or exceptional catch"
             if L < avg_land and V > avg_ves:
@@ -1305,7 +1309,7 @@ def main():
             if L < avg_land and V < avg_ves:
                 return "🛶 Low activity → Small fleet or seasonal downtime"
             if L > avg_land and V > avg_ves:
-                return "⚓ Large operations → Unusually intensive fishing scale"
+                return "⚓ Large-scale operation → Unusually intensive fishing"
             return "Unusual pattern compared to national averages"
 
         df["Explanation"] = df.apply(explain, axis=1)
@@ -1313,14 +1317,14 @@ def main():
         # --------------------------------------------
         # 6. Outlier Table
         # --------------------------------------------
-        st.markdown("### 🔍 Detected State-Level Outliers")
+        st.markdown(f"### 🔍 Detected Outliers — {sel_month}/{sel_year}")
 
         outliers = df[df["Anomaly"] == True][[
             "State", "Landing", "Vessels", "Outlier_Norm", "Explanation"
         ]]
 
         if outliers.empty:
-            st.success("No significant anomalies detected.")
+            st.success("No anomalies detected for this month.")
         else:
             st.dataframe(outliers, use_container_width=True)
 
@@ -1328,7 +1332,7 @@ def main():
         # 7. Scatter Plot Visualization
         # --------------------------------------------
         st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
-        fig, ax = plt.subplots(figsize=(9, 5))
+        fig, ax = plt.subplots(figsize=(8, 5))
 
         sns.scatterplot(
             data=df,
@@ -1352,14 +1356,14 @@ def main():
             label="Outlier"
         )
 
-        # label states
+        # label anomalies
         for _, r in ano.iterrows():
             ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
                     color="red", fontsize=9, fontweight="bold")
 
         ax.set_xlabel("Total Vessels")
         ax.set_ylabel("Total Fish Landing (Tonnes)")
-        ax.set_title(f"Outlier Detection ({sel_year})")
+        ax.set_title(f"Outlier Detection ({sel_month}/{sel_year})")
         ax.grid(alpha=0.3)
         ax.legend()
         st.pyplot(fig)
@@ -1372,7 +1376,6 @@ def main():
         import folium
         from streamlit_folium import st_folium
 
-        # Coordinates
         coords = {
             "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
             "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
@@ -1420,6 +1423,7 @@ def main():
             ).add_to(m)
 
         st_folium(m, height=550, width=800)
+
 
 
 
