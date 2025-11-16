@@ -1318,10 +1318,38 @@ def main():
         df_sel["Landing_adj"] = df_sel["Landing"] + np.random.normal(0, 1e-6, len(df_sel))
         df_sel["Vessels_adj"] = df_sel["Vessels"] + np.random.normal(0, 1e-6, len(df_sel))
 
-        # =============================
+      
         # 5. Scaling
-        # =============================
+       
         X = StandardScaler().fit_transform(df_sel[["Landing_adj", "Vessels_adj"]])
+
+       
+  
+        # 6. Create Explanation Column BEFORE HDBSCAN Outlier Table
+     
+
+        # Use original values if available, else use adjusted
+        L_col = "Landing" if "Landing" in df_sel.columns else "Landing_adj"
+        V_col = "Vessels" if "Vessels" in df_sel.columns else "Vessels_adj"
+
+        avg_land = df_sel[L_col].mean()
+        avg_ves = df_sel[V_col].mean()
+
+        def explain(row):
+            L = row[L_col]
+            V = row[V_col]
+
+            if L > avg_land and V < avg_ves:
+                return "⚡ High landing but few vessels → Highly efficient or exceptional catch"
+            if L < avg_land and V > avg_ves:
+                return "🐟 Low catch per vessel → Possible overfishing / low stock"
+            if L < avg_land and V < avg_ves:
+                return "🛶 Low activity → Small fleet or seasonal downtime"
+            if L > avg_land and V > avg_ves:
+                return "⚓ Large operations → Unusually intensive fishing scale"
+            return "Unusual pattern compared to national averages"
+
+        df_sel["Explanation"] = df_sel.apply(explain, axis=1)
 
         # =============================
         # 6. Run HDBSCAN safely
