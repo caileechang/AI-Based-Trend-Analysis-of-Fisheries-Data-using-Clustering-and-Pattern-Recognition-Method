@@ -810,34 +810,7 @@ def main():
     
         linestyles = ["solid", "dashed", "dotted", "dashdot"]
 
-        st.markdown(f"## Landing Summary in {latest_year}")
-    
-        col1, col2 = st.columns(2)
-        with col1:
-                st.markdown(
-                    f"""
-                    <div style="{card_style}">
-                        <h3 style="color:white;">Freshwater Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{fw_latest:,.0f}</b> tonnes</h1>
-                        {growth_html(fw_latest, fw_prev)}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-    
-        with col2:
-                st.markdown(
-                    f"""
-                    <div style="{card_style}">
-                        <h3 style="color:white;">Marine Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{ma_latest:,.0f}</b> tonnes</h1>
-                        {growth_html(ma_latest, ma_prev)}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-    
-        st.markdown("---")
+        
     
         # ======================================
         # USER SELECTION COMES FIRST
@@ -892,7 +865,34 @@ def main():
             ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
             ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
     
-            
+            st.markdown(f"## Landing Summary in {latest_year}")
+    
+        col1, col2 = st.columns(2)
+        with col1:
+                st.markdown(
+                    f"""
+                    <div style="{card_style}">
+                        <h3 style="color:white;">Freshwater Landing</h3>
+                        <h1 style="color:white; font-size:42px;"><b>{fw_latest:,.0f}</b> tonnes</h1>
+                        {growth_html(fw_latest, fw_prev)}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+    
+        with col2:
+                st.markdown(
+                    f"""
+                    <div style="{card_style}">
+                        <h3 style="color:white;">Marine Landing</h3>
+                        <h1 style="color:white; font-size:42px;"><b>{ma_latest:,.0f}</b> tonnes</h1>
+                        {growth_html(ma_latest, ma_prev)}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+    
+        st.markdown("---")
     
             # ======================================
             # YEARLY CLUSTER PLOT
