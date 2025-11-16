@@ -1239,11 +1239,10 @@ def main():
         
 
     elif plot_option == "HDBSCAN Outlier Detection":
-
-        st.subheader("HDBSCAN Outlier Detection (Fish Landing & Vessel Patterns)")
+        st.subheader("HDBSCAN Outlier Detection (State-Level Anomalies)")
 
         # =====================================================
-        # Detect vessel column from merged_df
+        # Auto-detect vessel column in merged_df
         # =====================================================
         def detect_vessel_column(df):
             for col in df.columns:
@@ -1254,63 +1253,55 @@ def main():
         vessel_col = detect_vessel_column(merged_df)
 
         if vessel_col is None:
-            st.error("❌ No vessel column found inside merged_df.")
+            st.error(" No vessel column found in merged_df.")
             st.stop()
 
         # =====================================================
-        # User chooses period
+        # User choice: Yearly or Monthly (STATE LEVEL)
         # =====================================================
         period = st.radio("Choose analysis period:", ["Yearly", "Monthly"], horizontal=True)
 
         # =====================================================
-        # YEARLY DATA
+        # PREPARE YEARLY DATA — KEEP STATE
         # =====================================================
         if period == "Yearly":
             df = (
-                merged_df.groupby(["Year"])[["Total Fish Landing (Tonnes)", vessel_col]]
+                merged_df.groupby(["State", "Year"])[
+                    ["Total Fish Landing (Tonnes)", vessel_col]
+                ]
                 .sum()
                 .reset_index()
             )
-            df["Label"] = df["Year"].astype(str)
+
+            df["Label"] = df["State"] + " (" + df["Year"].astype(str) + ")"
 
         # =====================================================
-        # MONTHLY DATA
-        # merged_df DOES NOT contain Month → build data from df_land
+        # PREPARE MONTHLY DATA — KEEP STATE
         # =====================================================
         else:
-            # Step 1: Aggregate landing by month
-            monthly_land = (
-                df_land.groupby(["Year", "Month"])["Fish Landing (Tonnes)"]
+            df = (
+                merged_df.groupby(["State", "Year", "Month"])[
+                    ["Total Fish Landing (Tonnes)", vessel_col]
+                ]
                 .sum()
                 .reset_index()
             )
 
-            # Step 2: Aggregate vessels by month from merged_df
-            monthly_vess = (
-                merged_df.groupby(["Year"])[vessel_col]  # no month in merged_df → use Year only
-                .sum()
-                .reset_index()
-            )
-
-            # Step 3: Merge back — per month, vessels same for whole year
-            df = pd.merge(monthly_land, monthly_vess, on="Year", how="left")
-
-            df.rename(columns={
-                "Fish Landing (Tonnes)": "Total Fish Landing (Tonnes)"
-            }, inplace=True)
-
-            # Create label
             df["MonthYear"] = pd.to_datetime(
                 df["Year"].astype(str) + "-" + df["Month"].astype(str) + "-01"
             )
-            df["Label"] = df["MonthYear"].dt.strftime("%b %Y")
+            df["Label"] = df["State"] + " (" + df["MonthYear"].dt.strftime("%b %Y") + ")"
+
+        # =====================================================
+        # Select features for HDBSCAN
+        # =====================================================
+        features = ["Total Fish Landing (Tonnes)", vessel_col]
+
+        X = StandardScaler().fit_transform(df[features])
 
         # =====================================================
         # Run HDBSCAN
         # =====================================================
-        features = ["Total Fish Landing (Tonnes)", vessel_col]
-        X = StandardScaler().fit_transform(df[features])
-
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=5, min_samples=5, prediction_data=True
         ).fit(X)
@@ -1322,63 +1313,98 @@ def main():
         df["Anomaly"] = df["Outlier_Score_Norm"] >= 0.65
 
         # =====================================================
-        # Outlier table
+        # Explanation logic
         # =====================================================
-        st.markdown("### 🔍 Detected Outliers")
+        avg_land = df["Total Fish Landing (Tonnes)"].mean()
+        avg_vess = df[vessel_col].mean()
+
+        def explain(row):
+            land = row["Total Fish Landing (Tonnes)"]
+            ves = row[vessel_col]
+
+            if land > avg_land and ves < avg_vess:
+                return "⚠️ High landing but few vessels — unusual efficiency."
+            if land < avg_land and ves > avg_vess:
+                return "🐟 Low landing with many vessels — possible overcapacity."
+            if land < avg_land and ves < avg_vess:
+                return "🛶 Low activity — possibly seasonal or small fleet."
+            if land > avg_land and ves > avg_vess:
+                return "⚓ High scale operation — unusually large."
+            return "Atypical pattern."
+
+        df["Why Flagged"] = df.apply(explain, axis=1)
+
+        # =====================================================
+        # OUTLIER TABLE
+        # =====================================================
+        st.markdown("### 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"] == True][[
-            "Label",
+            "State",
+            "Year",
+            "Month" if period == "Monthly" else None,
             "Total Fish Landing (Tonnes)",
             vessel_col,
-            "Outlier_Score_Norm"
-        ]]
+            "Outlier_Score_Norm",
+            "Why Flagged",
+            "Label",
+        ]].dropna(axis=1, how="all")
 
         st.dataframe(outliers, use_container_width=True)
 
         # =====================================================
-        # Scatter plot
+        # SCATTERPLOT (State Level)
         # =====================================================
         st.markdown("### 📈 Outlier Visualization")
 
-        fig, ax = plt.subplots(figsize=(8, 5))
+        fig, ax = plt.subplots(figsize=(9, 6))
 
         sns.scatterplot(
             x=df["Total Fish Landing (Tonnes)"],
             y=df[vessel_col],
             hue=df["Outlier_Score_Norm"],
             palette="viridis",
-            s=80,
+            s=90,
             ax=ax
         )
 
-        # highlight anomalies
+        # mark anomalies
         ano = df[df["Anomaly"] == True]
-
         plt.scatter(
             ano["Total Fish Landing (Tonnes)"],
             ano[vessel_col],
             s=160,
-            facecolors="none",
             edgecolors="red",
+            facecolors="none",
             linewidth=2,
             label="Outlier"
         )
 
+        # annotate state names
+        for _, r in ano.iterrows():
+            ax.text(
+                r["Total Fish Landing (Tonnes)"],
+                r[vessel_col],
+                r["State"],
+                fontsize=8,
+                color="white"
+            )
+
         ax.set_xlabel("Fish Landing (Tonnes)")
         ax.set_ylabel("Fishing Vessels")
-        ax.set_title("HDBSCAN Outliers (Landing vs Vessels)")
-        ax.legend()
+        ax.set_title("HDBSCAN Outliers by State")
         ax.grid(alpha=0.3)
+        ax.legend()
 
         st.pyplot(fig)
 
         # =====================================================
-        # Heatmap
+        # HEATMAP OF OUTLIERS
         # =====================================================
-        st.markdown("### 🔥 Outlier Heatmap")
+        st.markdown("### 🔥 Outlier Heatmap (State Patterns)")
 
         if len(outliers) > 0:
-            fig_h, ax_h = plt.subplots(figsize=(8, 4))
+            fig_h, ax_h = plt.subplots(figsize=(10, 4))
             sns.heatmap(
                 outliers[["Total Fish Landing (Tonnes)", vessel_col]],
                 annot=True,
@@ -1386,11 +1412,10 @@ def main():
                 fmt=".0f",
                 ax=ax_h
             )
-            ax_h.set_title("Outlier Catch/Vessel Pattern")
+            ax_h.set_title("Outlier Catch–Vessel Intensity")
             st.pyplot(fig_h)
         else:
             st.info("No strong outliers found.")
-
 
 
     elif plot_option == "Automatic DBSCAN":
