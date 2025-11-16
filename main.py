@@ -627,6 +627,12 @@ def main():
     
         # --- SHOW CLEAN TABLE ---
         st.dataframe(yearly_summary, use_container_width=True, height=400)
+
+        # --- Filter for selected year ---
+        filtered = yearly_summary[yearly_summary['Year'] == selected_year]
+    
+        st.write(f"### Fish Landing by State for {selected_year}")
+        st.dataframe(filtered, use_container_width=True, height=300)
     
         # --- Year selector ---
         available_years = sorted([int(y) for y in yearly_summary['Year'].unique()])
@@ -638,11 +644,7 @@ def main():
             key="yearly_summary_selectbox"
         )
     
-        # --- Filter for selected year ---
-        filtered = yearly_summary[yearly_summary['Year'] == selected_year]
-    
-        st.write(f"### Fish Landing by State for {selected_year}")
-        st.dataframe(filtered, use_container_width=True, height=300)
+        
     
         # --- Sort states for chart ---
         filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=True)
