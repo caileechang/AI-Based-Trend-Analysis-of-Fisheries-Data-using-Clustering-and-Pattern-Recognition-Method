@@ -160,13 +160,6 @@ def prepare_yearly(df_land, df_vess):
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
 def prepare_monthly(df_land, df_vess):
-    import pandas as pd
-    import numpy as np
-    from difflib import get_close_matches
-
-    # -----------------------------
-    # VALID STATES LIST
-    # -----------------------------
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
         "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -175,9 +168,6 @@ def prepare_monthly(df_land, df_vess):
     ]
     valid_states = [s.upper().strip() for s in valid_states]
 
-    # ======================================================
-    # 1) CLEAN df_land (MONTHLY FISH LANDING)
-    # ======================================================
     land = df_land.copy()
     land["State"] = (
         land["State"]
@@ -187,8 +177,6 @@ def prepare_monthly(df_land, df_vess):
         .str.replace(r"\s+", " ", regex=True)
         .str.strip()
     )
-
-    # REMOVE MALAYSIA-LEVEL ROWS
     land = land[~land["State"].str.startswith("MALAYSIA")]
 
     # Fuzzy match states
@@ -207,15 +195,12 @@ def prepare_monthly(df_land, df_vess):
 
     land = land.dropna(subset=["Month", "Year", "Fish Landing (Tonnes)"])
 
-    # GROUP MONTHLY
+    # Aggregate monthly totals
     monthly_totals = (
         land.groupby(["Year", "Month", "State"], as_index=False)["Fish Landing (Tonnes)"]
         .sum()
     )
 
-    # ======================================================
-    # 2) CLEAN df_vess (VESSELS)
-    # ======================================================
     vess = df_vess.copy()
     vess["State"] = (
         vess["State"]
@@ -242,9 +227,6 @@ def prepare_monthly(df_land, df_vess):
     vess = vess.dropna(subset=["Year"])
     vess["Year"] = vess["Year"].astype(int)
 
-    # ======================================================
-    # 3) MERGE
-    # ======================================================
     merged_monthly = pd.merge(
         monthly_totals,
         vess[["State", "Year", "Total number of fishing vessels"]],
@@ -253,7 +235,6 @@ def prepare_monthly(df_land, df_vess):
     )
 
     merged_monthly = merged_monthly.sort_values(["Year", "Month", "State"]).reset_index(drop=True)
-
     return merged_monthly
 
 
@@ -558,12 +539,6 @@ def hierarchical_clustering(merged_df):
         .sort_values("Cluster")
         .reset_index(drop=True)
     )
-
-
-       
-    
-
-
     
 def main():
     st.set_page_config(layout='wide')
@@ -672,7 +647,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "Automatic DBSCAN","HDBSCAN","HDBSCAN Outlier Detection",
+        "Automatic DBSCAN","Unified HDBSCAN Outlier Detection","HDBSCAN","HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Map",
         "Interactive Geospatial Map"
@@ -1334,7 +1309,210 @@ def main():
     
             st.plotly_chart(fig, use_container_width=True)
 
-        
+    elif plot_option == "Unified HDBSCAN Outlier Detection":
+
+        st.subheader("Unified HDBSCAN Outlier Detection (Monthly + Yearly)")
+        st.markdown("<p style='color:#ccc'>Detect both monthly and yearly anomalies with map and explanations.</p>",
+                    unsafe_allow_html=True)
+
+        # -----------------------------
+        # User selects YEAR
+        # -----------------------------
+        years = sorted(merged_df["Year"].unique())
+        sel_year = st.selectbox("Select Year:", years)
+
+        # =========================================================================
+        # 1️⃣ YEARLY OUTLIERS (State-Level Landing vs Vessels)
+        # =========================================================================
+        st.markdown("## 🟦 Yearly Outliers Summary")
+
+        df_yearly = merged_df[merged_df["Year"] == sel_year].copy()
+        df_yearly = df_yearly[[
+            "State", "Year",
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]].dropna()
+
+        df_yearly.rename(columns={
+            "Total Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
+        if df_yearly.empty:
+            st.warning("No data available for yearly summary.")
+        else:
+            # ---------- Scaling ----------
+            X_year = StandardScaler().fit_transform(df_yearly[["Landing", "Vessels"]])
+
+            # ---------- HDBSCAN ----------
+            yearly_clusterer = hdbscan.HDBSCAN(min_samples=3, min_cluster_size=3,
+                                            prediction_data=True).fit(X_year)
+
+            df_yearly["Outlier_Score"] = yearly_clusterer.outlier_scores_
+            df_yearly["Outlier_Norm"] = df_yearly["Outlier_Score"] / df_yearly["Outlier_Score"].max()
+            df_yearly["Anomaly"] = df_yearly["Outlier_Norm"] >= 0.65
+
+            # ---------- Explanation ----------
+            avg_land_y = df_yearly["Landing"].mean()
+            avg_ves_y = df_yearly["Vessels"].mean()
+
+            def explain_y(row):
+                L, V = row["Landing"], row["Vessels"]
+                if L > avg_land_y and V < avg_ves_y:
+                    return "⚡ High landing but few vessels → Efficient/Exceptional"
+                if L < avg_land_y and V > avg_ves_y:
+                    return "🐟 Low catch per vessel → Possible overfishing"
+                if L < avg_land_y and V < avg_ves_y:
+                    return "🛶 Low activity → Small fleet/Seasonal"
+                if L > avg_land_y and V > avg_ves_y:
+                    return "⚓ Large operations → Intensive fishing"
+                return "Unusual pattern"
+
+            df_yearly["Explanation"] = df_yearly.apply(explain_y, axis=1)
+
+            yearly_outliers = df_yearly[df_yearly["Anomaly"] == True][[
+                "State", "Landing", "Vessels", "Outlier_Norm", "Explanation"
+            ]]
+
+            if yearly_outliers.empty:
+                st.success("No yearly anomalies detected.")
+            else:
+                st.dataframe(yearly_outliers, use_container_width=True)
+
+            # -------------------- Scatter Plot --------------------
+            st.markdown("### 📈 Yearly Landing vs Vessels (Highlighted Outliers)")
+            fig, ax = plt.subplots(figsize=(9, 5))
+
+            sns.scatterplot(
+                data=df_yearly,
+                x="Vessels",
+                y="Landing",
+                hue="Outlier_Norm",
+                palette="viridis",
+                s=100,
+                ax=ax
+            )
+
+            ano = df_yearly[df_yearly["Anomaly"] == True]
+            ax.scatter(
+                ano["Vessels"], ano["Landing"],
+                s=250, facecolors="none",
+                edgecolors="red", linewidth=2, label="Outlier"
+            )
+
+            for _, r in ano.iterrows():
+                ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
+                        color="red", fontsize=9, fontweight="bold")
+
+            ax.set_title(f"State-Level Outliers ({sel_year})")
+            ax.grid(alpha=0.3)
+            ax.legend()
+            st.pyplot(fig)
+
+            # -------------------- MAP --------------------
+            st.markdown("### 🗺️ Map of Yearly Outliers")
+            coords = {
+                "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+                "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+                "JOHOR": [1.4854, 103.7618],
+                "MELAKA": [2.1896, 102.2501],
+                "NEGERI SEMBILAN": [2.7258, 101.9424],
+                "SELANGOR": [3.0738, 101.5183],
+                "PAHANG": [3.8126, 103.3256],
+                "TERENGGANU": [5.3302, 103.1408],
+                "KELANTAN": [6.1254, 102.2381],
+                "PERAK": [4.5921, 101.0901],
+                "PULAU PINANG": [5.4164, 100.3327],
+                "KEDAH": [6.1184, 100.3685],
+                "PERLIS": [6.4449, 100.2048],
+                "SABAH": [5.9788, 116.0753],
+                "SARAWAK": [1.5533, 110.3592],
+                "W.P. LABUAN": [5.2831, 115.2308],
+            }
+
+            df_yearly["Coords"] = df_yearly["State"].map(coords)
+            m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+
+            for _, row in df_yearly.iterrows():
+                if row["Coords"] is None:
+                    continue
+                lat, lon = row["Coords"]
+                color = "red" if row["Anomaly"] else "blue"
+                folium.CircleMarker(
+                    location=[lat, lon],
+                    radius=8, color=color, fill=True, fill_color=color,
+                    tooltip=row["State"]
+                ).add_to(m)
+
+            st_folium(m, height=500, width=800)
+
+        # =========================================================================
+        # 2️⃣ MONTHLY OUTLIERS (Detailed anomalies for each month)
+        # =========================================================================
+        st.markdown("## 🟩 Monthly Outliers Summary")
+
+        df_month = merged_monthly[merged_monthly["Year"] == sel_year].copy()
+
+        all_month_outliers = []
+
+        for month in sorted(df_month["Month"].unique()):
+            df_m = df_month[df_month["Month"] == month].copy()
+            if len(df_m) < 5:
+                continue
+
+            df_m = df_m[[
+                "State", "Year", "Month",
+                "Fish Landing (Tonnes)",
+                "Total number of fishing vessels"
+            ]].dropna()
+
+            df_m.rename(columns={
+                "Fish Landing (Tonnes)": "Landing",
+                "Total number of fishing vessels": "Vessels"
+            }, inplace=True)
+
+            # ------- HDBSCAN -------
+            X_m = StandardScaler().fit_transform(df_m[["Landing", "Vessels"]])
+            cl_m = hdbscan.HDBSCAN(min_samples=3, min_cluster_size=3,
+                                prediction_data=True).fit(X_m)
+
+            df_m["Outlier_Score"] = cl_m.outlier_scores_
+            if df_m["Outlier_Score"].max() == 0:
+                continue
+
+            df_m["Outlier_Norm"] = df_m["Outlier_Score"] / df_m["Outlier_Score"].max()
+            df_m["Anomaly"] = df_m["Outlier_Norm"] >= 0.65
+
+            avgL = df_m["Landing"].mean()
+            avgV = df_m["Vessels"].mean()
+
+            def explain_m(row):
+                L, V = row["Landing"], row["Vessels"]
+                if L > avgL and V < avgV:
+                    return "⚡ High landing but few vessels"
+                if L < avgL and V > avgV:
+                    return "🐟 Low catch per vessel"
+                if L < avgL and V < avgV:
+                    return "🛶 Low activity"
+                if L > avgL and V > avgV:
+                    return "⚓ Intensive fishing"
+                return "Unusual"
+            df_m["Explanation"] = df_m.apply(explain_m, axis=1)
+
+            out_m = df_m[df_m["Anomaly"] == True][[
+                "Year", "Month", "State",
+                "Landing", "Vessels",
+                "Outlier_Norm", "Explanation"
+            ]]
+            if not out_m.empty:
+                all_month_outliers.append(out_m)
+
+        if len(all_month_outliers) == 0:
+            st.success("No monthly anomalies detected.")
+        else:
+            final_month = pd.concat(all_month_outliers).sort_values(["Month", "State"])
+            st.dataframe(final_month, use_container_width=True)
+   
     elif plot_option == "HDBSCAN":
 
         st.subheader("HDBSCAN Outlier Detection — Monthly Anomalies per State")
