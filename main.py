@@ -1338,8 +1338,19 @@ def main():
             st.stop()
 
         df_sel["Cluster"] = clusterer.labels_
-        df_sel["Outlier_Score"] = clusterer.outlier_scores_.fillna(0)
-        df_sel["Outlier_Norm"] = df_sel["Outlier_Score"] / (df_sel["Outlier_Score"].max() + 1e-9)
+        
+        # SAFE OUTLIER SCORE EXTRACTION 
+
+        if hasattr(clusterer, "outlier_scores_") and clusterer.outlier_scores_ is not None:
+            df_sel["Outlier_Score"] = pd.Series(clusterer.outlier_scores_).fillna(0)
+        else:
+            df_sel["Outlier_Score"] = 0  # fallback when HDBSCAN can't compute scores
+
+        # Normalized outlier score
+        max_score = df_sel["Outlier_Score"].max()
+        df_sel["Outlier_Norm"] = df_sel["Outlier_Score"] / (max_score + 1e-9)
+
+        # Flag anomalies
         df_sel["Anomaly"] = df_sel["Outlier_Norm"] >= 0.65
 
         # ============================================================
