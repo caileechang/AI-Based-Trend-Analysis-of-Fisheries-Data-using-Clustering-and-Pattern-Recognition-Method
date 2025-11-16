@@ -159,6 +159,104 @@ def prepare_yearly(df_land, df_vess):
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
+def prepare_monthly(df_land, df_vess):
+    import pandas as pd
+    import numpy as np
+    from difflib import get_close_matches
+
+    # -----------------------------
+    # VALID STATES LIST
+    # -----------------------------
+    valid_states = [
+        "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+        "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+        "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+        "SABAH", "SARAWAK", "W.P. LABUAN"
+    ]
+    valid_states = [s.upper().strip() for s in valid_states]
+
+    # ======================================================
+    # 1) CLEAN df_land (MONTHLY FISH LANDING)
+    # ======================================================
+    land = df_land.copy()
+    land["State"] = (
+        land["State"]
+        .astype(str)
+        .str.upper()
+        .str.replace(r"\s*/\s*", "/", regex=True)
+        .str.replace(r"\s+", " ", regex=True)
+        .str.strip()
+    )
+
+    # REMOVE MALAYSIA-LEVEL ROWS
+    land = land[~land["State"].str.startswith("MALAYSIA")]
+
+    # Fuzzy match states
+    def match_state(name):
+        matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.90)
+        return matches[0] if matches else np.nan
+
+    land["State"] = land["State"].apply(match_state)
+    land = land.dropna(subset=["State"])
+    land = land[land["State"].isin(valid_states)]
+
+    # Convert numeric columns
+    land["Month"] = pd.to_numeric(land["Month"], errors="coerce")
+    land["Year"] = pd.to_numeric(land["Year"], errors="coerce")
+    land["Fish Landing (Tonnes)"] = pd.to_numeric(land["Fish Landing (Tonnes)"], errors="coerce")
+
+    land = land.dropna(subset=["Month", "Year", "Fish Landing (Tonnes)"])
+
+    # GROUP MONTHLY
+    monthly_totals = (
+        land.groupby(["Year", "Month", "State"], as_index=False)["Fish Landing (Tonnes)"]
+        .sum()
+    )
+
+    # ======================================================
+    # 2) CLEAN df_vess (VESSELS)
+    # ======================================================
+    vess = df_vess.copy()
+    vess["State"] = (
+        vess["State"]
+        .astype(str)
+        .str.upper()
+        .str.replace(r"\s*/\s*", "/", regex=True)
+        .str.replace(r"\s+", " ", regex=True)
+        .str.strip()
+    )
+
+    vess = vess[~vess["State"].str.startswith("MALAYSIA")]
+    vess["State"] = vess["State"].apply(match_state)
+    vess = vess.dropna(subset=["State"])
+    vess = vess[vess["State"].isin(valid_states)]
+
+    for col in ["Inboard Powered", "Outboard Powered", "Non-Powered"]:
+        vess[col] = pd.to_numeric(vess[col], errors="coerce").fillna(0)
+
+    vess["Total number of fishing vessels"] = (
+        vess["Inboard Powered"] + vess["Outboard Powered"] + vess["Non-Powered"]
+    )
+
+    vess["Year"] = pd.to_numeric(vess["Year"], errors="coerce")
+    vess = vess.dropna(subset=["Year"])
+    vess["Year"] = vess["Year"].astype(int)
+
+    # ======================================================
+    # 3) MERGE
+    # ======================================================
+    merged_monthly = pd.merge(
+        monthly_totals,
+        vess[["State", "Year", "Total number of fishing vessels"]],
+        on=["State", "Year"],
+        how="left"
+    )
+
+    merged_monthly = merged_monthly.sort_values(["Year", "Month", "State"]).reset_index(drop=True)
+
+    return merged_monthly
+
+
 def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
     from sklearn.cluster import KMeans
     from sklearn.metrics import silhouette_score
