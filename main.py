@@ -1239,7 +1239,7 @@ def main():
         
     elif plot_option == "HDBSCAN":
 
-elif plot_option == "HDBSCAN Outlier Detection":
+
 
         st.subheader("HDBSCAN Outlier Detection — Monthly Anomalies per State")
         st.markdown("<p style='color:#ccc'>Automatically detect abnormal landing–vessel patterns for all months in the selected year.</p>",
