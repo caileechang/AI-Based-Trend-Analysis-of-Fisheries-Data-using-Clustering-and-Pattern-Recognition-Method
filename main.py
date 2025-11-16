@@ -867,8 +867,8 @@ def main():
     
             st.markdown(f"## Landing Summary in {latest_year}")
     
-        col1, col2 = st.columns(2)
-        with col1:
+            col1, col2 = st.columns(2)
+            with col1:
                 st.markdown(
                     f"""
                     <div style="{card_style}">
@@ -880,7 +880,7 @@ def main():
                     unsafe_allow_html=True,
                 )
     
-        with col2:
+            with col2:
                 st.markdown(
                     f"""
                     <div style="{card_style}">
@@ -892,7 +892,7 @@ def main():
                     unsafe_allow_html=True,
                 )
     
-        st.markdown("---")
+            st.markdown("---")
     
             # ======================================
             # YEARLY CLUSTER PLOT
