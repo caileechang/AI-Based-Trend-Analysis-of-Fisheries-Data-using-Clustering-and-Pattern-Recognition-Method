@@ -1244,43 +1244,33 @@ def main():
         st.subheader("HDBSCAN Outlier Detection — Monthly Anomalies per State")
         st.markdown("<p style='color:#ccc'>Automatically detect abnormal landing–vessel patterns for all months in the selected year.</p>",
                 unsafe_allow_html=True)
-
-        # -------------------------------------------------
-        # 1. User selects only YEAR
-        # -------------------------------------------------
-        years = sorted(merged_df["Year"].unique())
+    
+     
+        years = sorted(merged_monthly["Year"].unique())
         sel_year = st.selectbox("Select Year:", years)
 
-        df_year = merged_df[merged_df["Year"] == sel_year]
+        df_year = merged_monthly[merged_monthly["Year"] == sel_year].copy()
         if df_year.empty:
-            st.error("No data for this year.")
+            st.error("No data found for this year.")
             st.stop()
 
-        # -------------------------------------------------
-        # Prepare storage for all anomalies for all months
-        # -------------------------------------------------
+        # --------------------------------------------------------------
+        # 2. COLLECT ALL OUTLIERS FOR ALL MONTHS INSIDE THE SELECTED YEAR
+        # --------------------------------------------------------------
         all_outliers = []
 
-        # -------------------------------------------------
-        # 2. Loop through all 12 months automatically
-        # -------------------------------------------------
         for month in sorted(df_year["Month"].unique()):
             df = df_year[df_year["Month"] == month].copy()
-
-            # Skip empty months
-            if df.empty:
+            if df.empty or len(df) < 5:
                 continue
 
+            # Keep only required columns
             required_cols = [
-                "State",
-                "Year",
-                "Month",
+                "State", "Year", "Month",
                 "Total Fish Landing (Tonnes)",
                 "Total number of fishing vessels"
             ]
-
-            # Skip if any column missing
-            if any(col not in df.columns for col in required_cols):
+            if any(c not in df.columns for c in required_cols):
                 continue
 
             df = df[required_cols].dropna()
@@ -1290,34 +1280,30 @@ def main():
                 "Total number of fishing vessels": "Vessels"
             }, inplace=True)
 
-            # Skip months with too few rows for HDBSCAN
             if len(df) < 5:
                 continue
 
-            # ---------------------
-            # Scaling
-            # ---------------------
+            # ----------------------------------------------------------
+            # HDBSCAN
+            # ----------------------------------------------------------
             X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
-            # ---------------------
-            # Run HDBSCAN
-            # ---------------------
             clusterer = hdbscan.HDBSCAN(
                 min_samples=3,
                 min_cluster_size=3,
                 prediction_data=True
             ).fit(X)
 
-            df["Cluster"] = clusterer.labels_
             df["Outlier_Score"] = clusterer.outlier_scores_
             if df["Outlier_Score"].max() == 0:
                 continue
+
             df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
             df["Anomaly"] = df["Outlier_Norm"] >= 0.65
 
-            # ---------------------
+            # ----------------------------------------------------------
             # Explanation rules
-            # ---------------------
+            # ----------------------------------------------------------
             avg_land = df["Landing"].mean()
             avg_ves = df["Vessels"].mean()
 
@@ -1335,29 +1321,29 @@ def main():
 
             df["Explanation"] = df.apply(explain, axis=1)
 
-            # save only outliers
-            all_outliers.append(
-                df[df["Anomaly"] == True][
-                    ["Year", "Month", "State", "Landing", "Vessels",
-                    "Outlier_Norm", "Explanation"]
-                ]
-            )
+            # Save only anomalies
+            outliers_only = df[df["Anomaly"] == True][[
+                "Year", "Month", "State", "Landing", "Vessels",
+                "Outlier_Norm", "Explanation"
+            ]]
 
-        # -------------------------------------------------
-        # 3. Combine all months into one big table
-        # -------------------------------------------------
+            if not outliers_only.empty:
+                all_outliers.append(outliers_only)
+
+        # --------------------------------------------------------------
+        # 3. COMBINE ALL MONTH OUTLIERS INTO ONE TABLE
+        # --------------------------------------------------------------
         if len(all_outliers) == 0:
             st.success("No anomalies detected for this year.")
             st.stop()
 
         final_outliers = pd.concat(all_outliers).sort_values(["Month", "State"])
-
-        # -------------------------------------------------
-        # 4. Display final table
-        # -------------------------------------------------
-        st.markdown("### 🔎 Detected State-Level Outliers")
+        
+        # --------------------------------------------------------------
+        # 4. DISPLAY TABLE
+        # --------------------------------------------------------------
+        st.markdown("### 🔍 Detected State-Level Outliers")
         st.dataframe(final_outliers, use_container_width=True)
-
 
 
     elif plot_option == "HDBSCAN Outlier Detection":
