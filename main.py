@@ -1337,13 +1337,10 @@ def main():
         
     elif plot_option == "HDBSCAN":
 
-
-
         st.subheader("HDBSCAN Outlier Detection — Monthly Anomalies per State")
         st.markdown("<p style='color:#ccc'>Automatically detect abnormal landing–vessel patterns for all months in the selected year.</p>",
-                unsafe_allow_html=True)
-    
-     
+                    unsafe_allow_html=True)
+
         years = sorted(merged_monthly["Year"].unique())
         sel_year = st.selectbox("Select Year:", years)
 
@@ -1352,9 +1349,9 @@ def main():
             st.error("No data found for this year.")
             st.stop()
 
-        # --------------------------------------------------------------
-        # 2. COLLECT ALL OUTLIERS FOR ALL MONTHS INSIDE THE SELECTED YEAR
-        # --------------------------------------------------------------
+        # ----------------------------------------------------
+        # Collect outliers for all months
+        # ----------------------------------------------------
         all_outliers = []
 
         for month in sorted(df_year["Month"].unique()):
@@ -1362,10 +1359,9 @@ def main():
             if df.empty or len(df) < 5:
                 continue
 
-            # Keep only required columns
             required_cols = [
                 "State", "Year", "Month",
-                "Total Fish Landing (Tonnes)",
+                "Fish Landing (Tonnes)",
                 "Total number of fishing vessels"
             ]
             if any(c not in df.columns for c in required_cols):
@@ -1374,16 +1370,16 @@ def main():
             df = df[required_cols].dropna()
 
             df.rename(columns={
-                "Total Fish Landing (Tonnes)": "Landing",
+                "Fish Landing (Tonnes)": "Landing",
                 "Total number of fishing vessels": "Vessels"
             }, inplace=True)
 
             if len(df) < 5:
                 continue
 
-            # ----------------------------------------------------------
+            # -----------------------
             # HDBSCAN
-            # ----------------------------------------------------------
+            # -----------------------
             X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
             clusterer = hdbscan.HDBSCAN(
@@ -1399,9 +1395,6 @@ def main():
             df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
             df["Anomaly"] = df["Outlier_Norm"] >= 0.65
 
-            # ----------------------------------------------------------
-            # Explanation rules
-            # ----------------------------------------------------------
             avg_land = df["Landing"].mean()
             avg_ves = df["Vessels"].mean()
 
@@ -1419,27 +1412,27 @@ def main():
 
             df["Explanation"] = df.apply(explain, axis=1)
 
-            # Save only anomalies
             outliers_only = df[df["Anomaly"] == True][[
-                "Year", "Month", "State", "Landing", "Vessels",
+                "Year", "Month", "State",
+                "Landing", "Vessels",
                 "Outlier_Norm", "Explanation"
             ]]
 
             if not outliers_only.empty:
                 all_outliers.append(outliers_only)
 
-        # --------------------------------------------------------------
-        # 3. COMBINE ALL MONTH OUTLIERS INTO ONE TABLE
-        # --------------------------------------------------------------
+        # ----------------------------
+        # Combine
+        # ----------------------------
         if len(all_outliers) == 0:
             st.success("No anomalies detected for this year.")
             st.stop()
 
         final_outliers = pd.concat(all_outliers).sort_values(["Month", "State"])
-        
-        # --------------------------------------------------------------
-        # 4. DISPLAY TABLE
-        # --------------------------------------------------------------
+
+        # ----------------------------
+        # Show table
+        # ----------------------------
         st.markdown("### 🔍 Detected State-Level Outliers")
         st.dataframe(final_outliers, use_container_width=True)
 
