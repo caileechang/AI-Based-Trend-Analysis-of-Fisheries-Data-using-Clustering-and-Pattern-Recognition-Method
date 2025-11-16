@@ -813,15 +813,34 @@ def main():
         # ======================================
         # USER SELECTION COMES FIRST
         # ======================================
-        st.markdown("## Fish Landing Trends (Cluster-Based Analysis)")
+        # st.markdown("## Fish Landing Trends (Cluster-Based Analysis)")
+        st.markdown("""
+            <h2 style='color:white;'>🎣 Fish Landing Trends (Cluster Analysis)</h2>
+            <p style='color:#ccc; margin-top:-10px;'>
+                Compare freshwater & marine fish landings across yearly or monthly periods using K-Means cluster grouping.
+            </p>
+        """, unsafe_allow_html=True)
+
+        st.markdown("<hr style='border:0.5px solid #444;'>", unsafe_allow_html=True)
+        # Options box
+        with st.container():
+            st.markdown("<h4 style='color:white;'>🔍 Display Options</h4>", unsafe_allow_html=True)
+
+            opt_col1, opt_col2 = st.columns([1,2])
+
+            with opt_col1:
+                period_choice = st.radio("Period:", ["Yearly", "Monthly"], horizontal=True)
+
+            with opt_col2:
+                trend_option = st.radio("Trend:", ["Freshwater", "Marine", "Both"], horizontal=True)
+                
+        # period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
     
-        period_choice = st.radio("Select period:", ["Yearly", "Monthly"], horizontal=True)
-    
-        trend_option = st.radio(
-            "Select trend to display:",
-            ("Freshwater", "Marine", "Both"),
-            horizontal=True
-        )
+        # trend_option = st.radio(
+           # "Select trend to display:",
+         #   ("Freshwater", "Marine", "Both"),
+          #  horizontal=True
+        #)
     
         # ======================================
         # YEARLY SUMMARY (Shown only if yearly selected)
