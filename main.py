@@ -1459,10 +1459,15 @@ def main():
         m = folium.Map(location=[4.5, 109.5], zoom_start=6)
 
         for _, row in df_sel.iterrows():
-            if row["Coords"] is None:
+
+            coords_val = row["Coords"]
+
+            # Skip missing or invalid coordinates
+            if not isinstance(coords_val, (list, tuple)) or len(coords_val) != 2:
                 continue
 
-            lat, lon = row["Coords"]
+            lat, lon = coords_val
+
             color = "red" if row["Anomaly"] else "blue"
 
             folium.CircleMarker(
@@ -1474,8 +1479,8 @@ def main():
                 tooltip=row["State"],
                 popup=(
                     f"<b>{row['State']}</b><br>"
-                    f"Landing: {row['Landing']:.0f}<br>"
-                    f"Vessels: {row['Vessels']:.0f}<br>"
+                    f"Landing: {row[L_col]:.0f} tonnes<br>"
+                    f"Vessels: {row[V_col]:.0f}<br>"
                     f"Score: {row['Outlier_Norm']:.2f}<br>"
                     f"<i>{row['Explanation']}</i>"
                 ),
