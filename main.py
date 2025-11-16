@@ -1253,26 +1253,6 @@ def main():
     
             st.plotly_chart(fig, use_container_width=True)
 
-           
-        
-     
-
-    elif plot_option == "DBSCAN Anomaly Detection":
-        eps = st.sidebar.slider("DBSCAN eps", 0.1, 1.0, 0.1, 0.05)
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-        scaled = StandardScaler().fit_transform(features)
-        labels = DBSCAN(eps=eps, min_samples=5).fit_predict(scaled)
-        merged_df['DBSCAN_Label'] = labels
-
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(x=scaled[:, 1], y=scaled[:, 0], hue=labels, palette='tab10', ax=ax)
-        ax.set_title(f"DBSCAN Clustering (eps={eps})")
-        ax.set_xlabel("Vessels (scaled)")
-        ax.set_ylabel("Landings (scaled)")
-        st.pyplot(fig)
-
-        st.markdown(f"**Outliers Detected:** {(labels == -1).sum()}")
-
     elif plot_option == "Automatic DBSCAN":
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
         from scipy.spatial import ConvexHull 
@@ -1311,7 +1291,7 @@ def main():
         st.markdown(f"**Automatically chosen min_samples:** `{min_samples_auto}`")
 
         # --- Step 7: Plot sorted k-distance graph (justification) ---
-        fig_k, ax_k = plt.subplots(figsize=(8, 5))
+        fig_k, ax_k = plt.subplots(figsize=(8, 3.5))
         ax_k.plot(distances, label="Sorted k-distance")
         if kneedle.knee is not None:
             ax_k.axvline(kneedle.knee, color="red", linestyle="--", label=f"Elbow index = {kneedle.knee}")
