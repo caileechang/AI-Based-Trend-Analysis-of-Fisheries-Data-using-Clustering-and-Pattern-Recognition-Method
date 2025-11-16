@@ -16,6 +16,7 @@ from difflib import get_close_matches
 import time
 import plotly.express as px
 
+
 import hdbscan
 
 # Import your clustering modules
@@ -1310,6 +1311,8 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
 
     elif plot_option == "Unified HDBSCAN Outlier Detection":
+        import folium
+        from streamlit_folium import st_folium
 
         st.subheader("Unified HDBSCAN Outlier Detection (Monthly + Yearly)")
         st.markdown("<p style='color:#ccc'>Detect both monthly and yearly anomalies with map and explanations.</p>",
