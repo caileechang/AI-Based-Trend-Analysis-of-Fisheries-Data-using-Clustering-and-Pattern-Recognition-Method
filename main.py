@@ -1239,183 +1239,142 @@ def main():
         
 
     elif plot_option == "HDBSCAN Outlier Detection":
-        st.subheader("HDBSCAN Outlier Detection (State-Level Anomalies)")
+        st.subheader("HDBSCAN Outlier Detection (Fish Landing & Vessel Patterns)")
+
+
+        vessel_col = "Total number of fishing vessels"
 
         # =====================================================
-        # Auto-detect vessel column in merged_df
+        # USER CHOICE
         # =====================================================
-        def detect_vessel_column(df):
-            for col in df.columns:
-                if "vessel" in col.lower():
-                    return col
-            return None
-
-        vessel_col = detect_vessel_column(merged_df)
-
-        if vessel_col is None:
-            st.error(" No vessel column found in merged_df.")
-            st.stop()
+        option = st.radio(
+            "Choose data period:",
+            ["Yearly", "Monthly"],
+            horizontal=True
+        )
 
         # =====================================================
-        # User choice: Yearly or Monthly (STATE LEVEL)
+        # YEARLY OUTLIER DETECTION
         # =====================================================
-        period = st.radio("Choose analysis period:", ["Yearly", "Monthly"], horizontal=True)
+        if option == "Yearly":
+            df = merged_df.copy()
+
+            # Features
+            df["Freshwater"] = df["Freshwater (Tonnes)"]
+            df["Marine"] = df["Marine (Tonnes)"]
+            df["Vessels"] = df[vessel_col]
+
+            df["Label"] = df["State"] + " – " + df["Year"].astype(str)
+
+            features = ["Freshwater", "Marine", "Vessels"]
+            X = StandardScaler().fit_transform(df[features])
 
         # =====================================================
-        # PREPARE YEARLY DATA — KEEP STATE
-        # =====================================================
-        if period == "Yearly":
-            df = (
-                merged_df.groupby(["State", "Year"])[
-                    ["Total Fish Landing (Tonnes)", vessel_col]
-                ]
-                .sum()
-                .reset_index()
-            )
-
-            df["Label"] = df["State"] + " (" + df["Year"].astype(str) + ")"
-
-        # =====================================================
-        # PREPARE MONTHLY DATA — KEEP STATE
+        # MONTHLY OUTLIER DETECTION (NOW WITH STATE INCLUDED)
         # =====================================================
         else:
-            df = (
-                merged_df.groupby(["State", "Year", "Month"])[
-                    ["Total Fish Landing (Tonnes)", vessel_col]
-                ]
+            monthly = (
+                df_land.groupby(["State","Year","Month","Type of Fish"])
+                [["Fish Landing (Tonnes)"]]
                 .sum()
                 .reset_index()
             )
 
-            df["MonthYear"] = pd.to_datetime(
-                df["Year"].astype(str) + "-" + df["Month"].astype(str) + "-01"
+            # Pivot → Freshwater, Marine separated
+            monthly = monthly.pivot_table(
+                index=["State","Year","Month"],
+                columns="Type of Fish",
+                values="Fish Landing (Tonnes)",
+                aggfunc="sum"
+            ).fillna(0).reset_index()
+
+            monthly["Freshwater"] = monthly.get("Freshwater", 0)
+            monthly["Marine"] = monthly.get("Marine", 0)
+
+            # Merge vessel data
+            monthly = monthly.merge(
+                df_vess[["State","Year", vessel_col]],
+                on=["State","Year"],
+                how="left"
+            ).fillna(0)
+
+            df = monthly.copy()
+            df["Vessels"] = df[vessel_col]
+            df["Label"] = (
+                df["State"] + " – " +
+                df["Year"].astype(str) + "-" +
+                df["Month"].astype(str).str.zfill(2)
             )
-            df["Label"] = df["State"] + " (" + df["MonthYear"].dt.strftime("%b %Y") + ")"
+
+            features = ["Freshwater", "Marine", "Vessels"]
+            X = StandardScaler().fit_transform(df[features])
 
         # =====================================================
-        # Select features for HDBSCAN
-        # =====================================================
-        features = ["Total Fish Landing (Tonnes)", vessel_col]
-
-        X = StandardScaler().fit_transform(df[features])
-
-        # =====================================================
-        # Run HDBSCAN
+        # RUN HDBSCAN
         # =====================================================
         clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=5, min_samples=5, prediction_data=True
+            min_cluster_size=5,
+            min_samples=5,
+            prediction_data=True
         ).fit(X)
 
         df["Cluster"] = clusterer.labels_
         df["Outlier_Score"] = clusterer.outlier_scores_
-        df["Outlier_Score_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
-
-        df["Anomaly"] = df["Outlier_Score_Norm"] >= 0.65
-
-        # =====================================================
-        # Explanation logic
-        # =====================================================
-        avg_land = df["Total Fish Landing (Tonnes)"].mean()
-        avg_vess = df[vessel_col].mean()
-
-        def explain(row):
-            land = row["Total Fish Landing (Tonnes)"]
-            ves = row[vessel_col]
-
-            if land > avg_land and ves < avg_vess:
-                return "⚠️ High landing but few vessels — unusual efficiency."
-            if land < avg_land and ves > avg_vess:
-                return "🐟 Low landing with many vessels — possible overcapacity."
-            if land < avg_land and ves < avg_vess:
-                return "🛶 Low activity — possibly seasonal or small fleet."
-            if land > avg_land and ves > avg_vess:
-                return "⚓ High scale operation — unusually large."
-            return "Atypical pattern."
-
-        df["Why Flagged"] = df.apply(explain, axis=1)
+        df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
+        df["Anomaly"] = df["Outlier_Norm"] >= 0.65
 
         # =====================================================
         # OUTLIER TABLE
         # =====================================================
-        st.markdown("### 🔍 Detected State-Level Outliers")
+        st.markdown("## 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"] == True][[
             "State",
             "Year",
-            "Month" if period == "Monthly" else None,
-            "Total Fish Landing (Tonnes)",
-            vessel_col,
-            "Outlier_Score_Norm",
-            "Why Flagged",
-            "Label",
+            "Month" if option=="Monthly" else None,
+            "Freshwater",
+            "Marine",
+            "Vessels",
+            "Outlier_Norm",
+            "Label"
         ]].dropna(axis=1, how="all")
 
         st.dataframe(outliers, use_container_width=True)
 
         # =====================================================
-        # SCATTERPLOT (State Level)
+        # SCATTER PLOT
         # =====================================================
-        st.markdown("### 📈 Outlier Visualization")
-
-        fig, ax = plt.subplots(figsize=(9, 6))
+        fig, ax = plt.subplots(figsize=(8,5))
 
         sns.scatterplot(
-            x=df["Total Fish Landing (Tonnes)"],
-            y=df[vessel_col],
-            hue=df["Outlier_Score_Norm"],
+            x=df["Freshwater"],
+            y=df["Marine"],
+            hue=df["Outlier_Norm"],
             palette="viridis",
-            s=90,
+            s=80,
             ax=ax
         )
 
-        # mark anomalies
-        ano = df[df["Anomaly"] == True]
-        plt.scatter(
-            ano["Total Fish Landing (Tonnes)"],
-            ano[vessel_col],
-            s=160,
-            edgecolors="red",
+        anomalies = df[df["Anomaly"]]
+        ax.scatter(
+            anomalies["Freshwater"],
+            anomalies["Marine"],
+            s=180,
             facecolors="none",
+            edgecolors="red",
             linewidth=2,
             label="Outlier"
         )
 
-        # annotate state names
-        for _, r in ano.iterrows():
-            ax.text(
-                r["Total Fish Landing (Tonnes)"],
-                r[vessel_col],
-                r["State"],
-                fontsize=8,
-                color="white"
-            )
-
-        ax.set_xlabel("Fish Landing (Tonnes)")
-        ax.set_ylabel("Fishing Vessels")
-        ax.set_title("HDBSCAN Outliers by State")
+        ax.set_title(f"HDBSCAN Outlier Detection ({option})")
+        ax.set_xlabel("Freshwater Landing")
+        ax.set_ylabel("Marine Landing")
         ax.grid(alpha=0.3)
         ax.legend()
 
         st.pyplot(fig)
 
-        # =====================================================
-        # HEATMAP OF OUTLIERS
-        # =====================================================
-        st.markdown("### 🔥 Outlier Heatmap (State Patterns)")
-
-        if len(outliers) > 0:
-            fig_h, ax_h = plt.subplots(figsize=(10, 4))
-            sns.heatmap(
-                outliers[["Total Fish Landing (Tonnes)", vessel_col]],
-                annot=True,
-                cmap="coolwarm",
-                fmt=".0f",
-                ax=ax_h
-            )
-            ax_h.set_title("Outlier Catch–Vessel Intensity")
-            st.pyplot(fig_h)
-        else:
-            st.info("No strong outliers found.")
+        
 
 
     elif plot_option == "Automatic DBSCAN":
