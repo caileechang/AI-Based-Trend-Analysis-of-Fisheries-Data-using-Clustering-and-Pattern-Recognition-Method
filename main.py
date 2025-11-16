@@ -1250,7 +1250,26 @@ def main():
         years = sorted(merged_df["Year"].unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
-        df_year = merged_df[merged_df["Year"] == sel_year].copy()
+        # Use monthly merged dataset (contains Month column)
+        df_year = merged_monthly[merged_monthly["Year"] == sel_year].copy()
+
+        if df_year.empty:
+            st.error("No monthly data available for selected year.")
+            st.stop()
+
+        # Ensure required columns exist
+        required_cols = [
+            "State", "Year", "Month",
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]
+
+        df_year = df_year[required_cols].dropna()
+        df_year.rename(columns={
+            "Total Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
         if df_year.empty:
             st.error("No data available for selected year.")
             st.stop()
