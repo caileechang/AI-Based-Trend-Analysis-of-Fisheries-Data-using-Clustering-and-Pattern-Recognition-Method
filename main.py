@@ -1246,7 +1246,7 @@ def main():
         # ============================================================
         # Step 1: Use merged_monthly (must come from prepare_monthly)
         # ============================================================
-       st.write(merged_monthly.columns.tolist())
+        st.write(merged_monthly.columns.tolist())
 
 
 
