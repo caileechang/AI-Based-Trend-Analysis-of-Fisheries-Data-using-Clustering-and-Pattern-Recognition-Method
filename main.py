@@ -574,7 +574,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "Automatic DBSCAN","HDBSCAN Outlier Detection",
+        "Automatic DBSCAN","HDBSCAN","HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Map",
         "Interactive Geospatial Map"
@@ -1237,6 +1237,212 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
 
         
+    elif plot_option == "HDBSCAN":
+
+        st.subheader("HDBSCAN Outlier Detection (State-Level Landing vs Vessels)")
+        st.markdown(
+            "<p style='color:#ccc'>Detect unusual landing–vessel relationships at the state level for a specific year and month.</p>",
+            unsafe_allow_html=True
+        )
+
+        df = merged_monthly.copy()
+
+        # ============================================================
+        # 1. YEAR SELECTION
+        # ============================================================
+        years = sorted(df["Year"].unique())
+        sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
+
+        df_y = df[df["Year"] == sel_year].copy()
+        if df_y.empty:
+            st.error("No data for selected year.")
+            st.stop()
+
+        # ============================================================
+        # 2. MONTH SELECTION
+        # ============================================================
+        month_name = {
+            1:"January",2:"February",3:"March",4:"April",5:"May",6:"June",
+            7:"July",8:"August",9:"September",10:"October",11:"November",12:"December"
+        }
+
+        months_available = sorted(df_y["Month"].unique())
+        sel_month = st.selectbox(
+            "Select Month:",
+            months_available,
+            format_func=lambda x: month_name[int(x)]
+        )
+
+        df_sel = df_y[df_y["Month"] == sel_month].copy()
+
+        if df_sel.empty:
+            st.error("No data available for that month.")
+            st.stop()
+
+        st.info(f"Analyzing **{month_name[sel_month]} {sel_year}**")
+
+        # ============================================================
+        # 3. PREPARE FEATURES
+        # ============================================================
+        df_sel = df_sel[[
+            "State",
+            "Year",
+            "Month",
+            "Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]].dropna()
+
+        df_sel.rename(columns={
+            "Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
+        # Fix missing/infinite numeric values
+        df_sel["Landing"] = pd.to_numeric(df_sel["Landing"], errors="coerce").fillna(0)
+        df_sel["Vessels"] = pd.to_numeric(df_sel["Vessels"], errors="coerce").fillna(0)
+
+        # ============================================================
+        # 4. SCALING
+        # ============================================================
+        X = StandardScaler().fit_transform(df_sel[["Landing", "Vessels"]])
+
+        # ============================================================
+        # 5. RUN HDBSCAN
+        # ============================================================
+        clusterer = hdbscan.HDBSCAN(
+            min_samples=3,
+            min_cluster_size=3,
+            prediction_data=True
+        ).fit(X)
+
+        df_sel["Cluster"] = clusterer.labels_
+        df_sel["Outlier_Score"] = clusterer.outlier_scores_
+        df_sel["Outlier_Norm"] = df_sel["Outlier_Score"] / df_sel["Outlier_Score"].max()
+        df_sel["Anomaly"] = df_sel["Outlier_Norm"] >= 0.65   # anomaly threshold
+
+        # ============================================================
+        # 6. EXPLANATION LOGIC
+        # ============================================================
+        avg_land = df_sel["Landing"].mean()
+        avg_ves = df_sel["Vessels"].mean()
+
+        def explain(row):
+            L = row["Landing"]
+            V = row["Vessels"]
+
+            if L > avg_land and V < avg_ves:
+                return "⚡ High landing but few vessels → Highly efficient or exceptional catch"
+            if L < avg_land and V > avg_ves:
+                return "🐟 Low catch per vessel → Possible overfishing / low stock"
+            if L < avg_land and V < avg_ves:
+                return "🛶 Low activity → Seasonal or small fleet"
+            if L > avg_land and V > avg_ves:
+                return "⚓ Large scale fishing → Unusually intensive operations"
+            return "Unusual relationship compared to national average"
+
+        df_sel["Explanation"] = df_sel.apply(explain, axis=1)
+
+        # ============================================================
+        # 7. OUTLIER TABLE
+        # ============================================================
+        st.markdown("### 🔍 Detected State-Level Outliers")
+
+        outliers = df_sel[df_sel["Anomaly"] == True][[
+            "State", "Landing", "Vessels", "Outlier_Norm", "Explanation"
+        ]]
+
+        if outliers.empty:
+            st.success("No significant anomalies detected for this month.")
+        else:
+            st.dataframe(outliers, use_container_width=True)
+
+        # ============================================================
+        # 8. SCATTER PLOT
+        # ============================================================
+        st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.scatterplot(
+            data=df_sel,
+            x="Vessels",
+            y="Landing",
+            hue="Outlier_Norm",
+            palette="viridis",
+            s=100,
+            ax=ax
+        )
+
+        ano = df_sel[df_sel["Anomaly"] == True]
+        ax.scatter(
+            ano["Vessels"], ano["Landing"],
+            s=260, facecolors="none",
+            edgecolors="red", linewidth=2, label="Outlier"
+        )
+
+        for _, r in ano.iterrows():
+            ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
+                    color="red", fontsize=9, fontweight="bold")
+
+        ax.set_title(f"HDBSCAN Outliers — {month_name[sel_month]} {sel_year}")
+        ax.grid(alpha=0.3)
+        ax.legend()
+        st.pyplot(fig)
+
+        # ============================================================
+        # 9. MAP VISUALIZATION
+        # ============================================================
+        st.markdown("### 🗺️ Map of Anomalous States")
+
+        import folium
+        from streamlit_folium import st_folium
+
+        coords = {
+            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+            "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+            "JOHOR": [1.4854, 103.7618],
+            "MELAKA": [2.1896, 102.2501],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "SELANGOR": [3.0738, 101.5183],
+            "PAHANG": [3.8126, 103.3256],
+            "TERENGGANU": [5.3302, 103.1408],
+            "KELANTAN": [6.1254, 102.2381],
+            "PERAK": [4.5921, 101.0901],
+            "PULAU PINANG": [5.4164, 100.3327],
+            "KEDAH": [6.1184, 100.3685],
+            "PERLIS": [6.4449, 100.2048],
+            "SABAH": [5.9788, 116.0753],
+            "SARAWAK": [1.5533, 110.3592],
+            "W.P. LABUAN": [5.2831, 115.2308],
+        }
+
+        df_sel["Coords"] = df_sel["State"].map(coords)
+
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+
+        for _, row in df_sel.iterrows():
+            if row["Coords"] is None:
+                continue
+
+            lat, lon = row["Coords"]
+            color = "red" if row["Anomaly"] else "blue"
+
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=8,
+                color=color,
+                fill=True,
+                fill_color=color,
+                tooltip=row["State"],
+                popup=(
+                    f"<b>{row['State']}</b><br>"
+                    f"Landing: {row['Landing']:.0f}<br>"
+                    f"Vessels: {row['Vessels']:.0f}<br>"
+                    f"Score: {row['Outlier_Norm']:.2f}<br>"
+                    f"<i>{row['Explanation']}</i>"
+                ),
+            ).add_to(m)
+
+        st_folium(m, height=550, width=800)
 
     elif plot_option == "HDBSCAN Outlier Detection":
 
