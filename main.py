@@ -824,7 +824,13 @@ def main():
         st.markdown("<hr style='border:0.5px solid #444;'>", unsafe_allow_html=True)
         # Options box
         with st.container():
-            st.markdown("<h4 style='color:white;'>🔍 Display Options</h4>", unsafe_allow_html=True)
+            #st.markdown("<h4 style='color:white;'> Display Options</h4>", unsafe_allow_html=True)
+            st.markdown(
+                "<p style='color:#ccc; margin-top:-12px; font-size:15px;'>"
+                "Please select the period and trend to display the fish landing analysis."
+                "</p>", 
+                unsafe_allow_html=True
+            )
 
             opt_col1, opt_col2 = st.columns([1,2])
 
