@@ -1311,6 +1311,11 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
 
     elif plot_option == "Unified HDBSCAN ":
+        import folium
+        import hdbscan
+        import seaborn as sns
+        from streamlit_folium import st_folium
+    
         
         from sklearn.preprocessing import StandardScaler
 
