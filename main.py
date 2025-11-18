@@ -1278,38 +1278,77 @@ def main():
         st.markdown("Clusters selected automatically using the highest Silhouette score.")
 
         # ===================================================
-        # STATIC VERSION — BEAUTIFUL PUBLICATION GRAPHIC
+        # STATIC VERSION 
         # ===================================================
+       
         if vis_mode == "Static":
             st.sidebar.markdown("### Adjust 3D View")
             elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
             azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
 
             plt.close('all')
-            fig = plt.figure(figsize=(5,4))
+
+            # ▶ Smaller but HIGH-QUALITY publication look
+            fig = plt.figure(figsize=(5, 4), dpi=160)     # high DPI + compact
             ax = fig.add_subplot(111, projection='3d')
 
-            # Distinct visual style
+            # -----------------------------
+            # BEAUTIFUL COLOR PALETTE
+            # -----------------------------
+            cmap = plt.cm.get_cmap("coolwarm", best_k)
+
+            # -----------------------------
+            # CLEANER MARKERS
+            # -----------------------------
             ax.scatter(
                 merged_df['Total number of fishing vessels'],
                 merged_df['Total Fish Landing (Tonnes)'],
                 merged_df['Year'],
                 c=merged_df['Cluster'],
-                cmap='coolwarm',         # DIFFERENT color palette
-                s=55,                    
-                alpha=0.85,
-                depthshade=True          # adds 3D shading
+                cmap=cmap,
+                s=45,                      # smaller + cleaner
+                alpha=0.92,
+                edgecolor="white",         # slight outline
+                linewidth=0.3,
+                depthshade=True
             )
 
-            ax.set_facecolor("#f4f4f4")
-            ax.grid(True, linestyle='--', alpha=0.3)
+            # -----------------------------
+            # MODERN MINIMAL GRID
+            # -----------------------------
+            ax.xaxis._axinfo["grid"]['linewidth'] = 0.2
+            ax.yaxis._axinfo["grid"]['linewidth'] = 0.2
+            ax.zaxis._axinfo["grid"]['linewidth'] = 0.2
 
-            ax.set_xlabel("Vessels", fontsize=10)
-            ax.set_ylabel("Landings", fontsize=10)
-            ax.set_zlabel("Year", fontsize=10)
-            ax.set_title(f"Static 3D KMeans (k={best_k})", fontsize=11, pad=10)
+            ax.xaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.3)
+            ax.yaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.3)
+            ax.zaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.3)
 
+            # Transparent background planes
+            for axis in ("x", "y", "z"):
+                ax._axinfo[axis]['pane_color'] = (0.97, 0.97, 0.97, 0.5)
+
+            # -----------------------------
+            # MODERN LABEL STYLE
+            # -----------------------------
+            ax.set_xlabel("Vessels", fontsize=8, labelpad=6)
+            ax.set_ylabel("Landings", fontsize=8, labelpad=6)
+            ax.set_zlabel("Year", fontsize=8, labelpad=6)
+            ax.tick_params(labelsize=7)
+
+            # -----------------------------
+            # TITLE
+            # -----------------------------
+            ax.set_title(
+                f"Static 3D KMeans (k={best_k})",
+                fontsize=10,
+                pad=14,
+                weight="bold"
+            )
+
+            # Camera angle
             ax.view_init(elev=elev, azim=azim)
+
             plt.tight_layout()
             st.pyplot(fig, use_container_width=False)
 
