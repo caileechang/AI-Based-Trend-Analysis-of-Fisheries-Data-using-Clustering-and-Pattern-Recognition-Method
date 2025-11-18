@@ -17,6 +17,7 @@ import time
 import plotly.express as px
 
 
+
 import hdbscan
 
 # Import your clustering modules
@@ -862,6 +863,9 @@ def main():
         st.session_state['best_k_yearly'] = best_k_yearly
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+
      
         # ======================================
         # GLOBAL CARD STYLE + CHART STYLES
