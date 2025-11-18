@@ -690,6 +690,9 @@ def main():
         st.pyplot(fig)
 
     elif plot_option == "Yearly Fish Landing Summary":
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+        
         st.subheader("Total Yearly Fish Landing by State")
         # --- ALWAYS use cleaned yearly summary from prepare_yearly ---
         if uploaded_file:
@@ -1251,7 +1254,7 @@ def main():
         # --- Step 4: User selects visualization mode ---
         vis_mode = st.radio(
             "Select visualization type:",
-            ["Static (Matplotlib)", "Interactive (Plotly)"],
+            ["Static", "Interactive"],
             horizontal=True
         )
     
