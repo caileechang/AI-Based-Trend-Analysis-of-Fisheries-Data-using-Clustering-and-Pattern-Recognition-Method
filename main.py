@@ -1286,7 +1286,7 @@ def main():
             azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
 
             plt.close('all')
-            fig = plt.figure(figsize=(7, 5))
+            fig = plt.figure(figsize=(5,4))
             ax = fig.add_subplot(111, projection='3d')
 
             # Distinct visual style
