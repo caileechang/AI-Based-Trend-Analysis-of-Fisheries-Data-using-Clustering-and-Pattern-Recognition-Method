@@ -1296,7 +1296,7 @@ def main():
                 merged_df['Year'],
                 c=merged_df['Cluster'],
                 cmap='coolwarm',         # DIFFERENT color palette
-                s=90,                    # larger markers
+                s=55,                    
                 alpha=0.85,
                 depthshade=True          # adds 3D shading
             )
