@@ -1238,65 +1238,84 @@ def main():
     elif plot_option == "3D KMeans Clustering":
         import matplotlib.pyplot as plt
         import seaborn as sns
-        st.subheader("Automatic 3D K-Means Clustering")
-    
         from mpl_toolkits.mplot3d import Axes3D
-    
-        # --- Step 1: Prepare data ---
+
+        st.subheader("Automatic 3D K-Means Clustering")
+
+        # ---------------------------------------------------
+        # STEP 1: PREPARE DATA
+        # ---------------------------------------------------
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
-    
-        # --- Step 2: Automatically find best k (Silhouette) ---
+
+        # ---------------------------------------------------
+        # STEP 2: AUTOMATICALLY FIND BEST k (Silhouette)
+        # ---------------------------------------------------
         sil_scores = {}
         for k in range(2, 11):
             kmeans = KMeans(n_clusters=k, random_state=42)
             labels = kmeans.fit_predict(scaled)
             sil_scores[k] = silhouette_score(scaled, labels)
-    
+
         best_k = max(sil_scores, key=sil_scores.get)
-    
-        # --- Step 3: Apply final model ---
+
+        # ---------------------------------------------------
+        # STEP 3: FIT FINAL MODEL
+        # ---------------------------------------------------
         final_model = KMeans(n_clusters=best_k, random_state=42)
         merged_df['Cluster'] = final_model.fit_predict(scaled)
-    
-        # --- Step 4: User selects visualization mode ---
+
+        # ---------------------------------------------------
+        # STEP 4: USER CHOICES
+        # ---------------------------------------------------
         vis_mode = st.radio(
             "Select visualization type:",
             ["Static", "Interactive"],
             horizontal=True
         )
-    
-        # --- Shared cluster summary info ---
+
         st.markdown(f"**Optimal number of clusters:** {best_k}")
-        st.markdown("Clusters are automatically determined using the highest silhouette score.")
-    
-        # --- STATIC (Matplotlib) VERSION -------------------------------------
+        st.markdown("Clusters selected automatically using the highest Silhouette score.")
+
+        # ===================================================
+        # STATIC VERSION — BEAUTIFUL PUBLICATION GRAPHIC
+        # ===================================================
         if vis_mode == "Static":
             st.sidebar.markdown("### Adjust 3D View")
             elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
             azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
-    
-            fig = plt.figure(figsize=(6, 4))
+
+            plt.close('all')
+            fig = plt.figure(figsize=(7, 5))
             ax = fig.add_subplot(111, projection='3d')
+
+            # Distinct visual style
             ax.scatter(
                 merged_df['Total number of fishing vessels'],
                 merged_df['Total Fish Landing (Tonnes)'],
                 merged_df['Year'],
                 c=merged_df['Cluster'],
-                cmap='viridis',
-                s=35, alpha=0.7, edgecolors='k'
+                cmap='coolwarm',         # DIFFERENT color palette
+                s=90,                    # larger markers
+                alpha=0.85,
+                depthshade=True          # adds 3D shading
             )
-    
-            ax.tick_params(labelsize=7)
-            ax.set_xlabel('Vessels', fontsize=8)
-            ax.set_ylabel('Landings', fontsize=8)
-            ax.set_zlabel('Year', fontsize=8)
-            ax.set_title(f'3D KMeans Clustering (k={best_k})', fontsize=9, pad=5)
+
+            ax.set_facecolor("#f4f4f4")
+            ax.grid(True, linestyle='--', alpha=0.3)
+
+            ax.set_xlabel("Vessels", fontsize=10)
+            ax.set_ylabel("Landings", fontsize=10)
+            ax.set_zlabel("Year", fontsize=10)
+            ax.set_title(f"Static 3D KMeans (k={best_k})", fontsize=11, pad=10)
+
             ax.view_init(elev=elev, azim=azim)
-            plt.tight_layout(pad=1.0)
+            plt.tight_layout()
             st.pyplot(fig, use_container_width=False)
-    
-        # --- INTERACTIVE (Plotly) VERSION -------------------------------------
+
+        # ===================================================
+        # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
+        # ===================================================
         else:
             fig = px.scatter_3d(
                 merged_df,
@@ -1305,21 +1324,35 @@ def main():
                 z='Year',
                 color='Cluster',
                 color_continuous_scale='Viridis',
-                title=f"3D KMeans Clustering (k={best_k})",
+                symbol='Cluster',
+                hover_data=['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels'],
+                title=f"Interactive 3D KMeans Clustering (k={best_k})",
                 height=600
             )
-    
-            fig.update_traces(marker=dict(size=4, line=dict(width=0.5, color='DarkSlateGrey')))
+
+            fig.update_traces(
+                marker=dict(
+                    size=5,
+                    line=dict(width=0.7, color='black')
+                )
+            )
+
             fig.update_layout(
                 scene=dict(
                     xaxis_title="Vessels",
                     yaxis_title="Landings",
-                    zaxis_title="Year"
+                    zaxis_title="Year",
+                    xaxis=dict(backgroundcolor='#1f1f1f'),
+                    yaxis=dict(backgroundcolor='#1f1f1f'),
+                    zaxis=dict(backgroundcolor='#1f1f1f'),
                 ),
-                margin=dict(l=0, r=0, b=0, t=40)
+                paper_bgcolor='#111111',
+                font_color='white',
+                margin=dict(l=0, r=0, b=0, t=50)
             )
-    
+
             st.plotly_chart(fig, use_container_width=True)
+
 
  
         
