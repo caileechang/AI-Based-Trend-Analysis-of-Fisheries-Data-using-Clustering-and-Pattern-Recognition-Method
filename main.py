@@ -1168,6 +1168,8 @@ def main():
 
         
     elif plot_option == "2D KMeans Scatter":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
     
         # --- Step 1: Prepare data ---
@@ -1234,6 +1236,8 @@ def main():
     
 
     elif plot_option == "3D KMeans Clustering":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
         st.subheader("Automatic 3D K-Means Clustering")
     
         from mpl_toolkits.mplot3d import Axes3D
@@ -1822,6 +1826,8 @@ def main():
 
 
     elif plot_option == "Automatic DBSCAN":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
         from scipy.spatial import ConvexHull 
 
