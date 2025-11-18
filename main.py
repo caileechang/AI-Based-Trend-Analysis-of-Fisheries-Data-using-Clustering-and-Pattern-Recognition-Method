@@ -1538,6 +1538,8 @@ def main():
             st.dataframe(final_month, use_container_width=True)
    
     elif plot_option == "HDBSCAN":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
 
         st.subheader("HDBSCAN Outlier Detection — Monthly Anomalies per State")
         st.markdown("<p style='color:#ccc'>Automatically detect abnormal landing–vessel patterns for all months in the selected year.</p>",
@@ -1640,6 +1642,8 @@ def main():
 
 
     elif plot_option == "HDBSCAN Outlier Detection":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
 
         st.subheader("HDBSCAN Outlier Detection (State-Level Landing vs Vessels)")
         st.markdown("<p style='color:#ccc'>Detect unusual landing–vessel relationships at the state level.</p>",
