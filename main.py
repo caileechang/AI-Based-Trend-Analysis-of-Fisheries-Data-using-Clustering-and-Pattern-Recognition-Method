@@ -1271,7 +1271,7 @@ def main():
         st.markdown("Clusters are automatically determined using the highest silhouette score.")
     
         # --- STATIC (Matplotlib) VERSION -------------------------------------
-        if vis_mode == "Static (Matplotlib)":
+        if vis_mode == "Static":
             st.sidebar.markdown("### Adjust 3D View")
             elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
             azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
@@ -1329,8 +1329,7 @@ def main():
         import seaborn as sns
        
         import folium
-        import hdbscan
-       
+     
         from streamlit_folium import st_folium
 
         st.subheader("Unified HDBSCAN Outlier Detection (Monthly + Yearly)")
