@@ -1280,7 +1280,6 @@ def main():
         # ===================================================
         # STATIC VERSION 
         # ===================================================
-       
         if vis_mode == "Static":
             st.sidebar.markdown("### Adjust 3D View")
             elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
@@ -1288,65 +1287,54 @@ def main():
 
             plt.close('all')
 
-            # ▶ Smaller but HIGH-QUALITY publication look
-            fig = plt.figure(figsize=(5, 4), dpi=160)     # high DPI + compact
+            fig = plt.figure(figsize=(5, 4), dpi=150)
             ax = fig.add_subplot(111, projection='3d')
 
-            # -----------------------------
-            # BEAUTIFUL COLOR PALETTE
-            # -----------------------------
-            cmap = plt.cm.get_cmap("coolwarm", best_k)
+            # PREMIUM COLOR PALETTE
+            cmap = plt.cm.coolwarm
 
-            # -----------------------------
-            # CLEANER MARKERS
-            # -----------------------------
+            # Scatter plot with nicer styling
             ax.scatter(
                 merged_df['Total number of fishing vessels'],
                 merged_df['Total Fish Landing (Tonnes)'],
                 merged_df['Year'],
                 c=merged_df['Cluster'],
                 cmap=cmap,
-                s=45,                      # smaller + cleaner
-                alpha=0.92,
-                edgecolor="white",         # slight outline
-                linewidth=0.3,
+                s=40,
+                alpha=0.88,
+                edgecolor="white",
+                linewidth=0.4,
                 depthshade=True
             )
 
-            # -----------------------------
-            # MODERN MINIMAL GRID
-            # -----------------------------
-            ax.xaxis._axinfo["grid"]['linewidth'] = 0.2
-            ax.yaxis._axinfo["grid"]['linewidth'] = 0.2
-            ax.zaxis._axinfo["grid"]['linewidth'] = 0.2
+            # =====================================================
+            # MODERN GRID & BACKGROUND WITHOUT USING _axinfo
+            # =====================================================
 
-            ax.xaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.3)
-            ax.yaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.3)
-            ax.zaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.3)
+            # Light grey background
+            ax.set_facecolor("#F5F5F5")
 
-            # Transparent background planes
-            for axis in ("x", "y", "z"):
-                ax._axinfo[axis]['pane_color'] = (0.97, 0.97, 0.97, 0.5)
+            # Grid style
+            ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.3)
 
-            # -----------------------------
-            # MODERN LABEL STYLE
-            # -----------------------------
-            ax.set_xlabel("Vessels", fontsize=8, labelpad=6)
-            ax.set_ylabel("Landings", fontsize=8, labelpad=6)
-            ax.set_zlabel("Year", fontsize=8, labelpad=6)
-            ax.tick_params(labelsize=7)
+            # Tick style
+            ax.tick_params(colors="#444", labelsize=7)
 
-            # -----------------------------
-            # TITLE
-            # -----------------------------
+            # Label style
+            ax.set_xlabel("Vessels", fontsize=8, labelpad=6, color="#333")
+            ax.set_ylabel("Landings", fontsize=8, labelpad=6, color="#333")
+            ax.set_zlabel("Year", fontsize=8, labelpad=6, color="#333")
+
+            # Title
             ax.set_title(
                 f"Static 3D KMeans (k={best_k})",
                 fontsize=10,
-                pad=14,
-                weight="bold"
+                weight="bold",
+                pad=12,
+                color="#222"
             )
 
-            # Camera angle
+            # Camera angles
             ax.view_init(elev=elev, azim=azim)
 
             plt.tight_layout()
