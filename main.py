@@ -1317,7 +1317,10 @@ def main():
         
 
     elif plot_option == "Unified HDBSCAN Outlier Detection":
+       
         import folium
+        import hdbscan
+        import seaborn as sns
         from streamlit_folium import st_folium
 
         st.subheader("Unified HDBSCAN Outlier Detection (Monthly + Yearly)")
