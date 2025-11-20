@@ -2462,9 +2462,17 @@ def main():
         max_lon = max(df["Coords"].apply(lambda x: x[1]))
 
         m = folium.Map(
-            tiles=tile_map[theme],
+            tiles=None,
             zoom_start=6
         )
+
+        # Add base layer but HIDE from layer control
+        folium.TileLayer(
+            tile_map[theme],
+            name="Base Map",
+            control=False
+        ).add_to(m)
+
 
         m.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
 
