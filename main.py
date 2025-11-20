@@ -2350,28 +2350,18 @@ def main():
         st.markdown("""
         <p style='color:#ccc'>
         Explore Malaysia’s fish landing distribution using an intuitive interactive heatmap.
+        Use map themes, search, tooltips, and layer toggles for a better experience.
         </p>
         """, unsafe_allow_html=True)
 
-        # ----------------------------------------------------
-        # CREATE UI CONTAINERS FOR LAYOUT ORDER
-        # ----------------------------------------------------
-        summary_container = st.container()
-        selection_container = st.container()
-        map_container = st.container()
-        table_container = st.container()
-        interpretation_container = st.container()
 
+      
         # ----------------------------------------------------
-        # 1️⃣ YEAR SELECTION (but shown AFTER summary via container)
+        # 1. PREPARE CLEAN YEARLY DATA
         # ----------------------------------------------------
-        with selection_container:
-            years = sorted(merged_df["Year"].unique())
-            sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
+        years = sorted(merged_df["Year"].unique())
+        sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
-        # ----------------------------------------------------
-        # PROCESS YEARLY DATA
-        # ----------------------------------------------------
         df_year = merged_df[merged_df["Year"] == sel_year].copy()
         df_year = df_year.groupby("State", as_index=False)[
             ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
@@ -2385,7 +2375,7 @@ def main():
         df_year = df_year[df_year["Landing"] > 0]
 
         # ----------------------------------------------------
-        # STATE COORDINATES
+        # 2. STATE COORDINATES
         # ----------------------------------------------------
         coords = {
             "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
@@ -2405,78 +2395,36 @@ def main():
             "SARAWAK": [1.5533, 110.3592],
             "W.P. LABUAN": [5.2831, 115.2308],
         }
-
         df_year["Coords"] = df_year["State"].map(coords)
-        df_year = df_year.dropna(subset=["Coords"]).copy()
+        df = df_year.dropna(subset=["Coords"]).copy()
 
-        # ----------------------------------------------------
-        # 2️⃣ SUMMARY CARDS (TOP SCREEN)
-        # ----------------------------------------------------
-        with summary_container:
-            total = df_year["Landing"].sum()
-            highest = df_year.loc[df_year["Landing"].idxmax()]
-            lowest = df_year.loc[df_year["Landing"].idxmin()]
+      
+        all_states = sorted(df_year["State"].unique())
 
-            card = """
-                background:#1e1e1e; padding:15px;
-                border-radius:10px; border:1px solid #333;
-            """
+        selected_states = st.multiselect(
+            "Select State(s):",
+            all_states,
+            default=all_states  # by default show all states
+        )
 
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown(f"""
-                <div style="{card}">
-                    <div style="color:#ccc">Total Landing</div>
-                    <div style="color:white;font-size:26px;"><b>{total:,.0f}</b> tonnes</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col2:
-                st.markdown(f"""
-                <div style="{card}">
-                    <div style="color:#ccc">Highest State</div>
-                    <div style="color:#4ade80;font-size:18px;"><b>{highest['State']}</b></div>
-                    <div style="color:white;font-size:26px;"><b>{highest['Landing']:,.0f}</b> t</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col3:
-                st.markdown(f"""
-                <div style="{card}">
-                    <div style="color:#ccc">Lowest State</div>
-                    <div style="color:#f87171;font-size:18px;"><b>{lowest['State']}</b></div>
-                    <div style="color:white;font-size:26px;"><b>{lowest['Landing']:,.0f}</b> t</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        # ----------------------------------------------------
-        # 3️⃣ STATE MULTISELECT (AFTER YEAR SELECTOR)
-        # ----------------------------------------------------
-        with selection_container:
-            all_states = sorted(df_year["State"].unique())
-            selected_states = st.multiselect(
-                "Select State(s):",
-                all_states,
-                default=all_states
-            )
-
+        # Filter dataframe based on selection
         df = df_year[df_year["State"].isin(selected_states)].copy()
 
         if df.empty:
             st.warning("No states selected.")
             st.stop()
 
+
+        
+
         # ----------------------------------------------------
-        # 4️⃣ MAP THEME SELECTOR
+        # 4. MAP THEME SELECTOR
         # ----------------------------------------------------
-        with selection_container:
-            theme = st.radio(
-                "Choose Map Theme:",
-                ["Light", "Dark", "Satellite", "Default"],
-                horizontal=True
-            )
+        theme = st.radio(
+            "Choose Map Theme:",
+            ["Light", "Dark", "Satellite", "Default"],
+            horizontal=True
+        )
 
         tile_map = {
             "Light": "CartoDB positron",
@@ -2486,73 +2434,161 @@ def main():
         }
 
         # ----------------------------------------------------
-        # 5️⃣ MAP (Heatmap + Markers)
+        # 5. BUILD MAP (AUTO-ZOOM)
         # ----------------------------------------------------
         min_lat = min(df["Coords"].apply(lambda x: x[0]))
         max_lat = max(df["Coords"].apply(lambda x: x[0]))
         min_lon = min(df["Coords"].apply(lambda x: x[1]))
         max_lon = max(df["Coords"].apply(lambda x: x[1]))
 
-        m = folium.Map(tiles=None, zoom_start=6)
-        folium.TileLayer(tile_map[theme], name="Base Map", control=False).add_to(m)
+        m = folium.Map(
+            tiles=None,
+            zoom_start=6
+        )
+
+        # Add base layer but HIDE from layer control
+        folium.TileLayer(
+            tile_map[theme],
+            name="Base Map",
+            control=False
+        ).add_to(m)
+
+
         m.fit_bounds([[min_lat, min_lon], [max_lat, max_lon]])
 
-        # Legend
+        # ----------------------------------------------------
+        # 6. COLOR SCALE LEGEND
+        # ----------------------------------------------------
         min_v = df["Landing"].min()
         max_v = df["Landing"].max()
 
-        cmap = linear.Blues_09.scale(min_v, max_v).to_step(5)
-        cmap.caption = f"Fish Landing (Tonnes)\nMin: {min_v:,.0f} | Max: {max_v:,.0f}"
-        m.add_child(cmap)
+        ticks = [
+            min_v,
+            min_v + (max_v - min_v) * 0.25,
+            min_v + (max_v - min_v) * 0.50,
+            min_v + (max_v - min_v) * 0.75,
+            max_v
+        ]
 
-        # HEATMAP
+        cmap = linear.Blues_09.scale(min_v, max_v).to_step(5)
+
+        cmap.caption = (
+            f"Fish Landing (Tonnes)\n"
+            f"Min: {min_v:,.0f}   |   Max: {max_v:,.0f}"
+        )
+
+        m.add_child(cmap)
+      
+  # ----------------------------------------------------
+        # 3. SUMMARY CARDS (Top, Bottom, Total)
+        # ----------------------------------------------------
+        total = df["Landing"].sum()
+        highest = df.loc[df["Landing"].idxmax()]
+        lowest = df.loc[df["Landing"].idxmin()]
+
+        card = """
+            background:#1e1e1e; padding:15px;
+            border-radius:10px; border:1px solid #333;
+        """
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"""
+            <div style="{card}">
+                <div style="color:#ccc">Total Landing</div>
+                <div style="color:white;font-size:26px;"><b>{total:,.0f}</b> tonnes</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            st.markdown(f"""
+            <div style="{card}">
+                <div style="color:#ccc">Highest State</div>
+                <div style="color:#4ade80;font-size:18px;"><b>{highest['State']}</b></div>
+                <div style="color:white;font-size:26px;"><b>{highest['Landing']:,.0f}</b> t</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
+            st.markdown(f"""
+            <div style="{card}">
+                <div style="color:#ccc">Lowest State</div>
+                <div style="color:#f87171;font-size:18px;"><b>{lowest['State']}</b></div>
+                <div style="color:white;font-size:26px;"><b>{lowest['Landing']:,.0f}</b> t</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ----------------------------------------------------
+        # 7. HEATMAP LAYER
+        # ----------------------------------------------------
+        heat_data = [
+            [row["Coords"][0], row["Coords"][1], row["Landing"]]
+            for _, row in df.iterrows()
+        ]
+
         heat_group = folium.FeatureGroup("Heatmap")
-        heat_data = [[r["Coords"][0], r["Coords"][1], r["Landing"]] for _, r in df.iterrows()]
-        HeatMap(heat_data, radius=40, blur=25, min_opacity=0.4).add_to(heat_group)
+        HeatMap(
+            heat_data,
+            radius=40, blur=25, min_opacity=0.4,
+        ).add_to(heat_group)
         heat_group.add_to(m)
 
-        # MARKERS
+        # ----------------------------------------------------
+        # 8. MARKERS (CIRCLEMARKERS)
+        # ----------------------------------------------------
         marker_group = folium.FeatureGroup("State Markers")
+
         for _, r in df.iterrows():
+            lat, lon = r["Coords"]
+            val = r["Landing"]
+
+            tooltip = f"""
+            <b>{r['State']}</b><br>
+            Landing: {val:,.0f} tonnes<br>
+            Vessels: {r['Vessels']:,.0f}
+            """
+
             folium.CircleMarker(
-                location=r["Coords"],
+                location=[lat, lon],
                 radius=9,
-                color="white",
+                color="#ffffff",
                 fill=True,
-                fill_color=cmap(r["Landing"]),
+                fill_color=cmap(val),
                 fill_opacity=0.95,
                 weight=1.3,
-                tooltip=f"<b>{r['State']}</b><br>{r['Landing']:,.0f} tonnes"
+                tooltip=tooltip
             ).add_to(marker_group)
 
         marker_group.add_to(m)
-        folium.LayerControl().add_to(m)
-
-        with map_container:
-            st_folium(m, height=550, width="100%")
-
         # ----------------------------------------------------
-        # 6️⃣ TABLE
+        # 10. DISPLAY MAP
         # ----------------------------------------------------
-        with table_container:
-            st.markdown("### 📋 State Landing Table")
-            st.dataframe(
-                df.sort_values("Landing", ascending=False).reset_index(drop=True),
-                use_container_width=True,
-                height=300
-            )
+        st_folium(m, height=550, width="100%")
 
         # ----------------------------------------------------
-        # 7️⃣ INTERPRETATION
+        # 11. TABLE BELOW MAP
         # ----------------------------------------------------
-        with interpretation_container:
-            with st.expander("ℹ️ How to read this map"):
-                st.markdown("""
-                **Heatmap intensity** reflects total fish landing:
-                - Darker blue → Higher landing  
-                - Light blue → Lower landing  
-                - Hover markers to see exact values  
-                """)
+        st.markdown("### 📋 State Landing Table")
+        st.dataframe(
+            df.sort_values("Landing", ascending=False).reset_index(drop=True),
+            use_container_width=True,
+            height=300
+        )
+
+        # ----------------------------------------------------
+        # 12. INTERPRETATION
+        # ----------------------------------------------------
+        with st.expander("ℹ️ How to read this map"):
+            st.markdown("""
+            **Heatmap intensity** reflects the amount of fish landed:
+            - Darker blue → Higher landing  
+            - Light blue → Lower landing  
+            - Hover circles to view detailed values  
+            - Use layer panel to toggle heatmap or markers  
+            - Use search box to jump directly to any state  
+            """)
 
 
 
