@@ -2558,6 +2558,7 @@ def main():
                 tooltip=tooltip
             ).add_to(marker_group)
 
+        marker_group.add_to(m)
         # ----------------------------------------------------
         # 10. DISPLAY MAP
         # ----------------------------------------------------
