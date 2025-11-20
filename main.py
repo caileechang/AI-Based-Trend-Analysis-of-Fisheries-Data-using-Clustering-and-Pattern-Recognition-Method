@@ -2354,6 +2354,48 @@ def main():
         </p>
         """, unsafe_allow_html=True)
 
+
+        # ----------------------------------------------------
+        # 3. SUMMARY CARDS (Top, Bottom, Total)
+        # ----------------------------------------------------
+        total = df["Landing"].sum()
+        highest = df.loc[df["Landing"].idxmax()]
+        lowest = df.loc[df["Landing"].idxmin()]
+
+        card = """
+            background:#1e1e1e; padding:15px;
+            border-radius:10px; border:1px solid #333;
+        """
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(f"""
+            <div style="{card}">
+                <div style="color:#ccc">Total Landing</div>
+                <div style="color:white;font-size:26px;"><b>{total:,.0f}</b> tonnes</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            st.markdown(f"""
+            <div style="{card}">
+                <div style="color:#ccc">Highest State</div>
+                <div style="color:#4ade80;font-size:18px;"><b>{highest['State']}</b></div>
+                <div style="color:white;font-size:26px;"><b>{highest['Landing']:,.0f}</b> t</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
+            st.markdown(f"""
+            <div style="{card}">
+                <div style="color:#ccc">Lowest State</div>
+                <div style="color:#f87171;font-size:18px;"><b>{lowest['State']}</b></div>
+                <div style="color:white;font-size:26px;"><b>{lowest['Landing']:,.0f}</b> t</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
         # ----------------------------------------------------
         # 1. PREPARE CLEAN YEARLY DATA
         # ----------------------------------------------------
@@ -2413,46 +2455,7 @@ def main():
             st.stop()
 
 
-        # ----------------------------------------------------
-        # 3. SUMMARY CARDS (Top, Bottom, Total)
-        # ----------------------------------------------------
-        total = df["Landing"].sum()
-        highest = df.loc[df["Landing"].idxmax()]
-        lowest = df.loc[df["Landing"].idxmin()]
-
-        card = """
-            background:#1e1e1e; padding:15px;
-            border-radius:10px; border:1px solid #333;
-        """
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(f"""
-            <div style="{card}">
-                <div style="color:#ccc">Total Landing</div>
-                <div style="color:white;font-size:26px;"><b>{total:,.0f}</b> tonnes</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col2:
-            st.markdown(f"""
-            <div style="{card}">
-                <div style="color:#ccc">Highest State</div>
-                <div style="color:#4ade80;font-size:18px;"><b>{highest['State']}</b></div>
-                <div style="color:white;font-size:26px;"><b>{highest['Landing']:,.0f}</b> t</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        with col3:
-            st.markdown(f"""
-            <div style="{card}">
-                <div style="color:#ccc">Lowest State</div>
-                <div style="color:#f87171;font-size:18px;"><b>{lowest['State']}</b></div>
-                <div style="color:white;font-size:26px;"><b>{lowest['Landing']:,.0f}</b> t</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("---")
+        
 
         # ----------------------------------------------------
         # 4. MAP THEME SELECTOR
