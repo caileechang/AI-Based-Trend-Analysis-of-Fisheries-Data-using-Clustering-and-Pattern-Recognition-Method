@@ -2479,9 +2479,26 @@ def main():
         # ----------------------------------------------------
         # 6. COLOR SCALE LEGEND
         # ----------------------------------------------------
-        cmap = linear.Blues_09.scale(df["Landing"].min(), df["Landing"].max())
-        cmap.caption = "Fish Landing (Tonnes)"
-        cmap.add_to(m)
+        min_v = df["Landing"].min()
+        max_v = df["Landing"].max()
+
+        ticks = [
+            min_v,
+            min_v + (max_v - min_v) * 0.25,
+            min_v + (max_v - min_v) * 0.50,
+            min_v + (max_v - min_v) * 0.75,
+            max_v
+        ]
+
+        cmap = linear.Blues_09.scale(min_v, max_v).to_step(5)
+
+        cmap.caption = (
+            f"Fish Landing (Tonnes)\n"
+            f"Min: {min_v:,.0f}   |   Max: {max_v:,.0f}"
+        )
+
+        m.add_child(cmap)
+      
 
         # ----------------------------------------------------
         # 7. HEATMAP LAYER
