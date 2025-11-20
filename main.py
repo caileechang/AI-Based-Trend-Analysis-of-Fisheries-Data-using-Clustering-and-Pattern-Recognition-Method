@@ -2545,18 +2545,20 @@ def main():
         # ----------------------------------------------------
         # 9. SEARCH BOX
         # ----------------------------------------------------
-        st.markdown("### 🔎 Search State")
-        state_query = st.text_input("Type a state name (e.g., Selangor):")
+        all_states = sorted(df_year["State"].unique())
 
-        if state_query:
-            match = df[df["State"].str.contains(state_query.upper(), na=False)]
-            if not match.empty:
-                lat, lon = match.iloc[0]["Coords"]
-                m.location = [lat, lon]
-                m.zoom_start = 7
-                st.success(f"Centered on **{match.iloc[0]['State']}**")
-            else:
-                st.error("State not found.")
+        selected_states = st.multiselect(
+            "Select State(s):",
+            all_states,
+            default=all_states  # by default show all states
+        )
+
+        # Filter dataframe based on selection
+        df = df_year[df_year["State"].isin(selected_states)].copy()
+
+        if df.empty:
+            st.warning("No states selected.")
+            st.stop()
 
         # ----------------------------------------------------
         # 10. DISPLAY MAP
