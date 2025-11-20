@@ -2396,6 +2396,23 @@ def main():
         df_year["Coords"] = df_year["State"].map(coords)
         df = df_year.dropna(subset=["Coords"]).copy()
 
+      
+        all_states = sorted(df_year["State"].unique())
+
+        selected_states = st.multiselect(
+            "Select State(s):",
+            all_states,
+            default=all_states  # by default show all states
+        )
+
+        # Filter dataframe based on selection
+        df = df_year[df_year["State"].isin(selected_states)].copy()
+
+        if df.empty:
+            st.warning("No states selected.")
+            st.stop()
+
+
         # ----------------------------------------------------
         # 3. SUMMARY CARDS (Top, Bottom, Total)
         # ----------------------------------------------------
@@ -2522,43 +2539,24 @@ def main():
 
         for _, r in df.iterrows():
             lat, lon = r["Coords"]
+            val = r["Landing"]
+
             tooltip = f"""
             <b>{r['State']}</b><br>
-            Landing: {r['Landing']:,.0f} t<br>
+            Landing: {val:,.0f} tonnes<br>
             Vessels: {r['Vessels']:,.0f}
             """
 
             folium.CircleMarker(
                 location=[lat, lon],
                 radius=9,
-                color="#fff",
+                color="#ffffff",
                 fill=True,
-                fill_color=cmap(r["Landing"]),
+                fill_color=cmap(val),
                 fill_opacity=0.95,
                 weight=1.3,
                 tooltip=tooltip
             ).add_to(marker_group)
-
-        marker_group.add_to(m)
-        folium.LayerControl().add_to(m)
-
-        # ----------------------------------------------------
-        # 9. SEARCH BOX
-        # ----------------------------------------------------
-        all_states = sorted(df_year["State"].unique())
-
-        selected_states = st.multiselect(
-            "Select State(s):",
-            all_states,
-            default=all_states  # by default show all states
-        )
-
-        # Filter dataframe based on selection
-        df = df_year[df_year["State"].isin(selected_states)].copy()
-
-        if df.empty:
-            st.warning("No states selected.")
-            st.stop()
 
         # ----------------------------------------------------
         # 10. DISPLAY MAP
