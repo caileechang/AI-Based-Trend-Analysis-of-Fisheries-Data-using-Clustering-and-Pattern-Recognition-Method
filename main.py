@@ -650,7 +650,7 @@ def main():
         "Automatic DBSCAN","Unified HDBSCAN Outlier Detection","HDBSCAN","HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Map",
-        "Interactive Geospatial Map","Geospatial Map(Heatmap)"
+        "Interactive Geospatial Map","Geospatial Map(Heatmap)","Geospatial Map(Heatmap Layer)"
     ])
 
     if plot_option == "Monthly Trends by Cluster":
@@ -2440,6 +2440,282 @@ def main():
                 """, unsafe_allow_html=True)
 
 
+    elif plot_option == "Geospatial Map(Heatmap Layer)":
+        import folium
+        import numpy as np
+        from streamlit_folium import st_folium
+        from folium.plugins import HeatMap
+        from branca.colormap import linear
+
+        st.subheader("🌍 Interactive Geospatial Heatmap")
+        st.markdown("""
+        <p style='color:#ccc'>
+        Explore Malaysia’s fish landing, vessel count, and efficiency distribution using interactive layered heatmaps.
+        </p>
+        """, unsafe_allow_html=True)
+
+        # ----------------------------------------------------
+        # UI CONTAINERS FOR CLEAN LAYOUT
+        # ----------------------------------------------------
+        summary_container = st.container()
+        selection_container = st.container()
+        map_container = st.container()
+        table_container = st.container()
+        interpretation_container = st.container()
+
+        # ----------------------------------------------------
+        # 1️⃣ YEAR SELECTION (Shown after summary)
+        # ----------------------------------------------------
+        with selection_container:
+            years = sorted(merged_df["Year"].unique())
+            sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
+
+        # ----------------------------------------------------
+        # PROCESS YEARLY DATA
+        # ----------------------------------------------------
+        df_year = merged_df[merged_df["Year"] == sel_year].copy()
+        df_year = df_year.groupby("State", as_index=False)[
+            ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
+        ].sum()
+
+        df_year.rename(columns={
+            "Total Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
+        # Efficiency = Landing per Vessel
+        df_year["Efficiency"] = df_year["Landing"] / df_year["Vessels"]
+
+        # Remove states with no landing
+        df_year = df_year[df_year["Landing"] > 0]
+
+        # ----------------------------------------------------
+        # 2️⃣ STATE COORDINATES
+        # ----------------------------------------------------
+        coords = {
+            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+            "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+            "JOHOR": [1.4854, 103.7618],
+            "MELAKA": [2.1896, 102.2501],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "SELANGOR": [3.0738, 101.5183],
+            "PAHANG": [3.8126, 103.3256],
+            "TERENGGANU": [5.3302, 103.1408],
+            "KELANTAN": [6.1254, 102.2381],
+            "PERAK": [4.5921, 101.0901],
+            "PULAU PINANG": [5.4164, 100.3327],
+            "KEDAH": [6.1184, 100.3685],
+            "PERLIS": [6.4449, 100.2048],
+            "SABAH": [5.9788, 116.0753],
+            "SARAWAK": [1.5533, 110.3592],
+            "W.P. LABUAN": [5.2831, 115.2308]
+        }
+
+        df_year["Coords"] = df_year["State"].map(coords)
+        df_year = df_year.dropna(subset=["Coords"]).copy()
+
+        # ----------------------------------------------------
+        # 3️⃣ SUMMARY CARDS (TOP SCREEN)
+        # ----------------------------------------------------
+        with summary_container:
+            total_land = df_year["Landing"].sum()
+            total_vessels = df_year["Vessels"].sum()
+
+            highest = df_year.loc[df_year["Landing"].idxmax()]
+            lowest = df_year.loc[df_year["Landing"].idxmin()]
+
+            card_style = """
+                background:#1e1e1e; padding:15px;
+                border-radius:10px; border:1px solid #333;
+            """
+
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                st.markdown(f"""
+                <div style="{card_style}">
+                    <div style="color:#ccc">Total Landing</div>
+                    <div style="color:white;font-size:26px;"><b>{total_land:,.0f}</b> tonnes</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with c2:
+                st.markdown(f"""
+                <div style="{card_style}">
+                    <div style="color:#ccc">Total Vessels</div>
+                    <div style="color:white;font-size:26px;"><b>{total_vessels:,.0f}</b></div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with c3:
+                st.markdown(f"""
+                <div style="{card_style}">
+                    <div style="color:#ccc">Highest Landing</div>
+                    <div style="color:#4ade80;font-size:18px;"><b>{highest['State']}</b></div>
+                    <div style="color:white;font-size:26px;"><b>{highest['Landing']:,.0f}</b></div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with c4:
+                st.markdown(f"""
+                <div style="{card_style}">
+                    <div style="color:#ccc">Lowest Landing</div>
+                    <div style="color:#f87171;font-size:18px;"><b>{lowest['State']}</b></div>
+                    <div style="color:white;font-size:26px;"><b>{lowest['Landing']:,.0f}</b></div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ----------------------------------------------------
+        # 4️⃣ MULTI-STATE FILTER
+        # ----------------------------------------------------
+        with selection_container:
+            state_list = sorted(df_year["State"].unique())
+            selected_states = st.multiselect("Select State(s):", state_list, default=state_list)
+
+        df = df_year[df_year["State"].isin(selected_states)].copy()
+
+        if df.empty:
+            st.warning("No states selected.")
+            st.stop()
+
+        # ----------------------------------------------------
+        # 5️⃣ MAP THEME SELECTOR
+        # ----------------------------------------------------
+        with selection_container:
+            theme = st.radio(
+                "Choose Map Theme:",
+                ["Light", "Dark", "Satellite", "Default"],
+                horizontal=True
+            )
+
+        tile_map = {
+            "Light": "CartoDB positron",
+            "Dark": "CartoDB dark_matter",
+            "Satellite": "Esri.WorldImagery",
+            "Default": "OpenStreetMap"
+        }
+
+        # ----------------------------------------------------
+        # 6️⃣ CREATE MAP
+        # ----------------------------------------------------
+        m = folium.Map(tiles=None, zoom_start=6)
+        folium.TileLayer(tile_map[theme], name="Base Map", control=False).add_to(m)
+
+        # Fit to states
+        lats = [c[0] for c in df["Coords"]]
+        lons = [c[1] for c in df["Coords"]]
+        m.fit_bounds([[min(lats), min(lons)], [max(lats), max(lons)]])
+
+        # ----------------------------------------------------
+        # COLOR SCALES
+        # ----------------------------------------------------
+        land_min, land_max = df["Landing"].min(), df["Landing"].max()
+        ves_min, ves_max = df["Vessels"].min(), df["Vessels"].max()
+        eff_min, eff_max = df["Efficiency"].min(), df["Efficiency"].max()
+
+        cmap_land = linear.Blues_09.scale(land_min, land_max).to_step(5)
+        cmap_ves = linear.YlOrRd_09.scale(ves_min, ves_max).to_step(5)
+        cmap_eff = linear.PuRd_09.scale(eff_min, eff_max).to_step(5)
+
+        # ----------------------------------------------------
+        # 7️⃣ HEATMAP LAYERS
+        # ----------------------------------------------------
+        # Landing Heatmap
+        heat_landing = [[c[0], c[1], v] for c, v in zip(df["Coords"], df["Landing"])]
+        layer_land = folium.FeatureGroup("Landing Heatmap")
+        HeatMap(heat_landing, radius=40, blur=25, min_opacity=0.4).add_to(layer_land)
+        layer_land.add_to(m)
+
+        # Vessels Heatmap
+        heat_vessels = [[c[0], c[1], v] for c, v in zip(df["Coords"], df["Vessels"])]
+        layer_vessels = folium.FeatureGroup("Vessels Heatmap")
+        HeatMap(
+            heat_vessels,
+            radius=40,
+            blur=25,
+            min_opacity=0.4,
+            gradient={0.2: "blue", 0.5: "cyan", 0.7: "lime", 1: "red"}
+        ).add_to(layer_vessels)
+        layer_vessels.add_to(m)
+
+        # Efficiency Heatmap
+        heat_eff = [[c[0], c[1], v] for c, v in zip(df["Coords"], df["Efficiency"])]
+        layer_eff = folium.FeatureGroup("Efficiency Heatmap")
+        HeatMap(
+            heat_eff,
+            radius=40,
+            blur=30,
+            min_opacity=0.4,
+            gradient={0.2: "purple", 0.5: "magenta", 0.8: "pink", 1: "white"}
+        ).add_to(layer_eff)
+        layer_eff.add_to(m)
+
+        # ----------------------------------------------------
+        # 8️⃣ MARKER LAYER (Landing + Vessels + Efficiency)
+        # ----------------------------------------------------
+        marker_group = folium.FeatureGroup("State Markers")
+
+        for _, r in df.iterrows():
+            lat, lon = r["Coords"]
+            popup = (
+                f"<b>{r['State']}</b><br>"
+                f"Landing: {r['Landing']:,.0f} tonnes<br>"
+                f"Vessels: {r['Vessels']:,.0f}<br>"
+                f"Efficiency: {r['Efficiency']:.2f}"
+            )
+
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=9,
+                color="white",
+                fill=True,
+                fill_color=cmap_land(r["Landing"]),
+                fill_opacity=0.95,
+                weight=1.3,
+                tooltip=popup
+            ).add_to(marker_group)
+
+        marker_group.add_to(m)
+
+        # Layer control
+        folium.LayerControl().add_to(m)
+
+        with map_container:
+            st_folium(m, height=550, width="100%")
+
+        # ----------------------------------------------------
+        # 9️⃣ TABLE SECTION
+        # ----------------------------------------------------
+        with table_container:
+            st.markdown("### 📋 State Landing, Vessels, Efficiency Table")
+            st.dataframe(
+                df.sort_values("Landing", ascending=False).reset_index(drop=True),
+                use_container_width=True,
+                height=350
+            )
+
+        # ----------------------------------------------------
+        # 🔟 INTERPRETATION
+        # ----------------------------------------------------
+        with interpretation_container:
+            with st.expander("ℹ️ How to read this map"):
+                st.markdown("""
+                ### **Heatmap Layers**
+                - **Landing Heatmap:** Darker blue = Higher fish landing  
+                - **Vessels Heatmap:** Red → High vessel count, Blue → Low  
+                - **Efficiency Heatmap:** Pink/White → High landing per vessel  
+
+                ### **Markers**
+                - Marker color = Landing amount  
+                - Hover for landing + vessels + efficiency  
+
+                ### **Use Case**
+                Helps identify:
+                - High productivity vs low productivity states  
+                - States with too many vessels but low landing  
+                - Regional landing differences  
+                """)
 
 
     elif plot_option == "Geospatial Map(Heatmap)":
