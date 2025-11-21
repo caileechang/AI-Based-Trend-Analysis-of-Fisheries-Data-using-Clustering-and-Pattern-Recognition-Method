@@ -731,7 +731,7 @@ def main():
                 return np.nan
             return prev["Total Fish Landing (Tonnes)"].iloc[0]
 
-        top3["Prev_Year"] = top3["State"].apply(get_prev_value)
+        top3["Prev_Year"] = top3["State"].apply(get_prev)
 
         def growth_text(curr, prev):
             if np.isnan(prev) or prev == 0:
