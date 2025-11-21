@@ -695,63 +695,173 @@ def main():
         import matplotlib.pyplot as plt
 
         st.subheader("Total Yearly Fish Landing by State")
+
         # --- ALWAYS use cleaned yearly summary from prepare_yearly ---
         if uploaded_file:
             yearly_summary = prepare_yearly(df_land, df_vess)
         else:
-            yearly_summary = st.session_state.get("yearly_summary", prepare_yearly(df_land, df_vess))
-    
-        # Store globally for other visualisations
+            yearly_summary = st.session_state.get(
+                "yearly_summary", prepare_yearly(df_land, df_vess)
+            )
+
+        # Store for reuse in other visualisations
         st.session_state.yearly_summary = yearly_summary
-    
-        # --- SHOW CLEAN TABLE ---
-        st.dataframe(yearly_summary, use_container_width=True, height=400)
+
+        # --- SHOW CLEAN TABLE (all years) ---
+        st.dataframe(yearly_summary, use_container_width=True, height=350)
 
         # --- Year selector ---
-        available_years = sorted([int(y) for y in yearly_summary['Year'].unique()])
-    
+        available_years = sorted([int(y) for y in yearly_summary["Year"].unique()])
+
         selected_year = st.selectbox(
             "Select a year to view state-level details:",
             available_years,
             index=len(available_years) - 1,
-            key="yearly_summary_selectbox"
+            key="yearly_summary_selectbox",
         )
-    
+
         # --- Filter for selected year ---
-        filtered = yearly_summary[yearly_summary['Year'] == selected_year]
-    
-        st.write(f"### Fish Landing by State for {selected_year}")
-        st.dataframe(filtered, use_container_width=True, height=300)
-    
-        # --- Sort states for chart ---
-        filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=True)
-    
-        # --- Horizontal bar chart (Safe size for Streamlit Cloud) ---
-        fig, ax = plt.subplots(figsize=(10, 7))
-    
-        sns.barplot(
-            data=filtered_sorted,
-            x='Total Fish Landing (Tonnes)',
-            y='State',
-            palette='Blues_d',
-            ax=ax
+        filtered = yearly_summary[yearly_summary["Year"] == selected_year].copy()
+
+        st.markdown(f"### Fish Landing by State for {selected_year}")
+        st.dataframe(filtered, use_container_width=True, height=280)
+
+        # ------------------------------------------------------
+        # 1. TOP-3 SUMMARY CARDS (Gold / Silver / Bronze)
+        # ------------------------------------------------------
+        # Sort by total landing (descending)
+        filtered_sorted_desc = filtered.sort_values(
+            "Total Fish Landing (Tonnes)", ascending=False
         )
-    
-        ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=12)
-        ax.set_xlabel("Total Fish Landing (Tonnes)", fontsize=12)
-        ax.set_ylabel("State", fontsize=12)
-    
-        # Value labels
-        for i, v in enumerate(filtered_sorted['Total Fish Landing (Tonnes)']):
-            ax.text(
-                v + (0.01 * v), i,
-                f"{v:,.0f}",
-                va='center',
-                fontsize=9
+
+        top3 = filtered_sorted_desc.head(3).copy()
+        prev_year = selected_year - 1
+
+        def get_prev_value(state):
+            prev = yearly_summary[
+                (yearly_summary["Year"] == prev_year)
+                & (yearly_summary["State"] == state)
+            ]
+            if prev.empty:
+                return np.nan
+            return prev["Total Fish Landing (Tonnes)"].iloc[0]
+
+        top3["Prev_Year"] = top3["State"].apply(get_prev_value)
+
+        def growth_text(curr, prev):
+            if np.isnan(prev) or prev == 0:
+                return "<span style='color:#888;'>No comparison</span>"
+            change = (curr - prev) / prev * 100
+            arrow = "↑" if change >= 0 else "↓"
+            color = "#4CAF50" if change >= 0 else "#ff4d4d"
+            return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}% vs {prev_year}</span>"
+
+        medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]  # gold, silver, bronze
+
+        st.markdown(f"## 🏅 Top 3 States in {selected_year}")
+
+        card_cols = st.columns(3)
+        for idx, (_, row) in enumerate(top3.iterrows()):
+            with card_cols[idx]:
+                state = row["State"]
+                total = row["Total Fish Landing (Tonnes)"]
+                prev_val = row["Prev_Year"]
+                growth_html = growth_text(total, prev_val)
+
+                card_html = f"""
+                <div style="
+                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
+                    border-radius: 14px;
+                    padding: 18px 18px 14px 18px;
+                    border: 1px solid rgba(0,255,255,0.35);
+                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
+                    min-height: 150px;
+                ">
+                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
+                        <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
+                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
+                    </div>
+                    <div style="font-size:30px; color:white; font-weight:bold;">
+                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
+                    </div>
+                    <div style="margin-top:8px;">
+                        {growth_html}
+                    </div>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ------------------------------------------------------
+        # 2. DARK LOLLIPOP CHART (Interactive, Neon Cyan)
+        # ------------------------------------------------------
+        st.markdown(
+            f"### 🍭 Lollipop View – Total Fish Landing by State ({selected_year})"
+        )
+
+        # Sort ascending for nicer lollipop layout
+        filtered_sorted = filtered.sort_values(
+            "Total Fish Landing (Tonnes)", ascending=True
+        )
+
+        # Build lollipop chart with Plotly
+        fig = go.Figure()
+
+        # Base stem lines
+        fig.add_trace(
+            go.Scatter(
+                x=filtered_sorted["Total Fish Landing (Tonnes)"],
+                y=filtered_sorted["State"],
+                mode="lines",
+                line=dict(color="rgba(0,255,255,0.3)", width=3),
+                showlegend=False,
+                hoverinfo="skip",
             )
-    
-        plt.tight_layout()
-        st.pyplot(fig)
+        )
+
+        # Neon nodes + value labels
+        fig.add_trace(
+            go.Scatter(
+                x=filtered_sorted["Total Fish Landing (Tonnes)"],
+                y=filtered_sorted["State"],
+                mode="markers+text",
+                marker=dict(
+                    color="#00E5FF",
+                    size=11,
+                    line=dict(color="white", width=1),
+                ),
+                text=[f"{v:,.0f}" for v in filtered_sorted["Total Fish Landing (Tonnes)"]],
+                textposition="middle right",
+                textfont=dict(color="white", size=11),
+                hovertemplate="State: %{y}<br>Landing: %{x:,.0f} tonnes<extra></extra>",
+                showlegend=False,
+            )
+        )
+
+        fig.update_layout(
+            template="plotly_dark",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            xaxis=dict(
+                title="Total Fish Landing (Tonnes)",
+                showgrid=True,
+                gridcolor="rgba(255,255,255,0.08)",
+                zeroline=False,
+            ),
+            yaxis=dict(
+                title="",
+                showgrid=False,
+            ),
+            margin=dict(l=40, r=30, t=60, b=40),
+            title=dict(
+                text=f"Total Fish Landing by State – Lollipop Chart ({selected_year})",
+                x=0.5,
+                xanchor="center",
+            ),
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
         # If user uploaded a new dataset, re-prepare merged_df dynamically
         #if uploaded_file:
