@@ -754,37 +754,38 @@ def main():
                 prev = row["Prev"]
 
                 card_html = f"""
-        <div style="
-            background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
-            border-radius: 14px;
-            padding: 18px;
-            border: 1px solid rgba(0,255,255,0.35);
-            box-shadow: 0 0 18px rgba(0,255,255,0.18);
-            min-height: 150px;
-        ">
-            <div style="font-size:18px; margin-bottom:6px;">
-                <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
-            </div>
+                <div style="
+                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
+                    border-radius: 14px;
+                    padding: 18px;
+                    border: 1px solid rgba(0,255,255,0.35);
+                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
+                    min-height: 150px;
+                ">
+                    <div style="font-size:18px; margin-bottom:6px;">
+                        <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
+                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
+                    </div>
 
-            <div style="font-size:32px; color:white; font-weight:bold;">
-                {total:,.0f}
-                <span style="font-size:16px; color:#bbb;"> tonnes</span>
-            </div>
+                    <div style="font-size:32px; color:white; font-weight:bold;">
+                        {total:,.0f}
+                        <span style="font-size:16px; color:#bbb;"> tonnes</span>
+                    </div>
 
-            <div style="margin-top:8px;">
-                {growth(total, prev)}
-            </div>
-        </div>
+                    <div style="margin-top:8px;">
+                        {growth(total, prev)}
+                    </div>
+                </div>
                 """
 
                 st.markdown(card_html, unsafe_allow_html=True)
+        st.markdown("---")
 
         # ------------------------------------------------------
         # B) LOLLIPOP CHART FOR LATEST YEAR
         # ------------------------------------------------------
         st.markdown(
-            f"### 🍭 Lollipop View – Total Fish Landing by State ({latest_year})"
+            f"### 🍭 Total Fish Landing by State ({latest_year})"
         )
 
         filtered_sorted = filtered_latest.sort_values(
