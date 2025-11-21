@@ -693,6 +693,8 @@ def main():
     elif plot_option == "Yearly Fish Landing Summary":
         import seaborn as sns
         import matplotlib.pyplot as plt
+        import plotly.graph_objects as go
+
 
         st.subheader("Total Yearly Fish Landing by State")
 
