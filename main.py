@@ -753,7 +753,7 @@ def main():
             label = f" vs {prev_year}" if prev_year else " vs previous"
 
             return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}%{label}</span>"
-            medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
+        medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
         st.markdown(f"## 🏅 Top 3 States in {latest_year}")
 
