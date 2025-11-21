@@ -734,13 +734,26 @@ def main():
         top3["Prev_Year"] = top3["State"].apply(get_prev)
 
         def growth_text(curr, prev):
-            if np.isnan(prev) or prev == 0:
+            # SAFELY handle missing or invalid previous-year values
+            try:
+                if prev is None or prev == "" or float(prev) == 0:
+                    return "<span style='color:#888;'>No comparison</span>"
+            except:
                 return "<span style='color:#888;'>No comparison</span>"
+
+            # Convert safely to float
+            prev = float(prev)
+
+            # Compute percentage change
             change = (curr - prev) / prev * 100
             arrow = "↑" if change >= 0 else "↓"
             color = "#4CAF50" if change >= 0 else "#ff4d4d"
-            return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}% vs {prev_year}</span>"
-        medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
+
+            # Label previous year if provided
+            label = f" vs {prev_year}" if prev_year else " vs previous"
+
+            return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}%{label}</span>"
+            medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
         st.markdown(f"## 🏅 Top 3 States in {latest_year}")
 
