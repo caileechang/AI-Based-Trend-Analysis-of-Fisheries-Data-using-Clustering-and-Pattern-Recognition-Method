@@ -744,7 +744,7 @@ def main():
 
         st.markdown(f"## 🏅 Top 3 States in {latest_year}")
 
-        cols = st.columns(3)
+        card_cols = st.columns(3)
         
         
         for idx, (_, row) in enumerate(top3.iterrows()):
