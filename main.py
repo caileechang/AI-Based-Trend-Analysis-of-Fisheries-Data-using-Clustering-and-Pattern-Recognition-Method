@@ -731,55 +731,54 @@ def main():
                 return np.nan
             return prev["Total Fish Landing (Tonnes)"].iloc[0]
 
-        top3["Prev"] = top3["State"].apply(get_prev)
+        top3["Prev_Year"] = top3["State"].apply(get_prev_value)
 
-        def growth(curr, prev):
+        def growth_text(curr, prev):
             if np.isnan(prev) or prev == 0:
-                return "<span style='color:#888;'>–</span>"
-            pct = (curr - prev) / prev * 100
-            color = "#4CAF50" if pct >= 0 else "#ff4d4d"
-            arrow = "↑" if pct >= 0 else "↓"
-            return f"<span style='color:{color}; font-size:16px;'>{arrow} {pct:.1f}% vs {prev_year}</span>"
-
+                return "<span style='color:#888;'>No comparison</span>"
+            change = (curr - prev) / prev * 100
+            arrow = "↑" if change >= 0 else "↓"
+            color = "#4CAF50" if change >= 0 else "#ff4d4d"
+            return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}% vs {prev_year}</span>"
         medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
         st.markdown(f"## 🏅 Top 3 States in {latest_year}")
 
         cols = st.columns(3)
-
+        
+        
         for idx, (_, row) in enumerate(top3.iterrows()):
-            with cols[idx]:
+            with card_cols[idx]:
                 state = row["State"]
                 total = row["Total Fish Landing (Tonnes)"]
-                prev = row["Prev"]
+                prev_val = row["Prev_Year"]
+                growth_html = growth_text(total, prev_val)
 
                 card_html = f"""
                 <div style="
                     background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
                     border-radius: 14px;
-                    padding: 18px;
+                    padding: 18px 18px 14px 18px;
                     border: 1px solid rgba(0,255,255,0.35);
                     box-shadow: 0 0 18px rgba(0,255,255,0.18);
                     min-height: 150px;
                 ">
-                    <div style="font-size:18px; margin-bottom:6px;">
+                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
                         <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
-
-                    <div style="font-size:32px; color:white; font-weight:bold;">
-                        {total:,.0f}
-                        <span style="font-size:16px; color:#bbb;"> tonnes</span>
+                    <div style="font-size:30px; color:white; font-weight:bold;">
+                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
                     </div>
-
                     <div style="margin-top:8px;">
-                        {growth(total, prev)}
+                        {growth_html}
                     </div>
                 </div>
                 """
-
                 st.markdown(card_html, unsafe_allow_html=True)
+
         st.markdown("---")
+
 
         # ------------------------------------------------------
         # B) LOLLIPOP CHART FOR LATEST YEAR
