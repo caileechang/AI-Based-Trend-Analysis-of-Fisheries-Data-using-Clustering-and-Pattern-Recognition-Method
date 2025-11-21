@@ -15,7 +15,7 @@ from kneed import KneeLocator
 from difflib import get_close_matches
 import time
 import plotly.express as px
- import plotly.graph_objects as go
+import plotly.graph_objects as go
 import hdbscan
 
 # Import your clustering modules
