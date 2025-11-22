@@ -1992,10 +1992,10 @@ def main():
         # --------------------------------------------
 
         # 🔹 Create a shared header row so both columns align perfectly
-        header_left, header_right = st.columns([3, 1])
+        header_left, header_right = st.columns([4.5, 1])
 
         with header_left:
-            st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
+            st.markdown("###  Landing vs Vessels (Highlighted Outliers)")
 
         with header_right:
             st.markdown("""
