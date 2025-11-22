@@ -853,7 +853,7 @@ def main():
         # ------------------------------------------------------
         # C) NOW SHOW YEAR SELECTOR & TABLE
         # ------------------------------------------------------
-        st.markdown("## Select a Year to View Full Details")
+        st.markdown("### Select a Year to View Full Details")
 
         selected_year = st.selectbox(
             "Choose a year:",
