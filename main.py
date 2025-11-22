@@ -1998,7 +1998,7 @@ def main():
             st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
 
         with header_right:
-            st.markdown("### 📘 How to Read HDBSCAN Membership Colors")
+            st.markdown("####  How to Read HDBSCAN Membership Colors")
 
         # 🔹 Now create the real content columns
         col_plot, col_legend = st.columns([3, 1], gap="large")
