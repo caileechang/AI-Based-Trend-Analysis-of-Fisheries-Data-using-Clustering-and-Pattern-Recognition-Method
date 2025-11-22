@@ -2042,7 +2042,7 @@ def main():
                 margin-top:10px;
                 margin-bottom:15px;
             ">
-            <h3 style='color:white;'> How to Read HDBSCAN Membership Colors</h3>
+            <h5 style='color:white;'> How to Read HDBSCAN Membership Colors</h5>
             <p style='color:#ccc;'>
             HDBSCAN assigns each point a <b>probability from 0 to 1</b> representing how strongly 
             it belongs to its cluster. This is <b>not the cluster number</b>.
