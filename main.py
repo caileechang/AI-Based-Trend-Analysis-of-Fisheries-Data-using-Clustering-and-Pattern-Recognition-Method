@@ -365,8 +365,10 @@ def hierarchical_clustering(merged_df):
 
     # Scale landing only
     scaled = StandardScaler().fit_transform(
-        grouped[["Total Fish Landing (Tonnes)"]]
+        grouped[["Total Fish Landing (Tonnes)",
+                "Total number of fishing vessels"]]
     )
+
 
     # ----------------------------
     # Ward linkage
