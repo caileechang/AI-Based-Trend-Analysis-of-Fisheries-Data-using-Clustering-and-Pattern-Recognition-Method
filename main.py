@@ -1287,37 +1287,32 @@ def main():
             st.pyplot(fig)
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fishes":
-   
+
         import matplotlib.pyplot as plt
         import seaborn as sns
 
-        # TITLE HEADER
-        st.markdown(
-            """
+        # ========== HEADER ==========
+        st.markdown("""
             <h2 style='color:white; font-size:32px; font-weight:700;'>
                 🎣 Fish Landing Trends (Cluster Analysis)
             </h2>
             <p style='color:#bbb; margin-top:-10px; font-size:15px;'>
                 Compare freshwater & marine fish landings using K-Means clustering (Yearly & Monthly).
             </p>
-            """,
-            unsafe_allow_html=True,
-        )
+        """, unsafe_allow_html=True)
 
-        st.markdown("<hr style='border:0.3px solid #333;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border:0.4px solid #333;'>", unsafe_allow_html=True)
 
-        # CONTROL BAR
-        ctrl1, ctrl2 = st.columns([1.2, 2])
+        # ========== CONTROL BAR ==========
+        c_period, c_trend = st.columns([1.1, 2])
 
-        with ctrl1:
+        with c_period:
             period_choice = st.radio("Period:", ["Yearly", "Monthly"], horizontal=True)
 
-        with ctrl2:
-            trend_option = st.radio(
-                "Trend:", ["Freshwater", "Marine", "Both"], horizontal=True
-            )
+        with c_trend:
+            trend_option = st.radio("Trend:", ["Freshwater", "Marine", "Both"], horizontal=True)
 
-        # Shared styling elements
+        # STYLE
         colors = {
             "Freshwater (Tonnes)": "#4ea8de",
             "Marine (Tonnes)": "#ff6b6b",
@@ -1325,12 +1320,11 @@ def main():
         markers = {"Freshwater (Tonnes)": "o", "Marine (Tonnes)": "^"}
         linestyles = ["solid", "dashed", "dotted", "dashdot"]
 
-        # ================================================================
+        # ===========================================================================================
         # 1) YEARLY VIEW
-        # ================================================================
+        # ===========================================================================================
         if period_choice == "Yearly":
 
-            # PREPARE YEARLY DF
             yearly = (
                 df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
                 .sum()
@@ -1340,112 +1334,100 @@ def main():
                 .reset_index()
             )
 
-            yearly.rename(
-                columns={
-                    "Freshwater": "Freshwater (Tonnes)",
-                    "Marine": "Marine (Tonnes)",
-                },
-                inplace=True,
-            )
+            yearly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)",
+            }, inplace=True)
 
-            # OBTAIN SUMMARY VALUES
             latest_year = yearly["Year"].max()
             prev_year = latest_year - 1
 
-            def safe_get(df, year, col):
-                val = df.loc[df["Year"] == year, col]
-                return val.values[0] if len(val) else 0
+            def safe_get(df, yr, col):
+                row = df.loc[df["Year"] == yr, col]
+                return row.values[0] if len(row) else 0
 
             fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
             fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
             ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
             ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
-            # =============== YEARLY SUMMARY ===============
-            st.markdown(
-                f"<h3 style='color:white; margin-top:20px;'>📌 Landing Summary in {latest_year}</h3>",
-                unsafe_allow_html=True,
-            )
+            # ========== YEARLY SUMMARY ==========
+            st.markdown(f"<h3 style='color:white;'>📌 Landing Summary in {latest_year}</h3>", unsafe_allow_html=True)
 
             c1, c2 = st.columns(2)
 
-            # FRESHWATER CARD
+            # -------- FRESHWATER CARD (CORRECTED) --------
             with c1:
-              
                 st.markdown(
                     f"""
-            <div class="neu-card">
-                <div class="shimmer"></div>
+    <div class="neu-card">
+        <div class="shimmer"></div>
 
-                <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
-                    🐟 Freshwater Landing
-                </h3>
+        <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
+            🐟 Freshwater Landing
+        </h3>
 
-                <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
+        <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
 
-                <h1 style="color:white; font-size:48px; margin:0;">
-                    <b>{fw_latest:,.0f}</b>
-                    <span style="opacity:0.75; font-size:32px;">tonnes</span>
-                </h1>
+        <h1 style="color:white; font-size:48px; margin:0;">
+            <b>{fw_latest:,.0f}</b>
+            <span style="opacity:0.75; font-size:32px;">tonnes</span>
+        </h1>
 
-                <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-                    <span style="font-size:24px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
-                        {'▲' if fw_latest >= fw_prev else '▼'}
-                    </span>
-                    <span style="font-size:17px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
-                        {fw_latest/fw_prev:.2f}x change
-                    </span>
-                </div>
-            </div>
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+            <span style="font-size:24px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
+                {'▲' if fw_latest >= fw_prev else '▼'}
+            </span>
+            <span style="font-size:17px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
+                {fw_latest/fw_prev:.2f}x change
+            </span>
+        </div>
+    </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
-
-            # MARINE CARD
+            # -------- MARINE CARD (CORRECTED) --------
             with c2:
-             
                 st.markdown(
                     f"""
-            <div class="neu-card">
-                <div class="shimmer"></div>
+    <div class="neu-card">
+        <div class="shimmer"></div>
 
-                <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
-                    🌊 Marine Landing
-                </h3>
+        <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
+            🌊 Marine Landing
+        </h3>
 
-                <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
+        <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
 
-                <h1 style="color:white; font-size:48px; margin:0;">
-                    <b>{ma_latest:,.0f}</b>
-                    <span style="opacity:0.75; font-size:32px;">tonnes</span>
-                </h1>
+        <h1 style="color:white; font-size:48px; margin:0;">
+            <b>{ma_latest:,.0f}</b>
+            <span style="opacity:0.75; font-size:32px;">tonnes</span>
+        </h1>
 
-                <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-                    <span style="font-size:24px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
-                        {'▲' if ma_latest >= ma_prev else '▼'}
-                    </span>
-                    <span style="font-size:17px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
-                        {ma_latest/ma_prev:.2f}x change
-                    </span>
-                </div>
-            </div>
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+            <span style="font-size:24px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
+                {'▲' if ma_latest >= ma_prev else '▼'}
+            </span>
+            <span style="font-size:17px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
+                {ma_latest/ma_prev:.2f}x change
+            </span>
+        </div>
+    </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
+            st.markdown("<hr>", unsafe_allow_html=True)
 
-            # =============== YEARLY CLUSTER PLOT ===============
+            # ========== YEARLY CLUSTER PLOT ==========
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly[features])
-
             best_k = st.session_state.get("best_k_yearly", 3)
+
             yearly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
 
-            st.markdown(
-                f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>",
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>", unsafe_allow_html=True)
 
             melted = yearly.melt(
                 id_vars=["Year", "Cluster"],
@@ -1458,169 +1440,142 @@ def main():
             fig.patch.set_facecolor("#111")
             ax.set_facecolor("#111")
 
-            for fish_type in features:
-
-                show = (trend_option == "Both") or (
-                    trend_option.lower() in fish_type.lower()
-                )
+            for f in features:
+                show = trend_option == "Both" or trend_option.lower() in f.lower()
 
                 if show:
                     for cl in sorted(melted["Cluster"].unique()):
-                        subset = melted[
-                            (melted["Type"] == fish_type)
-                            & (melted["Cluster"] == cl)
-                        ]
+                        subset = melted[(melted["Type"] == f) & (melted["Cluster"] == cl)]
 
                         sns.lineplot(
                             data=subset,
                             x="Year",
                             y="Landing",
-                            color=colors[fish_type],
-                            marker=markers[fish_type],
+                            color=colors[f],
+                            marker=markers[f],
                             linestyle=linestyles[cl % len(linestyles)],
                             linewidth=2,
                             ax=ax,
-                            label=f"{fish_type.replace('(Tonnes)','')} – Cluster {cl}",
+                            label=f"{f.replace('(Tonnes)','')} – Cluster {cl}",
                         )
 
-            ax.set_title(f"Yearly Fish Landing Trends (k={best_k})", fontsize=18, color="white")
+            ax.set_title(f"Yearly Fish Landing Trends (k={best_k})", color="white")
             ax.grid(True, alpha=0.25)
-            ax.legend(
-                loc="upper center",
-                bbox_to_anchor=(0.5, -0.2),
-                ncol=3,
-                frameon=False,
-                fontsize=10,
-            )
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3, frameon=False)
             st.pyplot(fig)
 
-        # ================================================================
+        # ===========================================================================================
         # 2) MONTHLY VIEW
-        # ================================================================
+        # ===========================================================================================
         else:
 
             monthly = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
                 .sum()
                 .reset_index()
-                .pivot(
-                    index=["Year", "Month"],
-                    columns="Type of Fish",
-                    values="Fish Landing (Tonnes)",
-                )
+                .pivot(index=["Year", "Month"], columns="Type of Fish", values="Fish Landing (Tonnes)")
                 .fillna(0)
                 .reset_index()
             )
 
-            monthly.rename(
-                columns={
-                    "Freshwater": "Freshwater (Tonnes)",
-                    "Marine": "Marine (Tonnes)",
-                },
-                inplace=True,
-            )
+            monthly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)",
+            }, inplace=True)
 
-            # Month-year index
             monthly["MonthYear"] = pd.to_datetime(
-                monthly["Year"].astype(str)
-                + "-"
-                + monthly["Month"].astype(str)
-                + "-01"
+                monthly["Year"].astype(str) + "-" + monthly["Month"].astype(str) + "-01"
             )
 
             latest_date = monthly["MonthYear"].max()
             prev_date = latest_date - pd.DateOffset(months=1)
 
             def safe_val(df, date, col):
-                v = df.loc[df["MonthYear"] == date, col]
-                return v.values[0] if len(v) else 0
+                row = df.loc[df["MonthYear"] == date, col]
+                return row.values[0] if len(row) else 0
 
             fw = safe_val(monthly, latest_date, "Freshwater (Tonnes)")
             fw_prev = safe_val(monthly, prev_date, "Freshwater (Tonnes)")
             ma = safe_val(monthly, latest_date, "Marine (Tonnes)")
             ma_prev = safe_val(monthly, prev_date, "Marine (Tonnes)")
 
-            # MONTHLY SUMMARY CARDS
-            st.markdown(
-                f"<h3 style='color:white;'>📌 Landing Summary in {latest_date.strftime('%B %Y')}</h3>",
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"<h3 style='color:white;'>📌 Landing Summary in {latest_date.strftime('%B %Y')}</h3>", unsafe_allow_html=True)
 
             c1, c2 = st.columns(2)
 
-            # Freshwater card
+            # -------- MONTHLY FW CARD --------
             with c1:
                 st.markdown(
                     f"""
-            <div class="neu-card">
-                            <div class="shimmer"></div>
+    <div class="neu-card">
+        <div class="shimmer"></div>
 
-                            <h3 style="color:white; font-size:20px; display:flex; gap:8px;">
-                                🐟 Freshwater Landing
-                            </h3>
-                            <p style="color:#888; font-size:13px; margin-top:-6px;">Previous month comparison</p>
+        <h3 style="color:white; font-size:20px; display:flex; gap:8px;">
+            🐟 Freshwater Landing
+        </h3>
 
-                            <h1 style="color:white; font-size:48px;">
-                                <b>{fw:,.0f}</b>
-                                <span style="opacity:0.75; font-size:32px;">tonnes</span>
-                            </h1>
+        <p style="color:#888; font-size:13px; margin-top:-6px;">Previous month comparison</p>
 
-                            <div style="margin-top:12px; display:flex; gap:8px;">
-                                <span style="font-size:24px; color:{'#48ff88' if fw >= fw_prev else '#ff5e5e'};">
-                                    {'▲' if fw >= fw_prev else '▼'}
-                                </span>
-                                <span style="font-size:17px; color:{'#48ff88' if fw >= fw_prev else '#ff5e5e'};">
-                                    {fw/fw_prev:.2f}x change
-                                </span>
-                            </div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )    
+        <h1 style="color:white; font-size:48px;">
+            <b>{fw:,.0f}</b>
+            <span style="opacity:0.75; font-size:32px;">tonnes</span>
+        </h1>
 
-            # Marine card
+        <div style="margin-top:12px; display:flex; gap:8px;">
+            <span style="font-size:24px; color:{'#48ff88' if fw >= fw_prev else '#ff5e5e'};">
+                {'▲' if fw >= fw_prev else '▼'}
+            </span>
+            <span style="font-size:17px; color:{'#48ff88' if fw >= fw_prev else '#ff5e5e'};">
+                {fw/fw_prev:.2f}x change
+            </span>
+        </div>
+    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            # -------- MONTHLY MARINE CARD --------
             with c2:
                 st.markdown(
                     f"""
-            <div class="neu-card">
-                        <div class="shimmer"></div>
+    <div class="neu-card">
+        <div class="shimmer"></div>
 
-                        <h3 style="color:white; font-size:20px; display:flex; gap:8px;">
-                            🌊 Marine Landing
-                        </h3>
-                        <p style="color:#888; font-size:13px; margin-top:-6px;">Previous month comparison</p>
+        <h3 style="color:white; font-size:20px; display:flex; gap:8px;">
+            🌊 Marine Landing
+        </h3>
 
-                        <h1 style="color:white; font-size:48px;">
-                            <b>{ma:,.0f}</b>
-                            <span style="opacity:0.75; font-size:32px;">tonnes</span>
-                        </h1>
+        <p style="color:#888; font-size:13px; margin-top:-6px;">Previous month comparison</p>
 
-                        <div style="margin-top:12px; display:flex; gap:8px;">
-                            <span style="font-size:24px; color:{'#48ff88' if ma >= ma_prev else '#ff5e5e'};">
-                                {'▲' if ma >= ma_prev else '▼'}
-                            </span>
-                            <span style="font-size:17px; color:{'#48ff88' if ma >= ma_prev else '#ff5e5e'};">
-                                {ma/ma_prev:.2f}x change
-                            </span>
-                        </div>
-                    </div>
+        <h1 style="color:white; font-size:48px;">
+            <b>{ma:,.0f}</b>
+            <span style="opacity:0.75; font-size:32px;">tonnes</span>
+        </h1>
+
+        <div style="margin-top:12px; display:flex; gap:8px;">
+            <span style="font-size:24px; color:{'#48ff88' if ma >= ma_prev else '#ff5e5e'};">
+                {'▲' if ma >= ma_prev else '▼'}
+            </span>
+            <span style="font-size:17px; color:{'#48ff88' if ma >= ma_prev else '#ff5e5e'};">
+                {ma/ma_prev:.2f}x change
+            </span>
+        </div>
+    </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
             st.markdown("<hr>", unsafe_allow_html=True)
 
-            # =============== MONTHLY CLUSTER PLOT ===============
+            # ========== MONTHLY PLOT ==========
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(monthly[features])
             best_k = st.session_state.get("best_k_monthly", 3)
 
             monthly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
 
-            st.markdown(
-                f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>",
-                unsafe_allow_html=True,
-            )
+            st.markdown(f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>",
+                        unsafe_allow_html=True)
 
             melted = monthly.melt(
                 id_vars=["MonthYear", "Cluster"],
@@ -1633,32 +1588,25 @@ def main():
             fig.patch.set_facecolor("#111")
             ax.set_facecolor("#111")
 
-            for fish_type in features:
-
-                show = (trend_option == "Both") or (
-                    trend_option.lower() in fish_type.lower()
-                )
-
+            for f in features:
+                show = trend_option == "Both" or trend_option.lower() in f.lower()
                 if show:
                     for cl in sorted(melted["Cluster"].unique()):
-                        subset = melted[
-                            (melted["Type"] == fish_type)
-                            & (melted["Cluster"] == cl)
-                        ]
+                        subset = melted[(melted["Type"] == f) & (melted["Cluster"] == cl)]
 
                         sns.lineplot(
                             data=subset,
                             x="MonthYear",
                             y="Landing",
-                            color=colors[fish_type],
-                            marker=markers[fish_type],
+                            color=colors[f],
+                            marker=markers[f],
                             linestyle=linestyles[cl % len(linestyles)],
                             linewidth=2,
                             ax=ax,
-                            label=f"{fish_type.replace('(Tonnes)','')} – Cluster {cl}",
+                            label=f"{f.replace('(Tonnes)','')} – Cluster {cl}",
                         )
 
-            ax.set_title(f"Monthly Fish Landing Trends (k={best_k})", fontsize=18, color="white")
+            ax.set_title(f"Monthly Fish Landing Trends (k={best_k})", color="white")
             plt.xticks(rotation=45)
             ax.grid(True, alpha=0.25)
             ax.legend(
@@ -1666,11 +1614,8 @@ def main():
                 bbox_to_anchor=(0.5, -0.2),
                 ncol=3,
                 frameon=False,
-                fontsize=10,
             )
             st.pyplot(fig)
-
-
 
         
     elif plot_option == "2D KMeans Scatter":
