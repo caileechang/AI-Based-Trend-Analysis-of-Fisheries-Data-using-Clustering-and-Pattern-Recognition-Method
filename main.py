@@ -693,7 +693,7 @@ def main():
         import seaborn as sns
         import matplotlib.pyplot as plt
 
-        st.markdown("## 📊 Yearly Fish Landing")
+        st.markdown("##  Yearly Fish Landing")
          
         
 
@@ -757,7 +757,8 @@ def main():
             return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}%{label}</span>"
         medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
-        st.markdown(f"## 🏅 Top 3 States in {latest_year}")
+        
+        st.markdown(f"### 🏅 Top 3 States in {latest_year}")
 
         card_cols = st.columns(3)
         
@@ -796,11 +797,9 @@ def main():
 
 
         # ------------------------------------------------------
-        # B) LOLLIPOP CHART FOR LATEST YEAR
+        # CHART FOR LATEST YEAR
         # ------------------------------------------------------
-        st.markdown(
-            f"### Total Fish Landing by State ({latest_year})"
-        )
+        st.markdown(f"### Total Fish Landing by State ({latest_year})")
 
         filtered_sorted = filtered_latest.sort_values(
             "Total Fish Landing (Tonnes)", ascending=True
