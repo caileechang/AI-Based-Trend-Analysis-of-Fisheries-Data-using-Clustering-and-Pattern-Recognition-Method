@@ -2269,7 +2269,7 @@ def main():
         # 2. FORCE CLUSTERS + detect outliers
         # ---------------------------------------------
         clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=3,
+            min_cluster_size=4,
             min_samples=1,
             cluster_selection_epsilon=0.25,   # ⭐ forces cluster formation
             allow_single_cluster=True,        # ⭐ avoids all noise
