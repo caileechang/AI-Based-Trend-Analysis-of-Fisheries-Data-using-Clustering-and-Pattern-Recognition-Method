@@ -2057,11 +2057,11 @@ def main():
                 background-color:#111;
                 padding:15px;
                 border-radius:10px;
-                border-left:4px solid #4ec9b0;
+                border-left:none;
                 margin-top:0px;
             ">
 
-            <p style='color:#ccc; font-size:14px;'>
+            <p style='color:#ccc; font-size:12px;'>
                 HDBSCAN assigns each point a <b>probability from 0 to 1</b> showing
                 confidence in cluster membership (not the cluster number).
             </p>
