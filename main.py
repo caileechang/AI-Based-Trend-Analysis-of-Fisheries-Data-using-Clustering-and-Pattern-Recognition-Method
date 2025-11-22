@@ -543,7 +543,7 @@ def hierarchical_clustering(merged_df):
     interpretation = ""
 
     for _, row in cluster_summary.iterrows():
-        cid = int(row["Cluster"])
+        cid = int(row["RawCluster"])
         tier_label = row["Tier"]
         subset = grouped[grouped["RawCluster"] == cid]
 
