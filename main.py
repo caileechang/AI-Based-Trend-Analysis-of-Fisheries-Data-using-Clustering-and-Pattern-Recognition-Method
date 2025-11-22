@@ -2010,7 +2010,7 @@ def main():
 
         with col_plot:
 
-            fig, ax = plt.subplots(figsize=(12, 8))
+            fig, ax = plt.subplots(figsize=(15, 12))
 
             sns.scatterplot(
                 data=df,
