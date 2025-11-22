@@ -479,25 +479,33 @@ def hierarchical_clustering(merged_df):
     ax2.set_ylabel("Distance")
     st.pyplot(fig2)
 
-    # ----------------------------
+
     # Interpretation Summary
-    # ----------------------------
-  
     st.markdown("### Interpretation of Clusters")
 
+    # Background + text colors for tiers
     tier_bg = {
-        "Low":   "#0a2a4a",   # deep navy blue
-        "Medium": "#4a2a0a",  # brownish-orange
-        "High":  "#4a0a0a",   # deep red
+        "Low":   "#0a2a4a",
+        "Medium": "#4a2a0a",
+        "High":  "#4a0a0a",
     }
 
     tier_text_color = {
-        "Low":   "#61a0ff",   # bright blue text
-        "Medium": "#ffb347",  # orange text
-        "High":  "#ff6b6b",   # red text
+        "Low":   "#61a0ff",
+        "Medium": "#ffb347",
+        "High":  "#ff6b6b",
     }
 
-    for _, row in cluster_summary.iterrows():
+    # Sort clusters by Tier order: Low → Medium → High
+    tier_order = ["Low", "Medium", "High"]
+    cluster_summary_sorted = cluster_summary.sort_values(
+        "Tier", key=lambda x: x.map({t:i for i,t in enumerate(tier_order)})
+    )
+
+    # One column per cluster
+    cols = st.columns(len(cluster_summary_sorted))
+
+    for idx, (_, row) in enumerate(cluster_summary_sorted.iterrows()):
         cid = int(row["RawCluster"])
         tier_label = row["Tier"]
         subset = grouped[grouped["RawCluster"] == cid]
@@ -505,15 +513,15 @@ def hierarchical_clustering(merged_df):
         bg = tier_bg[tier_label]
         txt = tier_text_color[tier_label]
 
-        block = f"""
+        html_block = f"""
         <div style="
             background-color:{bg};
             padding:20px;
             border-radius:12px;
-            margin-bottom:15px;
+            height:100%;
         ">
-            <h3 style="color:{txt};">Cluster {cid} – {tier_label} zone</h3>
-            <ul style="color:white; font-size:17px;">
+            <h3 style="color:{txt}; text-align:center;">Cluster {cid}<br>{tier_label} zone</h3>
+            <ul style="color:white; font-size:16px;">
                 <li><b>Avg landing:</b> {row['Total Fish Landing (Tonnes)']:.2f} tonnes</li>
                 <li><b>Range landing:</b> {subset['Total Fish Landing (Tonnes)'].min():.2f} → {subset['Total Fish Landing (Tonnes)'].max():.2f}</li>
                 <li><b>Avg vessels:</b> {row['Total number of fishing vessels']:.0f}</li>
@@ -521,7 +529,9 @@ def hierarchical_clustering(merged_df):
             </ul>
         </div>
         """
-        st.markdown(block, unsafe_allow_html=True)
+
+        cols[idx].markdown(html_block, unsafe_allow_html=True)
+
 
 
     # ----------------------------
