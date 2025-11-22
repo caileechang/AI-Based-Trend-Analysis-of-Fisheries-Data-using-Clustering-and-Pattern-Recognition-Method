@@ -772,7 +772,7 @@ def main():
                 state = row["State"]
                 total = row["Total Fish Landing (Tonnes)"]
                 prev_val = row["Prev_Year"]
-                growth_text_html = growth_text(total, prev_val)
+                growth_html = growth_text(total, prev_val)
 
                 card_html = f"""
                 <div style="
