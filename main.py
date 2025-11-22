@@ -474,7 +474,7 @@ def hierarchical_clustering(merged_df):
         x = lbl.get_position()[0]
         ax2.plot(x, -0.2, "o", color=color, markersize=10, clip_on=False)
 
-    ax2.set_ylim(bottom=-1)
+    ax2.set_ylim(bottom=-0.4)
     ax2.set_title(f"Tier-Colored Dendrogram – {selected_year} (k = {best_k})")
     ax2.set_ylabel("Distance")
     st.pyplot(fig2)
