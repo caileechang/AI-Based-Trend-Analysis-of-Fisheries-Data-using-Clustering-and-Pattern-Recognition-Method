@@ -2032,6 +2032,7 @@ def main():
             st.pyplot(fig)
 
         with col_legend:
+        
             st.markdown("""
             <div style="
                 background-color:#111;
@@ -2039,27 +2040,27 @@ def main():
                 border-radius:10px;
                 border-left:none;
                 margin-top:10px;
-                margin-bottom:15px;
             ">
-            <h4 style='color:white;'>📘 How to Read HDBSCAN Membership Colors</h4>
-            <p style='color:#ccc;'>
-            HDBSCAN assigns each point a <b>probability from 0 to 1</b> representing how strongly 
-            it belongs to its cluster. This is <b>not the cluster number</b>.
+            <h4 style='color:white; margin-top:0;'> HDBSCAN Membership Legend</h4>
+
+            <p style='color:#ccc; font-size:13px;'>
+            HDBSCAN assigns each point a <b>probability (0 → 1)</b>  
+            showing confidence in cluster membership.
             </p>
 
-            <table style='color:white; font-size:14px;'>
-                <tr><td>🟣 <b>0.0</b></td><td>Almost noise (very weak membership)</td></tr>
-                <tr><td>🔵 <b>0.2</b></td><td>Weak membership</td></tr>
-                <tr><td>🟦 <b>0.4</b></td><td>Medium membership</td></tr>
-                <tr><td>🟩 <b>0.6</b></td><td>Strong membership</td></tr>
-                <tr><td>🟢 <b>0.8</b></td><td>Very strong membership</td></tr>
-                <tr><td>🟡 <b>1.0</b></td><td>Perfect membership</td></tr>
-                <tr><td>⭕ <b>Outlier</b></td><td>Explicitly flagged as noise</td></tr>
+            <table style='color:white; font-size:14px; width:100%;'>
+                <tr><td>🟣 <b>0.0</b></td><td>Very weak membership</td></tr>
+                <tr><td>🔵 <b>0.2</b></td><td>Weak</td></tr>
+                <tr><td>🟦 <b>0.4</b></td><td>Medium</td></tr>
+                <tr><td>🟩 <b>0.6</b></td><td>Strong</td></tr>
+                <tr><td>🟢 <b>0.8</b></td><td>Very strong</td></tr>
+                <tr><td>🟡 <b>1.0</b></td><td>Perfect</td></tr>
+                <tr><td>⭕ <b>Outlier</b></td><td>Flagged as anomaly</td></tr>
             </table>
 
-            <p style='color:#ccc; margin-top:8px;'>
-            Higher membership probability = more reliable clustering.<br>
-            Red circle = true anomaly detected by HDBSCAN.
+            <p style='color:#ccc; font-size:13px; margin-top:8px;'>
+            Higher probability = more reliable cluster.<br>
+            Red circle = true anomaly.
             </p>
             </div>
             """, unsafe_allow_html=True)
