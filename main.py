@@ -2239,135 +2239,123 @@ def main():
             st.pyplot(fig_h)
 
 
-    elif plot_option == "HDBSCAN 2":
-        import hdbscan
-        import matplotlib.pyplot as plt
-        import seaborn as sns
+        elif plot_option == "HDBSCAN 2":
+ 
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+            import hdbscan
+            from scipy.spatial import ConvexHull
+            from sklearn.preprocessing import StandardScaler
 
-        st.subheader("HDBSCAN Clustering + Outlier Detection (Forced Cluster Mode)")
+            st.subheader("🔥 HDBSCAN Clustering + Outlier Detection (Enhanced View)")
 
-        # ---------------------------------------------
-        # 1. Select valid columns
-        # ---------------------------------------------
-        valid_states = [
-            "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
-            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
-            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
-            "SABAH", "SARAWAK", "W.P. LABUAN"
-        ]
+            # -------------------------
+            # STEP 1 — Prepare Data
+            # -------------------------
+            valid_states = [
+                "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+                "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+                "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+                "SABAH", "SARAWAK", "W.P. LABUAN"
+            ]
+            df = merged_df[merged_df["State"].isin(valid_states)].reset_index(drop=True)
 
-        df = merged_df[merged_df["State"].isin(valid_states)].reset_index(drop=True)
+            features = df[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+            scaled = StandardScaler().fit_transform(features)
 
-        if df.empty:
-            st.error("No valid Malaysian states found.")
-            st.stop()
+            # -------------------------
+            # STEP 2 — Run HDBSCAN
+            # -------------------------
+            clusterer = hdbscan.HDBSCAN(
+                min_cluster_size=4,
+                min_samples=3,
+                cluster_selection_epsilon=0.05
+            )
+            labels = clusterer.fit_predict(scaled)
+            df["Cluster"] = labels
 
-        X = df[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]].copy()
-        X_scaled = StandardScaler().fit_transform(X)
+            # Outliers detected as -1
+            noise_mask = (labels == -1)
+            num_clusters = len(set(labels) - {-1})
+            num_outliers = noise_mask.sum()
 
-        # ---------------------------------------------
-        # 2. FORCE CLUSTERS + detect outliers
-        # ---------------------------------------------
-        clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=4,
-            min_samples=1,
-            cluster_selection_epsilon=0.25,   # ⭐ forces cluster formation
-            allow_single_cluster=True,        # ⭐ avoids all noise
-            prediction_data=True
-        )
+            st.markdown(f"**Clusters detected:** {num_clusters}")
+            st.markdown(f"**Outliers detected:** {num_outliers}")
 
-        labels = clusterer.fit_predict(X_scaled)
-        probabilities = clusterer.probabilities_
+            # -------------------------
+            # STEP 3 — Visualization
+            # -------------------------
+            fig, ax = plt.subplots(figsize=(10, 6))
 
-        df["Cluster"] = labels
-        df["Confidence"] = probabilities
+            palette = sns.color_palette("tab10", num_clusters + 1)
 
-        unique_clusters = sorted(set(labels) - {-1})
-        n_clusters = len(unique_clusters)
-        n_noise = sum(labels == -1)
+            for cl in sorted(set(labels)):
+                cluster_points = scaled[labels == cl]
 
-        # ---------------------------------------------
-        # 3. Show summary
-        # ---------------------------------------------
-        st.markdown(f"### 📌 Found **{n_clusters} clusters** and **{n_noise} outliers**")
-
-        # ---------------------------------------------
-        # 4. Scatter Plot: Clusters + Outliers
-        # ---------------------------------------------
-        fig, ax = plt.subplots(figsize=(10, 6))
-
-        palette = sns.color_palette("tab10", n_clusters + 1)
-
-        for label in set(labels):
-            cluster_points = X_scaled[labels == label]
-
-            if label == -1:
-                ax.scatter(
-                    cluster_points[:, 1],
-                    cluster_points[:, 0],
-                    s=120,
-                    edgecolors="red",
-                    facecolors="none",
-                    linewidths=2,
-                    alpha=0.9,
-                    label="Outlier (-1)"
-                )
-            else:
-                color = palette[label % len(palette)]
-                ax.scatter(
-                    cluster_points[:, 1],
-                    cluster_points[:, 0],
-                    s=70,
-                    color=color,
-                    edgecolors="black",
-                    linewidths=0.6,
-                    alpha=0.8,
-                    label=f"Cluster {label}"
-                )
-
-                # Draw Convex Hull for cluster shape
-                if len(cluster_points) >= 3:
-                    from scipy.spatial import ConvexHull
-                    hull = ConvexHull(cluster_points)
-                    hull_idx = list(hull.vertices) + [hull.vertices[0]]
-                    ax.plot(
-                        cluster_points[hull_idx, 1],
-                        cluster_points[hull_idx, 0],
-                        color=color,
-                        linewidth=2,
-                        alpha=0.5
+                # --- Outliers ---
+                if cl == -1:
+                    ax.scatter(
+                        cluster_points[:, 1],
+                        cluster_points[:, 0],
+                        s=80,
+                        facecolors='none',
+                        edgecolors='red',
+                        linewidths=2,
+                        label=f"Outliers ({len(cluster_points)})"
                     )
+                    continue
 
-        ax.set_title("HDBSCAN Forced Clustering + Outlier Detection")
-        ax.set_xlabel("Vessels (scaled)")
-        ax.set_ylabel("Fish Landing (scaled)")
-        ax.grid(alpha=0.3)
-        ax.legend()
+                # --- Cluster points ---
+                color = palette[cl % len(palette)]
+                ax.scatter(
+                    cluster_points[:, 1],
+                    cluster_points[:, 0],
+                    s=50,
+                    c=[color],
+                    edgecolor="black",
+                    linewidth=0.4,
+                    alpha=0.9,
+                    label=f"Cluster {cl} ({len(cluster_points)})"
+                )
 
-        st.pyplot(fig)
+                # --- Convex Hull (safe mode) ---
+                if len(cluster_points) >= 3:
+                    try:
+                        hull = ConvexHull(cluster_points)
+                        hull_idx = list(hull.vertices) + [hull.vertices[0]]
+                        ax.plot(
+                            cluster_points[hull_idx, 1],
+                            cluster_points[hull_idx, 0],
+                            color=color,
+                            linewidth=2,
+                            alpha=0.6
+                        )
+                    except:
+                        pass  # ignore tiny clusters
 
-        # ---------------------------------------------
-        # 5. Cluster Summary Table
-        # ---------------------------------------------
-        st.markdown("### 📊 Cluster Summary")
-        cluster_summary = (
-            df[df["Cluster"] != -1]
-            .groupby("Cluster")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
-            .mean()
-            .reset_index()
-        )
-        st.dataframe(cluster_summary)
+            ax.set_title("HDBSCAN Clustering + Outlier Detection (Enhanced)", fontsize=14)
+            ax.set_xlabel("Vessels (scaled)")
+            ax.set_ylabel("Landings (scaled)")
+            ax.grid(alpha=0.3)
+            ax.legend()
 
-        # ---------------------------------------------
-        # 6. Outlier Details Table
-        # ---------------------------------------------
-        if n_noise > 0:
-            st.markdown("### 🚨 Outlier Details")
-            outliers = df[df["Cluster"] == -1][[
-                "State", "Year", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
-            ]]
-            st.dataframe(outliers)
+            st.pyplot(fig)
 
+            # -------------------------
+            # STEP 4 — Outlier Table
+            # -------------------------
+            if num_outliers > 0:
+                st.markdown("### 🚨 Outlier Details")
+                out = df[noise_mask][[
+                    "State", "Year",
+                    "Total Fish Landing (Tonnes)",
+                    "Total number of fishing vessels"
+                ]]
+                st.dataframe(out)
+            else:
+                st.success("No meaningful outliers found 🚀")
+
+       
 
                     
         elif plot_option == "Hierarchical Clustering":
