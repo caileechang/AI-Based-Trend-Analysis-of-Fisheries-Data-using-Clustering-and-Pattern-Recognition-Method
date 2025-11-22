@@ -2087,7 +2087,7 @@ def main():
 
 
     elif plot_option == "Automatic DBSCAN":
-
+        import numpy as np  
         import matplotlib.pyplot as plt
         import seaborn as sns
         from scipy.spatial import ConvexHull
