@@ -544,11 +544,10 @@ def hierarchical_clustering(merged_df):
     )
     
 def main():
+    
    
     st.set_page_config(layout='wide')
-    #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
-
-    # ======================================
+     # ======================================
     # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
     # ======================================
     st.markdown("""
@@ -608,6 +607,9 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
+    #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
+
+   
 
     # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
