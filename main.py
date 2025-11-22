@@ -693,7 +693,8 @@ def main():
         import seaborn as sns
         import matplotlib.pyplot as plt
 
-        st.subheader("Total Yearly Fish Landing")
+        st.subheader(f"## Yearly Fish Landing")
+        
 
         # --- ALWAYS use cleaned yearly summary from prepare_yearly ---
         if uploaded_file:
@@ -797,7 +798,7 @@ def main():
         # B) LOLLIPOP CHART FOR LATEST YEAR
         # ------------------------------------------------------
         st.markdown(
-            f"### 🍭 Total Fish Landing by State ({latest_year})"
+            f"### Total Fish Landing by State ({latest_year})"
         )
 
         filtered_sorted = filtered_latest.sort_values(
@@ -852,7 +853,7 @@ def main():
         # ------------------------------------------------------
         # C) NOW SHOW YEAR SELECTOR & TABLE
         # ------------------------------------------------------
-        st.markdown("## 📅 Select a Year to View Full Details")
+        st.markdown("## Select a Year to View Full Details")
 
         selected_year = st.selectbox(
             "Choose a year:",
@@ -864,7 +865,7 @@ def main():
             yearly_summary["Year"] == selected_year
         ].sort_values("Total Fish Landing (Tonnes)", ascending=False)
 
-        st.markdown(f"### 🐟 Fish Landing by State — {selected_year}")
+        st.markdown(f"### Fish Landing by State — {selected_year}")
         st.dataframe(filtered_selected, use_container_width=True, height=350)
 
 
