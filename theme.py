@@ -3,167 +3,109 @@ import streamlit as st
 def inject_premium_theme():
     st.markdown("""
     <style>
-    :root {
-      --bg-main: #05070b;
-      --bg-elevated: #111318;
-      --bg-elevated-soft: rgba(255,255,255,0.03);
-      --accent: #4dabf7;
-      --accent-soft: rgba(77,171,247,0.15);
-      --text-main: #f5f5f7;
-      --text-muted: #a0a4b8;
-      --border-subtle: rgba(255,255,255,0.08);
-      --radius-lg: 18px;
-      --shadow-soft: 0 18px 45px rgba(0,0,0,0.55);
-    }
 
-    /* App background + font */
+    /* --- GLOBAL --- */
     .stApp {
-      background: radial-gradient(circle at top left, #182233 0, #05070b 45%);
-      color: var(--text-main);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+        background-color: #0d1117 !important;
+        font-family: 'Inter', sans-serif;
     }
-
     .block-container {
-      padding-top: 1.8rem;
-      padding-bottom: 3rem;
-      max-width: 1250px;
+        padding-top: 2rem;
+        max-width: 1200px;
     }
+    h2, h3 {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600 !important;
+        letter-spacing: -0.5px;
+    }
+    h2 { font-size: 32px !important; }
+    h3 { font-size: 22px !important; }
 
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-      background: linear-gradient(180deg, #0e1117 0, #05070b 60%);
-      border-right: 1px solid var(--border-subtle);
-    }
-    [data-testid="stSidebar"] * {
-      color: var(--text-main);
-      font-size: 15px;
-    }
-
-    /* Headings + body text */
-    h1, h2, h3 {
-      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      letter-spacing: 0.02em;
-    }
-    h2 {
-      font-size: 34px !important;
-      font-weight: 700 !important;
-      margin-bottom: 0.35rem;
-    }
-    h3 {
-      font-size: 24px !important;
-      font-weight: 600 !important;
-      margin-bottom: 0.25rem;
-    }
     p {
-      font-size: 15px;
-      color: var(--text-muted);
+        color: #c9d1d9 !important;
+        font-size: 15px !important;
     }
 
     hr {
-      border: none;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      margin: 1.4rem 0 1rem 0;
+        border: none;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        margin: 1.4rem 0 1rem 0;
     }
 
-    /* Metric cards */
-    .metric-card {
-      background: var(--bg-elevated-soft);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-subtle);
-      padding: 20px 22px 18px 22px;
-      box-shadow: var(--shadow-soft);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.22s ease-out;
+    /* --- SIDEBAR --- */
+    [data-testid="stSidebar"] {
+        background-color: #0d1117 !important;
+        border-right: 1px solid rgba(255,255,255,0.07);
     }
-    .metric-card::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background: radial-gradient(circle at top left, var(--accent-soft), transparent 60%);
-      opacity: 0.9;
-      pointer-events: none;
-    }
-    .metric-card-inner {
-      position: relative;
-      z-index: 2;
-    }
-    .metric-label {
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-muted);
-      margin-bottom: 2px;
-    }
-    .metric-value {
-      font-size: 38px;
-      font-weight: 700;
-      color: var(--text-main);
-      line-height: 1.1;
-    }
-    .metric-unit {
-      font-size: 16px;
-      color: var(--text-muted);
-      margin-left: 6px;
-    }
-    .metric-delta {
-      margin-top: 6px;
-      font-size: 14px;
-    }
-    .metric-badge-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      display: inline-block;
-      margin-right: 6px;
-      background: var(--accent);
-    }
-    .metric-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 24px 55px rgba(0,0,0,0.70);
-      border-color: rgba(148, 187, 233, 0.55);
+    [data-testid="stSidebar"] * {
+        font-size: 15px !important;
     }
 
-    /* Radio buttons as chips */
-    div[data-testid="stRadio"] > label {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
+    /* --- CLEAN CHIPS (radio buttons) --- */
     div[data-testid="stRadio"] > div {
-      flex-direction: row;
-      gap: 0.5rem;
+        flex-direction: row !important;
+        gap: 6px !important;
     }
     div[data-testid="stRadio"] label > div {
-      background: #151821;
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.1);
+        background-color: #161b22 !important;
+        padding: 6px 14px !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(255,255,255,0.08) !important;
+        transition: 0.2s;
+    }
+    div[data-testid="stRadio"] label > div:hover {
+        border-color: rgba(255,255,255,0.18) !important;
     }
 
-    /* Buttons */
-    .stButton>button {
-      border-radius: 999px;
-      background: linear-gradient(135deg, #4dabf7, #9775fa);
-      color: white;
-      border: none;
-      padding: 0.45rem 1.2rem;
-      font-weight: 600;
+    /* --- METRIC CARDS --- */
+    .metric-card {
+        background-color: #161b22 !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        padding: 20px 24px !important;
+        transition: 0.2s ease;
     }
-    .stButton>button:hover {
-      filter: brightness(1.07);
-      transform: translateY(-1px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+    .metric-card:hover {
+        border-color: rgba(255,255,255,0.15) !important;
+        transform: translateY(-2px);
+    }
+    .metric-value {
+        color: white !important;
+        font-size: 36px !important;
+        font-weight: 700 !important;
+    }
+    .metric-label {
+        color: #8b949e !important;
+        font-size: 14px !important;
+    }
+    .metric-delta {
+        margin-top: 4px;
+        font-size: 13px !important;
     }
 
-    /* Tables */
+    /* --- BUTTONS --- */
+    .stButton > button {
+        background-color: #238636 !important;
+        border-radius: 6px !important;
+        color: white !important;
+        padding: 8px 18px !important;
+        border: none !important;
+        font-weight: 600 !important;
+    }
+    .stButton > button:hover {
+        background-color: #2ea043 !important;
+    }
+
+    /* --- TABLES --- */
     .stDataFrame, .stTable {
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: var(--bg-elevated);
+        background-color: #161b22 !important;
+        border-radius: 10px !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
     }
+
     </style>
     """, unsafe_allow_html=True)
+
 
 
 def section_header(title: str, subtitle: str | None = None, icon: str = "🎣"):
