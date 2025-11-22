@@ -693,7 +693,8 @@ def main():
         import seaborn as sns
         import matplotlib.pyplot as plt
 
-        st.subheader(f"## Yearly Fish Landing")
+        st.martdown(f"##  Yearly Fish Landing")
+         
         
 
         # --- ALWAYS use cleaned yearly summary from prepare_yearly ---
