@@ -2087,157 +2087,197 @@ def main():
 
 
     elif plot_option == "Automatic DBSCAN":
+
         import matplotlib.pyplot as plt
         import seaborn as sns
-        st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
-        from scipy.spatial import ConvexHull 
+        from scipy.spatial import ConvexHull
+        from sklearn.cluster import DBSCAN
+        from sklearn.neighbors import NearestNeighbors
+        from kneed import KneeLocator
 
-        # --- Step 1: Keep only valid Malaysian states ---
+        st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
+
+        # ---------------------------------------------
+        # STEP 1 — Filter valid Malaysian states
+        # ---------------------------------------------
         valid_states = [
             "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
             "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
             "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
             "SABAH", "SARAWAK", "W.P. LABUAN"
         ]
-        merged_df = merged_df[merged_df["State"].isin(valid_states)].reset_index(drop=True)
-        if merged_df.empty:
-            st.warning("No valid data rows remain after state filtering.")
+
+        df_db = merged_df[merged_df["State"].isin(valid_states)].reset_index(drop=True)
+
+        if df_db.empty:
+            st.error("❌ No valid data found after filtering Malaysian states.")
             st.stop()
 
-        # --- Step 2: Select and scale features ---
-        features = merged_df[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+        # ---------------------------------------------
+        # STEP 2 — Select features & scale
+        # ---------------------------------------------
+        features = df_db[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
         scaled = StandardScaler().fit_transform(features)
 
-        # --- Step 3: Automatically choose min_samples ---
+        n_samples = len(scaled)
         n_features = scaled.shape[1]
-        min_samples_auto = max(3, int(np.log(len(scaled))) + n_features)
 
-        # --- Step 4: Compute k-distances for knee detection ---
-        neigh = NearestNeighbors(n_neighbors=min_samples_auto)
-        distances, _ = neigh.fit(scaled).kneighbors(scaled)
+        # MUST HAVE MINIMUM 3 ROWS
+        if n_samples < 3:
+            st.error("❌ DBSCAN requires at least **3** data points. Not enough data.")
+            st.stop()
+
+        # ---------------------------------------------
+        # STEP 3 — Auto MIN_SAMPLES (with safety clamp)
+        # ---------------------------------------------
+        min_samples_auto = max(3, int(np.log(n_samples)) + n_features)
+        min_samples_auto = min(min_samples_auto, n_samples)   # strong safety
+
+        # ---------------------------------------------
+        # STEP 4 — Compute k-distance (with safety)
+        # ---------------------------------------------
+        try:
+            neigh = NearestNeighbors(n_neighbors=min_samples_auto)
+            distances, _ = neigh.fit(scaled).kneighbors(scaled)
+        except Exception as e:
+            st.error(f"❌ Failed computing k-distance: {e}")
+            st.stop()
+
         distances = np.sort(distances[:, min_samples_auto - 1])
 
-        # --- Step 5: Detect knee point (best epsilon) ---
-        kneedle = KneeLocator(range(len(distances)), distances, curve="convex", direction="increasing")
-        eps_auto = distances[kneedle.knee] if kneedle.knee is not None else np.percentile(distances, 90)
+        # ---------------------------------------------
+        # STEP 5 — Automatic epsilon (ε) detection
+        # ---------------------------------------------
+        try:
+            kneedle = KneeLocator(
+                range(len(distances)), distances,
+                curve="convex", direction="increasing"
+            )
+            eps_auto = distances[kneedle.knee] if kneedle.knee is not None else np.percentile(distances, 90)
+        except:
+            eps_auto = np.percentile(distances, 90)
 
-        # --- Step 6: Display auto parameters ---
-        st.markdown(f"**Automatically estimated ε (epsilon):** `{eps_auto:.3f}`")
+        # ---------------------------------------------
+        # STEP 6 — Show Parameters
+        # ---------------------------------------------
+        st.markdown(f"**Automatically estimated ε (epsilon):** `{eps_auto:.4f}`")
         st.markdown(f"**Automatically chosen min_samples:** `{min_samples_auto}`")
 
-        # --- Step 7: Plot sorted k-distance graph (justification) ---
+        # ---------------------------------------------
+        # STEP 7 — Plot k-distance graph
+        # ---------------------------------------------
         fig_k, ax_k = plt.subplots(figsize=(8, 3.5))
         ax_k.plot(distances, label="Sorted k-distance")
-        if kneedle.knee is not None:
-            ax_k.axvline(kneedle.knee, color="red", linestyle="--", label=f"Elbow index = {kneedle.knee}")
+
+        if 'kneedle' in locals() and kneedle.knee is not None:
+            ax_k.axvline(kneedle.knee, color="red", linestyle="--", label=f"Knee = {kneedle.knee}")
             ax_k.axhline(eps_auto, color="green", linestyle="--", label=f"ε = {eps_auto:.3f}")
+
         ax_k.set_title("Sorted k-distance Graph (Elbow Method for ε Selection)")
         ax_k.set_xlabel("Points sorted by distance")
-        ax_k.set_ylabel("k-distance")
+        ax_k.set_ylabel("Distance")
         ax_k.legend()
         st.pyplot(fig_k)
 
-        # --- Step 8: Run DBSCAN ---
+        # ---------------------------------------------
+        # STEP 8 — Run DBSCAN
+        # ---------------------------------------------
         db = DBSCAN(eps=eps_auto, min_samples=min_samples_auto)
         labels = db.fit_predict(scaled)
-        merged_df["DBSCAN_Label"] = labels
+        df_db["DBSCAN_Label"] = labels
 
-        # --- Step 9: Cluster quality metric (silhouette) ---
-       #if len(set(labels)) > 1 and np.any(labels != -1):
-          #  sil = silhouette_score(scaled[labels != -1], labels[labels != -1])
-         #   st.info(f"Silhouette Score (excluding noise): `{sil:.3f}`")
-       # else:
-            #st.warning("Silhouette score unavailable (all points are noise or only one cluster).")
-        # --- Step 9: Cluster quality metric (silhouette) ---
-        unique_labels = set(labels) - {-1}  # remove noise label (-1)
-        if len(unique_labels) > 1:
+        # ---------------------------------------------
+        # STEP 9 — Silhouette Score (if possible)
+        # ---------------------------------------------
+        valid_clusters = set(labels) - {-1}
+
+        if len(valid_clusters) > 1:
             try:
                 sil = silhouette_score(scaled[labels != -1], labels[labels != -1])
-                st.info(f"Silhouette Score (excluding noise): `{sil:.3f}`")
+                st.info(f"Silhouette Score (excluding noise): `{sil:.4f}`")
             except Exception as e:
-                st.warning(f"Silhouette score could not be computed: {e}")
+                st.warning(f"Silhouette score unavailable: {e}")
         else:
-            st.warning("Silhouette score unavailable — only one cluster or all points labeled as noise.")
+            st.warning("Silhouette score not available — only one cluster or all noise.")
 
-
-        # --- Step 10: Improved cluster visualization ---
-          # --- Step 10: Improved cluster visualization ---
+        # ---------------------------------------------
+        # STEP 10 — Plot Clusters (with convex hulls)
+        # ---------------------------------------------
         fig, ax = plt.subplots(figsize=(10, 6))
-        palette = sns.color_palette("bright", len(unique_labels) + 1)
-        n_clusters = len(unique_labels)
-    
-        for label in np.unique(labels):
-            cluster_points = scaled[labels == label]
-    
+
+        unique_labels = np.unique(labels)
+        palette = sns.color_palette("bright", len(unique_labels))
+
+        for label in unique_labels:
+            points = scaled[labels == label]
+
             if label == -1:
-                ax.scatter(cluster_points[:, 1], cluster_points[:, 0],
-                           s=50, c="lightgray", edgecolor="k", alpha=0.6, label="Noise (-1)")
+                ax.scatter(points[:, 1], points[:, 0], c="lightgray",
+                        s=60, edgecolor="k", alpha=0.6, label="Noise (-1)")
             else:
                 color = palette[label % len(palette)]
-                ax.scatter(cluster_points[:, 1], cluster_points[:, 0],
-                           s=60, c=[color], edgecolor="k", alpha=0.85,
-                           label=f"Cluster {label} ({len(cluster_points)})")
-    
-                # Draw convex hull around each cluster
-                if len(cluster_points) >= 3:
-                    hull = ConvexHull(cluster_points)
-                    hull_vertices = np.append(hull.vertices, hull.vertices[0])
-                    ax.plot(cluster_points[hull_vertices, 1],
-                            cluster_points[hull_vertices, 0],
-                            color=color, linewidth=2, alpha=0.6)
-    
-        ax.set_title(f"Automatic DBSCAN (ε={eps_auto:.3f}, min_samples={min_samples_auto}) → {n_clusters} Clusters Found")
+                ax.scatter(points[:, 1], points[:, 0], c=[color],
+                        s=70, edgecolor="k", alpha=0.85,
+                        label=f"Cluster {label} ({len(points)})")
+
+                # Convex Hull
+                if len(points) >= 3:
+                    hull = ConvexHull(points)
+                    hv = np.append(hull.vertices, hull.vertices[0])
+                    ax.plot(points[hv, 1], points[hv, 0], color=color, linewidth=2, alpha=0.6)
+
+        ax.set_title(f"Automatic DBSCAN (ε={eps_auto:.3f}, min_samples={min_samples_auto})")
         ax.set_xlabel("Vessels (scaled)")
-        ax.set_ylabel("Landings (scaled)")
-        ax.legend(frameon=True)
+        ax.set_ylabel("Landing (scaled)")
         ax.grid(alpha=0.3)
+        ax.legend()
         st.pyplot(fig)
-    
-        # --- Step 11: Cluster summary table ---
-        cluster_summary = merged_df[labels != -1].groupby("DBSCAN_Label")[[
+
+        # ---------------------------------------------
+        # STEP 11 — Cluster Summary Table
+        # ---------------------------------------------
+        df_summary = df_db[df_db["DBSCAN_Label"] != -1].groupby("DBSCAN_Label")[[
             "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
         ]].mean().reset_index().rename(columns={
             "DBSCAN_Label": "Cluster",
-            "Total Fish Landing (Tonnes)": "Avg Fish Landing (Tonnes)",
+            "Total Fish Landing (Tonnes)": "Avg Fish Landing",
             "Total number of fishing vessels": "Avg Vessels"
         })
+
         st.markdown("### 📊 Cluster Summary (excluding noise)")
-        st.dataframe(cluster_summary)
-    
-        # --- Step 12: Outlier analysis ---
+        st.dataframe(df_summary)
+
+        # ---------------------------------------------
+        # STEP 12 — Outlier Details
+        # ---------------------------------------------
         n_outliers = (labels == -1).sum()
-        st.success(f"Detected {n_outliers} outliers (noise points)")
-    
+        st.success(f"Detected **{n_outliers}** outliers (noise points)")
+
         if n_outliers > 0:
-            outlier_details = merged_df.loc[labels == -1, [
+            details = df_db[labels == -1][[
                 "State", "Year", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
-            ]].copy()
-    
-            avg_land = merged_df["Total Fish Landing (Tonnes)"].mean()
-            avg_ves = merged_df["Total number of fishing vessels"].mean()
-    
-            def explain(r):
-                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
-                    return "⚠️ High landing but few vessels – overperformance or anomaly."
-                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
-                    return "🐟 Low catch per vessel – possible overfishing or resource decline."
-                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
-                    return "🛶 Low activity – small fleet or seasonal downtime."
-                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] > avg_ves:
-                    return "⚓ Unusually high scale – large operations or exceptional yield."
-                return "Atypical pattern vs national average."
-    
-            outlier_details["Why Flagged"] = outlier_details.apply(explain, axis=1)
+            ]]
+
+            # Simple rule-based explanation
+            avg_land = df_db["Total Fish Landing (Tonnes)"].mean()
+            avg_ves = df_db["Total number of fishing vessels"].mean()
+
+            def explain(row):
+                if row["Total Fish Landing (Tonnes)"] > avg_land and row["Total number of fishing vessels"] < avg_ves:
+                    return "⚠️ High landing but few vessels — anomaly or over-performance"
+                if row["Total Fish Landing (Tonnes)"] < avg_land and row["Total number of fishing vessels"] > avg_ves:
+                    return "🐟 Low landing per vessel — possible overfishing"
+                if row["Total Fish Landing (Tonnes)"] < avg_land and row["Total number of fishing vessels"] < avg_ves:
+                    return "🛶 Low activity — small fleet or seasonal drop"
+                if row["Total Fish Landing (Tonnes)"] > avg_land and row["Total number of fishing vessels"] > avg_ves:
+                    return "⚓ Large scale operation — unusual spike"
+                return "Atypical pattern"
+
+            details["Why Flagged"] = details.apply(explain, axis=1)
+
             st.markdown("### 🚨 Outlier Details")
-            st.dataframe(outlier_details)
-    
-            # Optional: visual heatmap of outliers
-            st.markdown("#### Outlier Heatmap (Catch vs Vessels)")
-            fig_h, ax_h = plt.subplots(figsize=(8, 4))
-            sns.heatmap(outlier_details[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]],
-                        annot=True, fmt=".0f", cmap="coolwarm", cbar=False, ax=ax_h)
-            ax_h.set_title("Outlier Catch-Vessel Patterns")
-            st.pyplot(fig_h)
+            st.dataframe(details)
+
                 
     elif plot_option == "Hierarchical Clustering":
                     
