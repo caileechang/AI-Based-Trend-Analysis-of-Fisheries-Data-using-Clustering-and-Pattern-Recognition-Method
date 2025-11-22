@@ -471,6 +471,13 @@ def hierarchical_clustering(merged_df):
 
     grouped["Cluster"] = grouped["RawCluster"].map(cluster_map)
     grouped["Tier"] = grouped["Cluster"].map(tier_map)
+   
+    original_grouped = original_grouped.merge(
+        grouped[["State", "Cluster", "Tier"]],
+        on="State",
+        how="left"
+    )
+
 
     # ----------------------------
     # Optimal Leaf Ordering
