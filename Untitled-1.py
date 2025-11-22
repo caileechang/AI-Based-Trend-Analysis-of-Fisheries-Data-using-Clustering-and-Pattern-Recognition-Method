@@ -1039,3 +1039,42 @@ elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         ax.set_title(f"Automatic 2D K-Means Clustering (k={best_k})")
         st.pyplot(fig2)
     
+# --------------------------------------------
+        # 7. Scatter Plot Visualization
+        # --------------------------------------------
+        st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
+        fig, ax = plt.subplots(figsize=(9, 5))
+
+        sns.scatterplot(
+            data=df,
+            x="Vessels",
+            y="Landing",
+            hue="Outlier_Norm",
+            palette="viridis",
+            s=100,
+            ax=ax
+        )
+
+        # highlight anomalies
+        ano = df[df["Anomaly"] == True]
+        ax.scatter(
+            ano["Vessels"],
+            ano["Landing"],
+            s=250,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Outlier"
+        )
+
+        # label states
+        for _, r in ano.iterrows():
+            ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
+                    color="red", fontsize=9, fontweight="bold")
+
+        ax.set_xlabel("Total Vessels")
+        ax.set_ylabel("Total Fish Landing (Tonnes)")
+        ax.set_title(f"Outlier Detection ({sel_year})")
+        ax.grid(alpha=0.3)
+        ax.legend()
+        st.pyplot(fig)
