@@ -482,24 +482,47 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Interpretation Summary
     # ----------------------------
+  
     st.markdown("### Interpretation of Clusters")
 
-    interpretation = ""
+    tier_bg = {
+        "Low":   "#0a2a4a",   # deep navy blue
+        "Medium": "#4a2a0a",  # brownish-orange
+        "High":  "#4a0a0a",   # deep red
+    }
+
+    tier_text_color = {
+        "Low":   "#61a0ff",   # bright blue text
+        "Medium": "#ffb347",  # orange text
+        "High":  "#ff6b6b",   # red text
+    }
 
     for _, row in cluster_summary.iterrows():
-        cid = row["RawCluster"]
-        tier = row["Tier"]
-        sub = grouped[grouped["RawCluster"] == cid]
+        cid = int(row["RawCluster"])
+        tier_label = row["Tier"]
+        subset = grouped[grouped["RawCluster"] == cid]
 
-        interpretation += (
-            f"### Cluster {cid} – {tier} zone\n"
-            f"- Avg landing: **{row['Total Fish Landing (Tonnes)']:.2f}** tonnes\n"
-            f"- Range landing: {sub['Total Fish Landing (Tonnes)'].min():.2f} → {sub['Total Fish Landing (Tonnes)'].max():.2f}\n"
-            f"- Avg vessels: **{row['Total number of fishing vessels']:.0f}**\n"
-            f"- Range vessels: {sub['Total number of fishing vessels'].min():.0f} → {sub['Total number of fishing vessels'].max():.0f}\n\n"
-        )
+        bg = tier_bg[tier_label]
+        txt = tier_text_color[tier_label]
 
-    st.info(interpretation)
+        block = f"""
+        <div style="
+            background-color:{bg};
+            padding:20px;
+            border-radius:12px;
+            margin-bottom:15px;
+        ">
+            <h3 style="color:{txt};">Cluster {cid} – {tier_label} zone</h3>
+            <ul style="color:white; font-size:17px;">
+                <li><b>Avg landing:</b> {row['Total Fish Landing (Tonnes)']:.2f} tonnes</li>
+                <li><b>Range landing:</b> {subset['Total Fish Landing (Tonnes)'].min():.2f} → {subset['Total Fish Landing (Tonnes)'].max():.2f}</li>
+                <li><b>Avg vessels:</b> {row['Total number of fishing vessels']:.0f}</li>
+                <li><b>Range vessels:</b> {subset['Total number of fishing vessels'].min():.0f} → {subset['Total number of fishing vessels'].max():.0f}</li>
+            </ul>
+        </div>
+        """
+        st.markdown(block, unsafe_allow_html=True)
+
 
     # ----------------------------
     # Final Cluster Assignment Table
