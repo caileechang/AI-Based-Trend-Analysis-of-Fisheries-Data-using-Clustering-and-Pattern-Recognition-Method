@@ -2006,7 +2006,7 @@ def main():
 
 
         # 🔹 Now create the real content columns
-        col_plot, col_legend = st.columns([4, 1.5], gap="large")
+        col_plot, col_legend = st.columns([3, 1], gap="large")
 
         with col_plot:
 
@@ -2072,11 +2072,7 @@ def main():
             <p style="
                 color:#ccc; 
                 font-size:14px; 
-                 
-                
-                word-wrap:break-word;
-              
-                margin:auto;
+    
             ">
                 HDBSCAN assigns each point a <b>probability from 0 to 1</b> showing
                 confidence in cluster membership (not the cluster number).
