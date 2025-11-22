@@ -1291,19 +1291,26 @@ def main():
         import matplotlib.pyplot as plt
         import seaborn as sns
 
-        # ========== HEADER ==========
-        st.markdown("""
-            <h2 style='color:white; font-size:32px; font-weight:700;'>
-                🎣 Fish Landing Trends (Cluster Analysis)
-            </h2>
-            <p style='color:#bbb; margin-top:-10px; font-size:15px;'>
-                Compare freshwater & marine fish landings using K-Means clustering (Yearly & Monthly).
-            </p>
-        """, unsafe_allow_html=True)
+        # ===============================
+        # HEADER (NO INDENT INSIDE HTML)
+        # ===============================
+        st.markdown(
+            """
+    <h2 style='color:white; font-size:32px; font-weight:700;'>
+        🎣 Fish Landing Trends (Cluster Analysis)
+    </h2>
+    <p style='color:#bbb; margin-top:-10px; font-size:15px;'>
+        Compare freshwater & marine fish landings using K-Means clustering (Yearly & Monthly).
+    </p>
+    """,
+            unsafe_allow_html=True,
+        )
 
         st.markdown("<hr style='border:0.4px solid #333;'>", unsafe_allow_html=True)
 
-        # ========== CONTROL BAR ==========
+        # ===============================
+        # CONTROL BAR
+        # ===============================
         c_period, c_trend = st.columns([1.1, 2])
 
         with c_period:
@@ -1312,13 +1319,16 @@ def main():
         with c_trend:
             trend_option = st.radio("Trend:", ["Freshwater", "Marine", "Both"], horizontal=True)
 
-        # STYLE
+        # ===============================
+        # STYLING CONSTANTS
+        # ===============================
         colors = {
             "Freshwater (Tonnes)": "#4ea8de",
             "Marine (Tonnes)": "#ff6b6b",
         }
         markers = {"Freshwater (Tonnes)": "o", "Marine (Tonnes)": "^"}
         linestyles = ["solid", "dashed", "dotted", "dashdot"]
+
 
         # ===========================================================================================
         # 1) YEARLY VIEW
@@ -1347,16 +1357,21 @@ def main():
                 return row.values[0] if len(row) else 0
 
             fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
-            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
+            fw_prev   = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
             ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
-            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
+            ma_prev   = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
-            # ========== YEARLY SUMMARY ==========
-            st.markdown(f"<h3 style='color:white;'>📌 Landing Summary in {latest_year}</h3>", unsafe_allow_html=True)
+            # ============================================
+            # YEARLY SUMMARY CARDS (HTML FIXED)
+            # ============================================
+            st.markdown(
+                f"<h3 style='color:white;'>📌 Landing Summary in {latest_year}</h3>",
+                unsafe_allow_html=True,
+            )
 
             c1, c2 = st.columns(2)
 
-            # -------- FRESHWATER CARD (CORRECTED) --------
+            # -------- FRESHWATER CARD --------
             with c1:
                 st.markdown(
                     f"""
@@ -1379,7 +1394,7 @@ def main():
                 {'▲' if fw_latest >= fw_prev else '▼'}
             </span>
             <span style="font-size:17px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
-                {fw_latest/fw_prev:.2f}x change
+                {(fw_latest/fw_prev if fw_prev>0 else 0):.2f}x change
             </span>
         </div>
     </div>
@@ -1387,7 +1402,7 @@ def main():
                     unsafe_allow_html=True,
                 )
 
-            # -------- MARINE CARD (CORRECTED) --------
+            # -------- MARINE CARD --------
             with c2:
                 st.markdown(
                     f"""
@@ -1410,7 +1425,7 @@ def main():
                 {'▲' if ma_latest >= ma_prev else '▼'}
             </span>
             <span style="font-size:17px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
-                {ma_latest/ma_prev:.2f}x change
+                {(ma_latest/ma_prev if ma_prev>0 else 0):.2f}x change
             </span>
         </div>
     </div>
@@ -1420,14 +1435,19 @@ def main():
 
             st.markdown("<hr>", unsafe_allow_html=True)
 
-            # ========== YEARLY CLUSTER PLOT ==========
+            # ============================================
+            # YEARLY CLUSTER PLOT
+            # ============================================
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly[features])
             best_k = st.session_state.get("best_k_yearly", 3)
 
             yearly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
 
-            st.markdown(f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>", unsafe_allow_html=True)
+            st.markdown(
+                f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>",
+                unsafe_allow_html=True,
+            )
 
             melted = yearly.melt(
                 id_vars=["Year", "Cluster"],
@@ -1464,6 +1484,8 @@ def main():
             ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3, frameon=False)
             st.pyplot(fig)
 
+
+
         # ===========================================================================================
         # 2) MONTHLY VIEW
         # ===========================================================================================
@@ -1488,7 +1510,7 @@ def main():
             )
 
             latest_date = monthly["MonthYear"].max()
-            prev_date = latest_date - pd.DateOffset(months=1)
+            prev_date   = latest_date - pd.DateOffset(months=1)
 
             def safe_val(df, date, col):
                 row = df.loc[df["MonthYear"] == date, col]
@@ -1499,7 +1521,10 @@ def main():
             ma = safe_val(monthly, latest_date, "Marine (Tonnes)")
             ma_prev = safe_val(monthly, prev_date, "Marine (Tonnes)")
 
-            st.markdown(f"<h3 style='color:white;'>📌 Landing Summary in {latest_date.strftime('%B %Y')}</h3>", unsafe_allow_html=True)
+            st.markdown(
+                f"<h3 style='color:white;'>📌 Landing Summary in {latest_date.strftime('%B %Y')}</h3>",
+                unsafe_allow_html=True,
+            )
 
             c1, c2 = st.columns(2)
 
@@ -1526,7 +1551,7 @@ def main():
                 {'▲' if fw >= fw_prev else '▼'}
             </span>
             <span style="font-size:17px; color:{'#48ff88' if fw >= fw_prev else '#ff5e5e'};">
-                {fw/fw_prev:.2f}x change
+                {(fw/fw_prev if fw_prev>0 else 0):.2f}x change
             </span>
         </div>
     </div>
@@ -1557,7 +1582,7 @@ def main():
                 {'▲' if ma >= ma_prev else '▼'}
             </span>
             <span style="font-size:17px; color:{'#48ff88' if ma >= ma_prev else '#ff5e5e'};">
-                {ma/ma_prev:.2f}x change
+                {(ma/ma_prev if ma_prev>0 else 0):.2f}x change
             </span>
         </div>
     </div>
@@ -1567,15 +1592,19 @@ def main():
 
             st.markdown("<hr>", unsafe_allow_html=True)
 
-            # ========== MONTHLY PLOT ==========
+            # ============================================
+            # MONTHLY CLUSTER PLOT
+            # ============================================
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(monthly[features])
             best_k = st.session_state.get("best_k_monthly", 3)
 
             monthly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
 
-            st.markdown(f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>",
-                        unsafe_allow_html=True)
+            st.markdown(
+                f"<p style='color:#ccc;'>Optimal clusters used: <b>{best_k}</b></p>",
+                unsafe_allow_html=True,
+            )
 
             melted = monthly.melt(
                 id_vars=["MonthYear", "Cluster"],
@@ -1616,6 +1645,7 @@ def main():
                 frameon=False,
             )
             st.pyplot(fig)
+    
 
         
     elif plot_option == "2D KMeans Scatter":
