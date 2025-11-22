@@ -1363,72 +1363,105 @@ def main():
     
         
     elif plot_option == "2D KMeans Scatter":
+        
+
         import matplotlib.pyplot as plt
         import seaborn as sns
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
 
-        # --- Prepare data ---
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        # ============================
+        # 0. SAFETY CHECKS
+        # ============================
+        if merged_df is None or merged_df.empty:
+            st.error("❌ merged_df is empty. Please upload valid Yearly + Vessel dataset.")
+            st.stop()
+
+        required_cols = [
+            'Total Fish Landing (Tonnes)',
+            'Total number of fishing vessels'
+        ]
+
+        # Check if required columns exist
+        for col in required_cols:
+            if col not in merged_df.columns:
+                st.error(f"❌ Missing column: **{col}** in merged_df")
+                st.stop()
+
+        # Drop rows with NaN to avoid StandardScaler crash
+        merged_df_clean = merged_df.dropna(subset=required_cols)
+
+        if merged_df_clean.empty:
+            st.error("❌ No valid rows after removing NaN values. Please check your dataset.")
+            st.stop()
+
+        # ============================
+        # 1. Prepare data
+        # ============================
+        features = merged_df_clean[required_cols]
         scaled = StandardScaler().fit_transform(features)
 
-        # --- Compute inertia & silhouette safely ---
+        # ============================
+        # 2. Compute inertia & silhouette
+        # ============================
         ks = list(range(2, 11))
         inertia = []
         silhouette = []
 
         for k in ks:
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            labels = kmeans.fit_predict(scaled)
+
+            inertia.append(kmeans.inertia_)
+
             try:
-                model = KMeans(n_clusters=k, random_state=42)
-                labels = model.fit_predict(scaled)
-
-                inertia.append(model.inertia_)
-
-                # Compute silhouette safely
                 sil = silhouette_score(scaled, labels)
-                silhouette.append(sil)
+            except:
+                sil = -1   # In case silhouette fails
 
-            except Exception:
-                # If silhouette fails, append NaN
-                inertia.append(model.inertia_)
-                silhouette.append(np.nan)
+            silhouette.append(sil)
 
-        # --- Determine best_k safely ---
-        silhouette_clean = np.array(silhouette, dtype=float)
+        # Validate silhouette
+        if max(silhouette) < 0:
+            st.error("❌ Silhouette cannot be computed (probably too few distinct points).")
+            st.stop()
 
-        if np.all(np.isnan(silhouette_clean)):
-            best_k = 3   # fallback
-        else:
-            best_k = ks[np.nanargmax(silhouette_clean)]
+        # ============================
+        # 3. Determine best k
+        # ============================
+        best_k = ks[int(np.argmax(silhouette))]
 
-        # --- Plot Elbow + Silhouette ---
+        # ============================
+        # 4. Plot elbow + silhouette
+        # ============================
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
-        # Elbow
         ax1.plot(ks, inertia, marker='o')
         ax1.set_title("Elbow Method")
-        ax1.set_xlabel("k")
-        ax1.set_ylabel("Inertia")
         ax1.axvline(best_k, color='red', linestyle='--')
-        
-        # Silhouette
+
         ax2.plot(ks, silhouette, marker='o', color='orange')
         ax2.set_title("Silhouette Score")
-        ax2.set_xlabel("k")
-        ax2.set_ylabel("Score")
         ax2.axvline(best_k, color='red', linestyle='--')
 
         st.pyplot(fig)
 
-        # --- Fit final model ---
+        # ============================
+        # 5. Fit final KMeans
+        # ============================
         final_model = KMeans(n_clusters=best_k, random_state=42)
-        merged_df['Cluster'] = final_model.fit_predict(scaled)
+        merged_df_clean['Cluster'] = final_model.fit_predict(scaled)
 
-        st.success(f"Optimal number of clusters automatically selected: **k = {best_k}**")
+        # ============================
+        # 6. Summary
+        # ============================
+        st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
 
-        # --- Scatter plot ---
+        # ============================
+        # 7. Scatter plot
+        # ============================
         fig2, ax = plt.subplots(figsize=(10, 6))
         sns.scatterplot(
-            data=merged_df,
+            data=merged_df_clean,
             x='Total number of fishing vessels',
             y='Total Fish Landing (Tonnes)',
             hue='Cluster',
@@ -1436,10 +1469,10 @@ def main():
             s=70,
             ax=ax
         )
-        ax.set_title(f"2D K-Means Clustering (k={best_k})")
+        ax.set_title(f"Automatic 2D K-Means Clustering (k={best_k})")
+
         st.pyplot(fig2)
 
-    
 
     elif plot_option == "3D KMeans Clustering":
         import matplotlib.pyplot as plt
