@@ -2034,7 +2034,7 @@ def main():
             background-color:#111;
             padding:15px;
             border-radius:10px;
-            border-left:5px solid #4ec9b0;
+            border-left:none;
             margin-top:10px;
             margin-bottom:15px;
         ">
