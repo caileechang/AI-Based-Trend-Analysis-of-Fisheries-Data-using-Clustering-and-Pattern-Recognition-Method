@@ -693,7 +693,7 @@ def main():
         import seaborn as sns
         import matplotlib.pyplot as plt
 
-        st.martdown(f"##  Yearly Fish Landing")
+        st.markdown("## 📊 Yearly Fish Landing")
          
         
 
