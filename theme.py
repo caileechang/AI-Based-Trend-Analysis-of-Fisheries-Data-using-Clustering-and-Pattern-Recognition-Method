@@ -139,11 +139,4 @@ def metric_card(title, value, unit="tonnes", delta_html=None, accent="#4dabf7"):
     )
 
 
-def growth_html(curr, prev):
-    if prev == 0:
-        return "<span style='color:#888;'>No comparison</span>"
-    ratio = curr / prev
-    if ratio >= 1:
-        return f"<span style='color:#69db7c;'>↑ {ratio:.2f}x vs previous</span>"
-    else:
-        return f"<span style='color:#ff6b6b;'>↓ {ratio:.2f}x vs previous</span>"
+

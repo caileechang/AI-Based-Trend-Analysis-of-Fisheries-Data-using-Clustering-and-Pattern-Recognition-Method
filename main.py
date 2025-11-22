@@ -17,7 +17,8 @@ import time
 import plotly.express as px
 import plotly.graph_objects as go
 import hdbscan
-from theme import inject_premium_theme, section_header, metric_card, growth_html
+from theme import inject_premium_theme, section_header, metric_card
+
 
 
 # Import your clustering modules
@@ -543,7 +544,7 @@ def hierarchical_clustering(merged_df):
     )
     
 def main():
-    inject_premium_theme() 
+   
     st.set_page_config(layout='wide')
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
@@ -771,7 +772,7 @@ def main():
                 state = row["State"]
                 total = row["Total Fish Landing (Tonnes)"]
                 prev_val = row["Prev_Year"]
-                growth_html = growth_text(total, prev_val)
+                growth_text_html = growth_text(total, prev_val)
 
                 card_html = f"""
                 <div style="
