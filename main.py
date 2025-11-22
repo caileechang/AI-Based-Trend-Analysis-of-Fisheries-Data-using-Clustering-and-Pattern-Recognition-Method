@@ -1992,7 +1992,7 @@ def main():
         # --------------------------------------------
 
         # 🔹 Create a shared header row so both columns align perfectly
-        header_left, header_right = st.columns([4.5, 1])
+        header_left, header_right = st.columns([3, 1])
 
         with header_left:
             st.markdown("###  Landing vs Vessels (Highlighted Outliers)")
@@ -2010,7 +2010,7 @@ def main():
 
         with col_plot:
 
-            fig, ax = plt.subplots(figsize=(9, 6))
+            fig, ax = plt.subplots(figsize=(12, 8))
 
             sns.scatterplot(
                 data=df,
