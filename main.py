@@ -471,21 +471,24 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     Z_ordered = optimal_leaf_ordering(Z, scaled)
 
-    # ----------------------------
-    # Reorder leaves by tier
+   # ----------------------------
+    # Get leaf order from the dendrogram
     # ----------------------------
     leaf_order = leaves_list(Z_ordered)
-    ordered_states = grouped.iloc[leaf_order].copy()
-    ordered_states = ordered_states.sort_values("Tier")
 
-    # Tier colors
+    # Order states exactly as the dendrogram outputs them
+    ordered_states = grouped.iloc[leaf_order].copy()  # keep dendrogram order
+
+    # Tier color mapping
     tier_colors = {"Low": "blue", "Medium": "orange", "High": "red"}
+
+    # Colors must follow dendrogram leaf sequence
     leaf_colors = [tier_colors[t] for t in ordered_states["Tier"]]
 
     labels = ordered_states["State"].tolist()
 
     # ----------------------------
-    # Tier-Colored Dendrogram
+    # Plot dendrogram
     # ----------------------------
     fig2, ax2 = plt.subplots(figsize=(16, 6))
 
@@ -494,15 +497,16 @@ def hierarchical_clustering(merged_df):
         labels=labels,
         leaf_rotation=45,
         leaf_font_size=10,
-        color_threshold=0
+        color_threshold=0,
     )
 
-    xlbls = ax2.get_xmajorticklabels()
-    for lbl, col in zip(xlbls, leaf_colors):
+    # Apply correct colors to labels
+    for lbl, col in zip(ax2.get_xmajorticklabels(), leaf_colors):
         lbl.set_color(col)
 
     ax2.set_title(f"Tier-Colored Dendrogram – {selected_year} (k = {best_k})")
     ax2.set_ylabel("Distance")
+
     st.pyplot(fig2)
 
     # ----------------------------
