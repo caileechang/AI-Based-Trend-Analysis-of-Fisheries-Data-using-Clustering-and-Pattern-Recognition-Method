@@ -2036,7 +2036,7 @@ def main():
             st.markdown("""
             <div style="
                 background-color:#111;
-                padding:15px;
+                padding:12px;
                 border-radius:10px;
                 border-left:none;
                 margin-top:10px;
