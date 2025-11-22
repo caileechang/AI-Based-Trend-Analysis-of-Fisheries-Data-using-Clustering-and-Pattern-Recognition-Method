@@ -2032,23 +2032,23 @@ def main():
             st.pyplot(fig)
 
         with col_legend:
-        
             st.markdown("""
             <div style="
-                background-color:#111;
-                padding:15px;
-                border-radius:10px;
-                border-left:none;
-                margin-top:10px;
+                background-color:#151515;
+                padding:20px;
+                border-radius:12px;
+                border:1px solid #333;
             ">
-            <h4 style='color:white; margin-top:0;'> HDBSCAN Membership Legend</h4>
+                <h3 style="color:white; margin-bottom:10px;">
+                    🟦 HDBSCAN Membership<br>Legend
+                </h3>
 
-            <p style='color:#ccc; font-size:13px;'>
-            HDBSCAN assigns each point a <b>probability (0 → 1)</b>  
-            showing confidence in cluster membership.
-            </p>
+                <p style="color:#ccc; font-size:14px;">
+                HDBSCAN assigns each point a probability (0 → 1) showing
+                confidence in cluster membership.
+                </p>
 
-            <table style='color:white; font-size:14px; width:100%;'>
+                <table style='color:white; font-size:14px; width:100%;'>
                 <tr><td>🟣 <b>0.0</b></td><td>Very weak membership</td></tr>
                 <tr><td>🔵 <b>0.2</b></td><td>Weak</td></tr>
                 <tr><td>🟦 <b>0.4</b></td><td>Medium</td></tr>
@@ -2056,12 +2056,12 @@ def main():
                 <tr><td>🟢 <b>0.8</b></td><td>Very strong</td></tr>
                 <tr><td>🟡 <b>1.0</b></td><td>Perfect</td></tr>
                 <tr><td>⭕ <b>Outlier</b></td><td>Flagged as anomaly</td></tr>
-            </table>
+                </table>
 
-            <p style='color:#ccc; font-size:13px; margin-top:8px;'>
-            Higher probability = more reliable cluster.<br>
-            Red circle = true anomaly.
-            </p>
+                <p style="color:#aaa; margin-top:10px; font-size:13px;">
+                Higher probability = more reliable cluster.<br>
+                Red circle = true anomaly.
+                </p>
             </div>
             """, unsafe_allow_html=True)
 
