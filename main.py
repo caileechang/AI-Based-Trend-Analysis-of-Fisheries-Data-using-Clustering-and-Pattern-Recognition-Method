@@ -1988,13 +1988,23 @@ def main():
             st.dataframe(outliers, use_container_width=True)
 
         # --------------------------------------------
-        # 7. Scatter Plot Visualization (with Legend on Right)
+        # 7. Scatter Plot Visualization (with Aligned Legend)
         # --------------------------------------------
-        st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
 
-        col_plot, col_legend = st.columns([3, 1])   # wider plot, narrow legend
+        # 🔹 Create a shared header row so both columns align perfectly
+        header_left, header_right = st.columns([3, 1])
+
+        with header_left:
+            st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
+
+        with header_right:
+            st.markdown("### 📘 How to Read HDBSCAN Membership Colors")
+
+        # 🔹 Now create the real content columns
+        col_plot, col_legend = st.columns([3, 1], gap="large")
 
         with col_plot:
+
             fig, ax = plt.subplots(figsize=(9, 6))
 
             sns.scatterplot(
@@ -2021,49 +2031,59 @@ def main():
 
             # label states
             for _, r in ano.iterrows():
-                ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
-                        color="red", fontsize=9, fontweight="bold")
+                ax.text(
+                    r["Vessels"] + 0.2,
+                    r["Landing"] + 0.2,
+                    r["State"],
+                    color="red",
+                    fontsize=9,
+                    fontweight="bold"
+                )
 
             ax.set_xlabel("Total Vessels")
             ax.set_ylabel("Total Fish Landing (Tonnes)")
             ax.set_title(f"Outlier Detection ({sel_year})")
             ax.grid(alpha=0.3)
             ax.legend()
+
             st.pyplot(fig)
 
+
         with col_legend:
-       
+
+            # 🔹 Legend box — NO top margin so it aligns with the plot
             st.markdown("""
             <div style="
                 background-color:#111;
-                padding:12px;
+                padding:15px;
                 border-radius:10px;
-                border-left:none;
-                margin-top:10px;
-                margin-bottom:15px;
+                border-left:4px solid #4ec9b0;
+                margin-top:0px;
             ">
-            <h4 style='color:white;'> How to Read HDBSCAN Membership Colors</h4>
-            <p style='color:#ccc;'>
-            HDBSCAN assigns each point a <b>probability from 0 to 1</b> representing how strongly 
-            it belongs to its cluster. This is <b>not the cluster number</b>.
+
+            <p style='color:#ccc; font-size:14px;'>
+                HDBSCAN assigns each point a <b>probability from 0 to 1</b> showing
+                confidence in cluster membership (not the cluster number).
             </p>
 
-            <table style='color:white; font-size:14px;'>
-                <tr><td>🟣 <b>0.0</b></td><td>Almost noise (very weak membership)</td></tr>
+            <table style='color:white; font-size:14px; margin-top:10px;'>
+                <tr><td>🟣 <b>0.0</b></td><td>Very weak membership</td></tr>
                 <tr><td>🔵 <b>0.2</b></td><td>Weak membership</td></tr>
                 <tr><td>🟦 <b>0.4</b></td><td>Medium membership</td></tr>
                 <tr><td>🟩 <b>0.6</b></td><td>Strong membership</td></tr>
                 <tr><td>🟢 <b>0.8</b></td><td>Very strong membership</td></tr>
                 <tr><td>🟡 <b>1.0</b></td><td>Perfect membership</td></tr>
-                <tr><td>⭕ <b>Outlier</b></td><td>Explicitly flagged as noise</td></tr>
+                <tr><td>⭕ <b>Outlier</b></td><td>Explicit anomaly</td></tr>
             </table>
 
-            <p style='color:#ccc; margin-top:8px;'>
-            Higher membership probability = more reliable clustering.<br>
-            Red circle = true anomaly detected by HDBSCAN.
+            <p style='color:#ccc; margin-top:12px; font-size:13px;'>
+                Higher membership = more reliable cluster.<br>
+                Red circle = true anomaly detected by HDBSCAN.
             </p>
+
             </div>
             """, unsafe_allow_html=True)
+
 
 
         # --------------------------------------------
