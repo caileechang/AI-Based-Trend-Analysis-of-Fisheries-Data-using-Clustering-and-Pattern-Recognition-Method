@@ -568,7 +568,7 @@ def hierarchical_clustering(merged_df):
     st.dataframe(
         grouped[["State", "Total Fish Landing (Tonnes)",
                  "Total number of fishing vessels",
-                 "Cluster", "Tier"]]
+                 "RawCluster", "Tier"]]
         .sort_values("RawCluster")
         .reset_index(drop=True)
     )
