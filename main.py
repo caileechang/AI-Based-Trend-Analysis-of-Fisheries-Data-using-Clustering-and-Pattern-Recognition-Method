@@ -714,7 +714,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "Automatic DBSCAN","Unified HDBSCAN Outlier Detection","HDBSCAN","HDBSCAN Outlier Detection",
+        "Automatic DBSCAN","Unified HDBSCAN Outlier Detection","HDBSCAN","HDBSCAN 2","HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Map",
         "Interactive Geospatial Map","Geospatial Map(Heatmap)","Geospatial Map (Upgraded)"
@@ -2238,100 +2238,231 @@ def main():
             ax_h.set_title("Outlier Heatmap")
             st.pyplot(fig_h)
 
-                
-    elif plot_option == "Hierarchical Clustering":
-                    
-        st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
-        
-            # Call the hierarchical clustering function
-        hierarchical_clustering(merged_df)
-        
-    elif plot_option == "Geospatial Map":
-            st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
 
-        # Let user choose year
-            available_years = sorted(merged_df['Year'].unique())
-            selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+    elif plot_option == "HDBSCAN 2":
+        import hdbscan
+        import matplotlib.pyplot as plt
+        import seaborn as sns
 
-        # Filter dataset by selected year
-            geo_df = merged_df[merged_df['Year'] == selected_year].copy()
+        st.subheader("HDBSCAN Clustering + Outlier Detection (Forced Cluster Mode)")
 
-            import re
-            import folium
-            from streamlit_folium import st_folium
+        # ---------------------------------------------
+        # 1. Select valid columns
+        # ---------------------------------------------
+        valid_states = [
+            "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+            "SABAH", "SARAWAK", "W.P. LABUAN"
+        ]
 
-        # Manually define coordinates for each region (including subregions)
-            state_coords = {
-            # Johor regions
-                "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
-                "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
-                "JOHOR": [1.4854, 103.7618],
-                "MELAKA": [2.1896, 102.2501],
-                "NEGERI SEMBILAN": [2.7258, 101.9424],
-                "SELANGOR": [3.0738, 101.5183],
-                "PAHANG": [3.8126, 103.3256],
-                "TERENGGANU": [5.3302, 103.1408],
-                "KELANTAN": [6.1254, 102.2381],
-                "PERAK": [4.5921, 101.0901],
-                "PULAU PINANG": [5.4164, 100.3327],
-                "KEDAH": [6.1184, 100.3685],
-                "PERLIS": [6.4449, 100.2048],
-                "SABAH": [5.9788, 116.0753],
-                "SARAWAK": [1.5533, 110.3592],
-                "W.P. LABUAN": [5.2831, 115.2308]
-        }
+        df = merged_df[merged_df["State"].isin(valid_states)].reset_index(drop=True)
 
-            # Clean state names in dataset (remove spaces and unify slashes)
-            geo_df['State_Clean'] = (
-                geo_df['State']
-                .astype(str)
-                .str.upper()
-                .str.replace(r'\s*/\s*', '/', regex=True)  # Normalize " / " to "/"
-                .str.replace(r'\s+', ' ', regex=True)      # Remove multiple spaces
-                .str.strip()
-            )
+        if df.empty:
+            st.error("No valid Malaysian states found.")
+            st.stop()
 
-        # Clean coordinate dictionary
-            clean_coords = { re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items() }
+        X = df[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]].copy()
+        X_scaled = StandardScaler().fit_transform(X)
 
-            
-            # Clean coordinate dictionary keys the same way
-        
-    # Now safely map using the cleaned version
-            geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
+        # ---------------------------------------------
+        # 2. FORCE CLUSTERS + detect outliers
+        # ---------------------------------------------
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=3,
+            min_samples=1,
+            cluster_selection_epsilon=0.25,   # ⭐ forces cluster formation
+            allow_single_cluster=True,        # ⭐ avoids all noise
+            prediction_data=True
+        )
 
-        # Drop regions with no coordinates (to avoid map crash)
-            missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
-            if len(missing_coords) > 0:
-                st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
+        labels = clusterer.fit_predict(X_scaled)
+        probabilities = clusterer.probabilities_
 
-            geo_df = geo_df.dropna(subset=['Coords'])
+        df["Cluster"] = labels
+        df["Confidence"] = probabilities
 
-            #  Safety check: make sure there’s data to map
-            if geo_df.empty:
-                st.warning("No valid locations found for the selected year.")
+        unique_clusters = sorted(set(labels) - {-1})
+        n_clusters = len(unique_clusters)
+        n_noise = sum(labels == -1)
+
+        # ---------------------------------------------
+        # 3. Show summary
+        # ---------------------------------------------
+        st.markdown(f"### 📌 Found **{n_clusters} clusters** and **{n_noise} outliers**")
+
+        # ---------------------------------------------
+        # 4. Scatter Plot: Clusters + Outliers
+        # ---------------------------------------------
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        palette = sns.color_palette("tab10", n_clusters + 1)
+
+        for label in set(labels):
+            cluster_points = X_scaled[labels == label]
+
+            if label == -1:
+                ax.scatter(
+                    cluster_points[:, 1],
+                    cluster_points[:, 0],
+                    s=120,
+                    edgecolors="red",
+                    facecolors="none",
+                    linewidths=2,
+                    alpha=0.9,
+                    label="Outlier (-1)"
+                )
             else:
-            # Create Folium map centered on Malaysia
-                m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+                color = palette[label % len(palette)]
+                ax.scatter(
+                    cluster_points[:, 1],
+                    cluster_points[:, 0],
+                    s=70,
+                    color=color,
+                    edgecolors="black",
+                    linewidths=0.6,
+                    alpha=0.8,
+                    label=f"Cluster {label}"
+                )
 
-    
+                # Draw Convex Hull for cluster shape
+                if len(cluster_points) >= 3:
+                    from scipy.spatial import ConvexHull
+                    hull = ConvexHull(cluster_points)
+                    hull_idx = list(hull.vertices) + [hull.vertices[0]]
+                    ax.plot(
+                        cluster_points[hull_idx, 1],
+                        cluster_points[hull_idx, 0],
+                        color=color,
+                        linewidth=2,
+                        alpha=0.5
+                    )
 
-        # Add markers for each region
-                for _, row in geo_df.iterrows():
-                    folium.CircleMarker(
-                        location=row['Coords'],
-                        radius=8,
-                        color='blue',
-                        fill=True,
-                        fill_color='cyan',
-                        popup=f"<b>{row['State']}</b><br>"
-                            f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                            f"Vessels: {row['Total number of fishing vessels']:.0f}",
-                        tooltip=row['State']
-                    ).add_to(m)
+        ax.set_title("HDBSCAN Forced Clustering + Outlier Detection")
+        ax.set_xlabel("Vessels (scaled)")
+        ax.set_ylabel("Fish Landing (scaled)")
+        ax.grid(alpha=0.3)
+        ax.legend()
 
-        # Display map
-                st_folium(m, width=800, height=500)
+        st.pyplot(fig)
+
+        # ---------------------------------------------
+        # 5. Cluster Summary Table
+        # ---------------------------------------------
+        st.markdown("### 📊 Cluster Summary")
+        cluster_summary = (
+            df[df["Cluster"] != -1]
+            .groupby("Cluster")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+            .mean()
+            .reset_index()
+        )
+        st.dataframe(cluster_summary)
+
+        # ---------------------------------------------
+        # 6. Outlier Details Table
+        # ---------------------------------------------
+        if n_noise > 0:
+            st.markdown("### 🚨 Outlier Details")
+            outliers = df[df["Cluster"] == -1][[
+                "State", "Year", "Total Fish Landing (Tonnes)", "Total number of fishing vessels"
+            ]]
+            st.dataframe(outliers)
+
+
+                    
+        elif plot_option == "Hierarchical Clustering":
+                        
+            st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
+            
+                # Call the hierarchical clustering function
+            hierarchical_clustering(merged_df)
+            
+        elif plot_option == "Geospatial Map":
+                st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
+
+            # Let user choose year
+                available_years = sorted(merged_df['Year'].unique())
+                selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
+
+            # Filter dataset by selected year
+                geo_df = merged_df[merged_df['Year'] == selected_year].copy()
+
+                import re
+                import folium
+                from streamlit_folium import st_folium
+
+            # Manually define coordinates for each region (including subregions)
+                state_coords = {
+                # Johor regions
+                    "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+                    "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+                    "JOHOR": [1.4854, 103.7618],
+                    "MELAKA": [2.1896, 102.2501],
+                    "NEGERI SEMBILAN": [2.7258, 101.9424],
+                    "SELANGOR": [3.0738, 101.5183],
+                    "PAHANG": [3.8126, 103.3256],
+                    "TERENGGANU": [5.3302, 103.1408],
+                    "KELANTAN": [6.1254, 102.2381],
+                    "PERAK": [4.5921, 101.0901],
+                    "PULAU PINANG": [5.4164, 100.3327],
+                    "KEDAH": [6.1184, 100.3685],
+                    "PERLIS": [6.4449, 100.2048],
+                    "SABAH": [5.9788, 116.0753],
+                    "SARAWAK": [1.5533, 110.3592],
+                    "W.P. LABUAN": [5.2831, 115.2308]
+            }
+
+                # Clean state names in dataset (remove spaces and unify slashes)
+                geo_df['State_Clean'] = (
+                    geo_df['State']
+                    .astype(str)
+                    .str.upper()
+                    .str.replace(r'\s*/\s*', '/', regex=True)  # Normalize " / " to "/"
+                    .str.replace(r'\s+', ' ', regex=True)      # Remove multiple spaces
+                    .str.strip()
+                )
+
+            # Clean coordinate dictionary
+                clean_coords = { re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items() }
+
+                
+                # Clean coordinate dictionary keys the same way
+            
+        # Now safely map using the cleaned version
+                geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
+
+            # Drop regions with no coordinates (to avoid map crash)
+                missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
+                if len(missing_coords) > 0:
+                    st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
+
+                geo_df = geo_df.dropna(subset=['Coords'])
+
+                #  Safety check: make sure there’s data to map
+                if geo_df.empty:
+                    st.warning("No valid locations found for the selected year.")
+                else:
+                # Create Folium map centered on Malaysia
+                    m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+
+        
+
+            # Add markers for each region
+                    for _, row in geo_df.iterrows():
+                        folium.CircleMarker(
+                            location=row['Coords'],
+                            radius=8,
+                            color='blue',
+                            fill=True,
+                            fill_color='cyan',
+                            popup=f"<b>{row['State']}</b><br>"
+                                f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
+                                f"Vessels: {row['Total number of fishing vessels']:.0f}",
+                            tooltip=row['State']
+                        ).add_to(m)
+
+            # Display map
+                    st_folium(m, width=800, height=500)
 
     
     elif plot_option == "Interactive Geospatial Map":
