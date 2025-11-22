@@ -1358,73 +1358,122 @@ def main():
         
     elif plot_option == "2D KMeans Scatter":
         
-
         import matplotlib.pyplot as plt
         import seaborn as sns
+
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
-    
-        # --- Step 1: Prepare data ---
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+
+        # ============================
+        # 0. SAFETY CHECKS
+        # ============================
+        if merged_df is None or merged_df.empty:
+            st.error("❌ merged_df is empty. Please upload / load a valid dataset first.")
+            st.stop()
+
+        required_cols = [
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels",
+        ]
+
+        # Check required columns exist
+        missing = [c for c in required_cols if c not in merged_df.columns]
+        if missing:
+            st.error(f"❌ Missing required columns in merged_df: {missing}")
+            st.stop()
+
+        # ============================
+        # 1. Prepare clean numeric data
+        # ============================
+        features = merged_df[required_cols].copy()
+
+        # Force numeric & drop NaNs (prevents StandardScaler crash)
+        for col in features.columns:
+            features[col] = pd.to_numeric(features[col], errors="coerce")
+
+        features = features.dropna()
+
+        if len(features) < 3:
+            st.error("❌ Not enough valid rows for clustering after cleaning (need ≥3).")
+            st.stop()
+
         scaled = StandardScaler().fit_transform(features)
-    
-        # --- Step 2: Compute inertia (Elbow) and silhouette for k = 2–10 ---
-        ks = range(2, 11)
+
+        # ============================
+        # 2. Compute inertia & silhouette (k = 2..max_k)
+        # ============================
+        max_k = min(10, len(features) - 1)  # cannot have k >= number of samples
+        ks = list(range(2, max_k + 1))
+
         inertia = []
-        silhouette = []
-    
+        silhouette_vals = []
+
         for k in ks:
             kmeans = KMeans(n_clusters=k, random_state=42)
             labels = kmeans.fit_predict(scaled)
             inertia.append(kmeans.inertia_)
-            sil = silhouette_score(scaled, labels)
-            silhouette.append(sil)
-    
-        # --- Step 3: Determine the best k (highest silhouette) ---
-        best_k = ks[np.argmax(silhouette)]
-    
-        # --- Step 4: Plot both metrics side by side ---
+
+            # silhouette might fail if cluster structure is weird → wrap in try
+            try:
+                sil = silhouette_score(scaled, labels)
+            except Exception:
+                sil = -1.0
+            silhouette_vals.append(sil)
+
+        if max(silhouette_vals) <= -1.0:
+            st.error("❌ Cannot compute a valid Silhouette score for any k. Data may be degenerate.")
+            st.stop()
+
+        # Best k = k with highest silhouette
+        best_k = ks[int(np.argmax(silhouette_vals))]
+
+        # ============================
+        # 3. Plot Elbow & Silhouette
+        # ============================
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-    
-        # Elbow plot
-        ax1.plot(ks, inertia, marker='o')
+
+        # Elbow
+        ax1.plot(ks, inertia, marker="o")
         ax1.set_title("Elbow Method")
         ax1.set_xlabel("k")
         ax1.set_ylabel("Inertia")
-        ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax1.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
         ax1.legend()
-    
-        # Silhouette plot
-        ax2.plot(ks, silhouette, marker='o', color='orange')
+
+        # Silhouette
+        ax2.plot(ks, silhouette_vals, marker="o", color="orange")
         ax2.set_title("Silhouette Score")
         ax2.set_xlabel("k")
         ax2.set_ylabel("Score")
-        ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax2.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
         ax2.legend()
-    
+
         st.pyplot(fig)
-    
-        # --- Step 5: Fit the final model using best_k ---
+
+        # ============================
+        # 4. Fit final KMeans & plot 2D scatter
+        # ============================
         final_model = KMeans(n_clusters=best_k, random_state=42)
-        merged_df['Cluster'] = final_model.fit_predict(scaled)
-    
-        # --- Step 6: Display summary ---
-        st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
-        st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
-    
-        # --- Step 7: Show 2D scatter ---
+        cluster_labels = final_model.fit_predict(scaled)
+
+        # Use a copy so you don't pollute original merged_df unexpectedly
+        plot_df = features.copy()
+        plot_df["Cluster"] = cluster_labels
+
+        st.success(f"✅ Optimal number of clusters: **k = {best_k}** "
+                "(chosen by highest Silhouette score).")
+
         fig2, ax = plt.subplots(figsize=(10, 6))
         sns.scatterplot(
-            data=merged_df,
-            x='Total number of fishing vessels',
-            y='Total Fish Landing (Tonnes)',
-            hue='Cluster',
-            palette='viridis',
+            data=plot_df,
+            x="Total number of fishing vessels",
+            y="Total Fish Landing (Tonnes)",
+            hue="Cluster",
+            palette="viridis",
             s=70,
-            ax=ax
+            ax=ax,
         )
         ax.set_title(f"Automatic 2D K-Means Clustering (k={best_k})")
         st.pyplot(fig2)
-    
 
 
 
