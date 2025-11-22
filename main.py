@@ -1998,7 +1998,12 @@ def main():
             st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
 
         with header_right:
-            st.markdown("####  How to Read HDBSCAN Membership Colors")
+            st.markdown("""
+            <h4 style="text-align:center; color:white; margin-top:0;">
+                How to Read HDBSCAN Membership Colors
+            </h4>
+            """, unsafe_allow_html=True)
+
 
         # 🔹 Now create the real content columns
         col_plot, col_legend = st.columns([3, 1.5], gap="large")
@@ -2062,9 +2067,7 @@ def main():
                 width:100%;
             ">
                         
-            <h3 style="color:white; text-align:center; margin-bottom:10px;">
-            How to Read HDBSCAN Membership Colors
-            </h3>
+           
 
             <p style='color:#ccc; font-size:12px;'>
                 HDBSCAN assigns each point a <b>probability from 0 to 1</b> showing
