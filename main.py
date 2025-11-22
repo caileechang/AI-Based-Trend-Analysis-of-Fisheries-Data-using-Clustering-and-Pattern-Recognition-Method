@@ -2032,50 +2032,6 @@ def main():
             st.pyplot(fig)
 
         with col_legend:
-             st.markdown("""
-            <div style="
-                background-color:#111;
-                padding:18px;
-                border-radius:12px;
-                margin-left:10px;
-                border:1px solid #2a2a2a;
-                ">
-                
-                <!-- INTERNAL GREEN ACCENT BAR -->
-                <div style="
-                    height:100%;
-                    border-left:5px solid #4ec9b0;
-                    padding-left:12px;
-                ">
-                
-                <h3 style='color:white; margin-top:0;'> HDBSCAN<br>Membership<br>Legend</h3>
-                <p style='color:#ccc; font-size:14px;'>
-                    HDBSCAN assigns each point a probability (0 → 1) showing 
-                    confidence in cluster membership.
-                </p>
-
-                <table style='color:white; font-size:14px; width:100%;'>
-                    <tr><td>🟣 <b>0.0</b></td><td>Very weak membership</td></tr>
-                    <tr><td>🔵 <b>0.2</b></td><td>Weak</td></tr>
-                    <tr><td>🟦 <b>0.4</b></td><td>Medium</td></tr>
-                    <tr><td>🟩 <b>0.6</b></td><td>Strong</td></tr>
-                    <tr><td>🟢 <b>0.8</b></td><td>Very strong</td></tr>
-                    <tr><td>🟡 <b>1.0</b></td><td>Perfect</td></tr>
-                    <tr><td>⭕ <b>Outlier</b></td><td>Flagged as anomaly</td></tr>
-                </table>
-
-                <p style='color:#ccc; font-size:13px; margin-top:10px;'>
-                    Higher probability = more reliable cluster.<br>
-                    Red circle = true anomaly.
-                </p>
-
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-
-
-        with st.expander("📘 How to Read HDBSCAN Membership Colors"):
             st.markdown("""
             <div style="
                 background-color:#111;
