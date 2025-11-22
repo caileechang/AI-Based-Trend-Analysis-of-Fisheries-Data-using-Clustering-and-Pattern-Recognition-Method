@@ -2085,10 +2085,7 @@ def main():
                 <tr><td>⭕ <b>Outlier</b></td><td>Explicit anomaly</td></tr>
             </table>
 
-            <p style='color:#ccc; margin-top:14px; font-size:13px;'>
-                Higher membership = more reliable cluster.<br>
-                Red circle = true anomaly detected by HDBSCAN.
-            </p>
+           
 
             </div>
             """, unsafe_allow_html=True)
