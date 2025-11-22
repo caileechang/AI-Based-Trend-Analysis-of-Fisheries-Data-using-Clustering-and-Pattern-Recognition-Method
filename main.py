@@ -2001,7 +2001,7 @@ def main():
             st.markdown("####  How to Read HDBSCAN Membership Colors")
 
         # 🔹 Now create the real content columns
-        col_plot, col_legend = st.columns([3, 1], gap="large")
+        col_plot, col_legend = st.columns([3, 1.5], gap="large")
 
         with col_plot:
 
@@ -2051,14 +2051,15 @@ def main():
 
         with col_legend:
 
-            # 🔹 Legend box — NO top margin so it aligns with the plot
+          
             st.markdown("""
             <div style="
                 background-color:#111;
-                padding:15px;
+                padding:12px;
                 border-radius:10px;
                 border-left:none;
                 margin-top:0px;
+                width:100%;
             ">
 
             <p style='color:#ccc; font-size:12px;'>
