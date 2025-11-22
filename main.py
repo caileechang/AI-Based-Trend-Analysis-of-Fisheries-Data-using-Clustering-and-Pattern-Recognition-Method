@@ -2006,7 +2006,7 @@ def main():
 
 
         # 🔹 Now create the real content columns
-        col_plot, col_legend = st.columns([5, 1], gap="large")
+        col_plot, col_legend = st.columns([4, 1], gap="large")
 
         with col_plot:
 
