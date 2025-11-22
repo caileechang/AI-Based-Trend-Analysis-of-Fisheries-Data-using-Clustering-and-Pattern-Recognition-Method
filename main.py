@@ -364,10 +364,11 @@ def hierarchical_clustering(merged_df):
     original_grouped = grouped.copy()
 
     # Scale landing only
-    scaled = StandardScaler().fit_transform(
-        grouped[["Total Fish Landing (Tonnes)",
-                "Total number of fishing vessels"]]
-    )
+    # scaled = StandardScaler().fit_transform(
+      #  grouped[["Total Fish Landing (Tonnes)",
+         #       "Total number of fishing vessels"]]
+  #  )
+    scaled = StandardScaler().fit_transform(grouped[features])
 
 
     # ----------------------------
@@ -447,38 +448,49 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
-    # Sort clusters by landing (Low → Medium → High)
-    cluster_summary = cluster_summary.sort_values(
-        "Total Fish Landing (Tonnes)"
-    ).reset_index(drop=True)
+    cluster_summary["Tier"] = pd.qcut(
+        cluster_summary["Total Fish Landing (Tonnes)"],
+        q=3,
+        labels=["Low", "Medium", "High"]
+    )
 
-    cluster_summary["Cluster"] = cluster_summary.index + 1
+    # Map Tier to grouped & original_grouped
+    tier_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Tier"]))
+    grouped["Tier"] = grouped["RawCluster"].map(tier_map)
+    original_grouped["Tier"] = grouped["RawCluster"].map(tier_map)
+
+    # Sort clusters by landing (Low → Medium → High)
+    # cluster_summary = cluster_summary.sort_values(
+      #  "Total Fish Landing (Tonnes)"
+    #).reset_index(drop=True)
+
+    #cluster_summary["Cluster"] = cluster_summary.index + 1
 
     # Tier assignment
-    n = len(cluster_summary)
+    #n = len(cluster_summary)
 
-    def tier(i, n):
-        if i < n * (1/3):
-            return "Low"
-        elif i < n * (2/3):
-            return "Medium"
-        else:
-            return "High"
+   # def tier(i, n):
+    #    if i < n * (1/3):
+     #       return "Low"
+      #  elif i < n * (2/3):
+       #     return "Medium"
+     #   else:
+      #      return "High"
 
-    cluster_summary["Tier"] = [tier(i, n) for i in range(n)]
+   # cluster_summary["Tier"] = [tier(i, n) for i in range(n)]
 
     # Map back
-    cluster_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Cluster"]))
-    tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
+  #  cluster_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Cluster"]))
+ #   tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
 
-    grouped["Cluster"] = grouped["RawCluster"].map(cluster_map)
-    grouped["Tier"] = grouped["Cluster"].map(tier_map)
+  #  grouped["Cluster"] = grouped["RawCluster"].map(cluster_map)
+  #  grouped["Tier"] = grouped["Cluster"].map(tier_map)
    
-    original_grouped = original_grouped.merge(
-        grouped[["State", "Cluster", "Tier"]],
-        on="State",
-        how="left"
-    )
+   # original_grouped = original_grouped.merge(
+    #    grouped[["State", "Cluster", "Tier"]],
+     #   on="State",
+ #       how="left"
+   # )
 
 
     # ----------------------------
