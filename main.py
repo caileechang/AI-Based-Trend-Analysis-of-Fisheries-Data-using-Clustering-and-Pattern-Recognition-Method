@@ -1231,15 +1231,15 @@ def main():
         # ======================================
         # MODERN UI THEME
         # ======================================
+       
         card_style = """
-            background: rgba(30, 30, 30, 0.6);
-            backdrop-filter: blur(6px);
-            padding: 22px;
-            border-radius: 16px;
+            background: linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
+            padding: 26px;
+            border-radius: 18px;
             border: 1px solid rgba(255,255,255,0.08);
-            box-shadow: 0px 4px 18px rgba(0,0,0,0.35);
-            margin-bottom: 20px;
+            box-shadow: 0px 8px 25px rgba(0,0,0,0.35);
         """
+
 
         header_style = """
             font-size: 32px;
