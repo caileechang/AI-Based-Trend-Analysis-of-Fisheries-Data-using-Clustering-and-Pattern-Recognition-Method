@@ -2006,7 +2006,7 @@ def main():
 
 
         # 🔹 Now create the real content columns
-        col_plot, col_legend = st.columns([4, 1], gap="large")
+        col_plot, col_legend = st.columns([4, 1.5], gap="large")
 
         with col_plot:
 
@@ -2072,10 +2072,10 @@ def main():
             <p style="
                 color:#ccc; 
                 font-size:14px; 
-                max-width:260px; 
-                line-height:1.4;
+                 
+                
                 word-wrap:break-word;
-                text-align:center;
+              
                 margin:auto;
             ">
                 HDBSCAN assigns each point a <b>probability from 0 to 1</b> showing
