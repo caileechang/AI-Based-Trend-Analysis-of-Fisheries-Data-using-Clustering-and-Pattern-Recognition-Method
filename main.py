@@ -1371,65 +1371,69 @@ def main():
 
             # FRESHWATER CARD
             with c1:
+              
                 st.markdown(
                     f"""
-                    <div class="neu-card">
-                        <div class="shimmer"></div>
+            <div class="neu-card">
+                <div class="shimmer"></div>
 
-                        <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
-                            🐟 Freshwater Landing
-                        </h3>
-                        <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
+                <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
+                    🐟 Freshwater Landing
+                </h3>
 
-                        <h1 style="color:white; font-size:48px; margin:0;">
-                            <b>{fw_latest:,.0f}</b>
-                            <span style="opacity:0.75; font-size:32px;">tonnes</span>
-                        </h1>
+                <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
 
-                        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-                            <span style="font-size:24px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
-                                {'▲' if fw_latest >= fw_prev else '▼'}
-                            </span>
-                            <span style="font-size:17px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
-                                {fw_latest/fw_prev:.2f}x change
-                            </span>
-                        </div>
-                    </div>
+                <h1 style="color:white; font-size:48px; margin:0;">
+                    <b>{fw_latest:,.0f}</b>
+                    <span style="opacity:0.75; font-size:32px;">tonnes</span>
+                </h1>
+
+                <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:24px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
+                        {'▲' if fw_latest >= fw_prev else '▼'}
+                    </span>
+                    <span style="font-size:17px; color:{'#48ff88' if fw_latest >= fw_prev else '#ff5e5e'};">
+                        {fw_latest/fw_prev:.2f}x change
+                    </span>
+                </div>
+            </div>
                     """,
                     unsafe_allow_html=True,
                 )
+
 
             # MARINE CARD
             with c2:
+             
                 st.markdown(
                     f"""
-                    <div class="neu-card">
-                        <div class="shimmer"></div>
+            <div class="neu-card">
+                <div class="shimmer"></div>
 
-                        <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
-                            🌊 Marine Landing
-                        </h3>
-                        <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
+                <h3 style="color:white; font-size:20px; display:flex; gap:8px; align-items:center;">
+                    🌊 Marine Landing
+                </h3>
 
-                        <h1 style="color:white; font-size:48px; margin:0;">
-                            <b>{ma_latest:,.0f}</b>
-                            <span style="opacity:0.75; font-size:32px;">tonnes</span>
-                        </h1>
+                <p style="color:#888; font-size:13px; margin-top:-6px;">Compared to previous year</p>
 
-                        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
-                            <span style="font-size:24px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
-                                {'▲' if ma_latest >= ma_prev else '▼'}
-                            </span>
-                            <span style="font-size:17px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
-                                {ma_latest/ma_prev:.2f}x change
-                            </span>
-                        </div>
-                    </div>
+                <h1 style="color:white; font-size:48px; margin:0;">
+                    <b>{ma_latest:,.0f}</b>
+                    <span style="opacity:0.75; font-size:32px;">tonnes</span>
+                </h1>
+
+                <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+                    <span style="font-size:24px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
+                        {'▲' if ma_latest >= ma_prev else '▼'}
+                    </span>
+                    <span style="font-size:17px; color:{'#48ff88' if ma_latest >= ma_prev else '#ff5e5e'};">
+                        {ma_latest/ma_prev:.2f}x change
+                    </span>
+                </div>
+            </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
-            st.markdown("<hr>", unsafe_allow_html=True)
 
             # =============== YEARLY CLUSTER PLOT ===============
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
