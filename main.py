@@ -1565,8 +1565,24 @@ def main():
             )
 
             fig, ax = plt.subplots(figsize=(14, 6))
-            fig.patch.set_facecolor("#111")
-            ax.set_facecolor("#111")
+
+            # Light mode background
+            fig.patch.set_facecolor("white")
+            ax.set_facecolor("white")
+
+            # Grid style (light gray)
+            ax.grid(True, color="#e5e5e5", linewidth=1, alpha=0.7)
+
+            # Axis + label colors
+            ax.tick_params(colors="black")
+            ax.xaxis.label.set_color("black")
+            ax.yaxis.label.set_color("black")
+            ax.title.set_color("black")
+
+            # Light mode spines
+            for spine in ax.spines.values():
+                spine.set_color("#cccccc")
+
 
             for f in features:
                 show = trend_option == "Both" or trend_option.lower() in f.lower()
