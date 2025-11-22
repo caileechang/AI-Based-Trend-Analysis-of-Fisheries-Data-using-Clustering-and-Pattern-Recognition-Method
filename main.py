@@ -17,6 +17,7 @@ import time
 import plotly.express as px
 import plotly.graph_objects as go
 import hdbscan
+from theme import inject_premium_theme
 
 # Import your clustering modules
 #from clustering_method import hierarchical_clustering
@@ -541,6 +542,7 @@ def hierarchical_clustering(merged_df):
     )
     
 def main():
+    inject_premium_theme() 
     st.set_page_config(layout='wide')
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
