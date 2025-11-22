@@ -2011,6 +2011,7 @@ def main():
         with col_plot:
 
             fig, ax = plt.subplots(figsize=(15, 12))
+            st.pyplot(fig, use_container_width=True)
 
             sns.scatterplot(
                 data=df,
