@@ -1224,6 +1224,7 @@ def main():
             st.pyplot(fig)
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fishes":
+   
         import matplotlib.pyplot as plt
         import seaborn as sns
 
