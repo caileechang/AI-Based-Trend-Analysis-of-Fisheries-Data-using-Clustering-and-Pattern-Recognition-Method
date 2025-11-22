@@ -292,17 +292,12 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
 
     return best_k, best_sil, best_inertia
 
-
 def hierarchical_clustering(merged_df):
 
     import streamlit as st
     import pandas as pd
     from scipy.cluster.hierarchy import (
-        dendrogram,
-        linkage,
-        fcluster,
-        leaves_list,
-        optimal_leaf_ordering,
+        dendrogram, linkage, fcluster, leaves_list, optimal_leaf_ordering
     )
     from sklearn.preprocessing import StandardScaler
     from sklearn.metrics import silhouette_score
@@ -338,17 +333,17 @@ def hierarchical_clustering(merged_df):
     # Year selection
     # ----------------------------
     years = sorted(df["Year"].unique())
-    selected_year = st.selectbox("Select Year:", years,
-                                 index=len(years)-1)
+    selected_year = st.selectbox(
+        "Select Year:", years, index=len(years)-1
+    )
 
     df_year = df[df["Year"] == selected_year]
-
     if df_year.empty:
-        st.warning("No data available for the selected year.")
+        st.warning("No data available for this year.")
         return
 
     # ----------------------------
-    # Aggregate (Average Landing & Vessels)
+    # Group state averages
     # ----------------------------
     grouped = (
         df_year.groupby("State")[["Total Fish Landing (Tonnes)",
@@ -357,29 +352,26 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
-    features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
-    
-    # Keep a stable, unsorted copy for the dendrogram
     grouped = grouped.reset_index(drop=True)
     original_grouped = grouped.copy()
 
-    # Scale landing only
-    # scaled = StandardScaler().fit_transform(
-      #  grouped[["Total Fish Landing (Tonnes)",
-         #       "Total number of fishing vessels"]]
-  #  )
-    scaled = StandardScaler().fit_transform(grouped[features])
-
+    features = ["Total Fish Landing (Tonnes)",
+                "Total number of fishing vessels"]
 
     # ----------------------------
-    # Ward linkage
+    # Scaling
+    # ----------------------------
+    scaled = StandardScaler().fit_transform(grouped[features])
+
+    # ----------------------------
+    # Linkage
     # ----------------------------
     Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # Silhouette Validation k = 2–6
+    # Silhouette Validation: k = 2–6
     # ----------------------------
-    st.markdown("### Silhouette Validation (k = 2 to 6)")
+    st.markdown("### Silhouette Validation (k = 2–6)")
 
     cand_k = [2, 3, 4, 5, 6]
     sil_scores = {}
@@ -391,57 +383,41 @@ def hierarchical_clustering(merged_df):
         else:
             sil_scores[k] = -1
 
-    # Best k = highest silhouette
     best_k = max(sil_scores, key=sil_scores.get)
     best_sil = sil_scores[best_k]
 
-   
-# ----------------------------
-# SIDE-BY-SIDE LAYOUT
-# ----------------------------
-    col1, col2 = st.columns([1, 1.2])  # adjust ratio here
+    col1, col2 = st.columns([1, 1.2])
 
-    # Table (Left side)
     with col1:
-            st.write("#### Silhouette Score Curve")
+        st.write("#### Silhouette Score Curve")
+        fig, ax = plt.subplots(figsize=(5, 3))
+        ax.plot(cand_k, [sil_scores[k] for k in cand_k], marker="o")
+        ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
+        ax.set_xlabel("k")
+        ax.set_ylabel("Silhouette Score")
+        ax.legend()
+        st.pyplot(fig)
 
-            fig, ax = plt.subplots(figsize=(5, 3))     # 🔥 Make diagram smaller
-
-            ax.plot(cand_k, [sil_scores[k] for k in cand_k], marker="o")
-            ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
-
-            ax.set_xlabel("Number of Clusters (k)")
-            ax.set_ylabel("Silhouette Score")
-            ax.set_title("Silhouette Score vs Number of Clusters")
-            ax.legend()
-
-            st.pyplot(fig)
-
-    # Plot (Right side)
     with col2:
-       
         st.write("#### Silhouette Scores Table")
         st.dataframe(
             pd.DataFrame({
                 "k": cand_k,
-                "Silhouette Score": [sil_scores[k] for k in cand_k],
+                "Silhouette Score": [sil_scores[k] for k in cand_k]
             }),
-            use_container_width=True,
-            height=230   # adjust table height
+            height=230
         )
 
-    st.success(f"**Optimal number of clusters selected: k = {best_k} (Silhouette = {best_sil:.4f})**")
-   
+    st.success(f"Optimal number of clusters chosen: **k = {best_k}** (Silhouette = {best_sil:.4f})")
+
     # ----------------------------
-    # Final Clustering using best_k
+    # Final clustering
     # ----------------------------
     grouped["RawCluster"] = fcluster(Z, best_k, criterion="maxclust")
 
     # ----------------------------
-    # Cluster Summary (Average landing levels)
+    # Tier assignment using qcut (Low / Medium / High)
     # ----------------------------
-
- 
     cluster_summary = (
         grouped.groupby("RawCluster")[features]
         .mean()
@@ -450,128 +426,94 @@ def hierarchical_clustering(merged_df):
 
     cluster_summary["Tier"] = pd.qcut(
         cluster_summary["Total Fish Landing (Tonnes)"],
-        q=3,
-        labels=["Low", "Medium", "High"]
+        q=3, labels=["Low", "Medium", "High"]
     )
 
-    # Map Tier to grouped & original_grouped
+    # Map tier back
     tier_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Tier"]))
+
     grouped["Tier"] = grouped["RawCluster"].map(tier_map)
     original_grouped["Tier"] = grouped["RawCluster"].map(tier_map)
 
-    # Sort clusters by landing (Low → Medium → High)
-    # cluster_summary = cluster_summary.sort_values(
-      #  "Total Fish Landing (Tonnes)"
-    #).reset_index(drop=True)
-
-    #cluster_summary["Cluster"] = cluster_summary.index + 1
-
-    # Tier assignment
-    #n = len(cluster_summary)
-
-   # def tier(i, n):
-    #    if i < n * (1/3):
-     #       return "Low"
-      #  elif i < n * (2/3):
-       #     return "Medium"
-     #   else:
-      #      return "High"
-
-   # cluster_summary["Tier"] = [tier(i, n) for i in range(n)]
-
-    # Map back
-  #  cluster_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Cluster"]))
- #   tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
-
-  #  grouped["Cluster"] = grouped["RawCluster"].map(cluster_map)
-  #  grouped["Tier"] = grouped["Cluster"].map(tier_map)
-   
-   # original_grouped = original_grouped.merge(
-    #    grouped[["State", "Cluster", "Tier"]],
-     #   on="State",
- #       how="left"
-   # )
-
-
     # ----------------------------
-    # Optimal Leaf Ordering
+    # Optimal Leaf Order
     # ----------------------------
     Z_ordered = optimal_leaf_ordering(Z, scaled)
-
-  
     leaf_order = leaves_list(Z_ordered)
 
-    # Order states exactly as the dendrogram outputs them
-    # Use the original (unsorted) version to match the linkage
-    ordered_states = original_grouped.iloc[leaf_order].copy()
+    ordered_states = original_grouped.iloc[leaf_order].reset_index(drop=True)
 
-    # Tier color mapping
+    # ----------------------------
+    # FORCED COLOR DENDROGRAM  (ALWAYS MATCHES TABLE)
+    # ----------------------------
     tier_colors = {"Low": "blue", "Medium": "orange", "High": "red"}
 
-    # Colors must follow dendrogram leaf sequence
-    leaf_colors = [tier_colors[t] for t in ordered_states["Tier"]]
-
-    labels = ordered_states["State"].tolist()
-
-    # ----------------------------
-    # Plot dendrogram
-    # ----------------------------
     fig2, ax2 = plt.subplots(figsize=(16, 6))
 
     dend = dendrogram(
         Z_ordered,
-        labels=labels,
+        labels=ordered_states["State"].tolist(),
         leaf_rotation=45,
         leaf_font_size=10,
-        color_threshold=0,
+        color_threshold=None   # do NOT let SciPy color branches
     )
 
-    # Apply correct colors to labels
-    for lbl, col in zip(ax2.get_xmajorticklabels(), leaf_colors):
-        lbl.set_color(col)
+    xticks = ax2.get_xmajorticklabels()
 
+    for lbl in xticks:
+        state = lbl.get_text()
+        tier = ordered_states.loc[
+            ordered_states["State"] == state, "Tier"
+        ].values[0]
+        color = tier_colors[tier]
+
+        # Color the text
+        lbl.set_color(color)
+
+        # Color dot under label (stronger visual guarantee)
+        x = lbl.get_position()[0]
+        ax2.plot(x, -0.2, "o", color=color, markersize=10, clip_on=False)
+
+    ax2.set_ylim(bottom=-1)
     ax2.set_title(f"Tier-Colored Dendrogram – {selected_year} (k = {best_k})")
     ax2.set_ylabel("Distance")
-
     st.pyplot(fig2)
 
     # ----------------------------
-    # Interpretation
+    # Interpretation Summary
     # ----------------------------
     st.markdown("### Interpretation of Clusters")
 
     interpretation = ""
 
     for _, row in cluster_summary.iterrows():
-        cid = int(row["RawCluster"])
-        tier_label = row["Tier"]
-        subset = grouped[grouped["RawCluster"] == cid]
+        cid = row["RawCluster"]
+        tier = row["Tier"]
+        sub = grouped[grouped["RawCluster"] == cid]
 
         interpretation += (
-            f"### Cluster {cid} – {tier_label}-Production Zone\n"
-            f"- **Avg Landing:** {row['Total Fish Landing (Tonnes)']:.2f} tonnes\n"
-            f"- **Landing Range:** "
-            f"{subset['Total Fish Landing (Tonnes)'].min():.2f} → "
-            f"{subset['Total Fish Landing (Tonnes)'].max():.2f} tonnes\n"
-            f"- **Avg Vessels:** {row['Total number of fishing vessels']:.0f}\n"
-            f"- **Vessel Range:** "
-            f"{subset['Total number of fishing vessels'].min():.0f} → "
-            f"{subset['Total number of fishing vessels'].max():.0f}\n\n"
+            f"### Cluster {cid} – {tier} zone\n"
+            f"- Avg landing: **{row['Total Fish Landing (Tonnes)']:.2f}** tonnes\n"
+            f"- Range landing: {sub['Total Fish Landing (Tonnes)'].min():.2f} → {sub['Total Fish Landing (Tonnes)'].max():.2f}\n"
+            f"- Avg vessels: **{row['Total number of fishing vessels']:.0f}**\n"
+            f"- Range vessels: {sub['Total number of fishing vessels'].min():.0f} → {sub['Total number of fishing vessels'].max():.0f}\n\n"
         )
 
     st.info(interpretation)
 
     # ----------------------------
-    # Cluster Assignments Table
+    # Final Cluster Assignment Table
     # ----------------------------
     st.markdown("### Cluster Assignments")
     st.dataframe(
-        grouped[["State", "Total Fish Landing (Tonnes)",
+        grouped[["State",
+                 "Total Fish Landing (Tonnes)",
                  "Total number of fishing vessels",
                  "RawCluster", "Tier"]]
         .sort_values("RawCluster")
         .reset_index(drop=True)
     )
+
     
 def main():
     
