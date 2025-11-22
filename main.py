@@ -2006,12 +2006,12 @@ def main():
 
 
         # 🔹 Now create the real content columns
-        col_plot, col_legend = st.columns([3, 1.5], gap="large")
+        col_plot, col_legend = st.columns([3, 1], gap="large")
 
         with col_plot:
 
             fig, ax = plt.subplots(figsize=(15, 12))
-            st.pyplot(fig, use_container_width=True)
+           
 
             sns.scatterplot(
                 data=df,
