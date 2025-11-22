@@ -545,7 +545,7 @@ def hierarchical_clustering(merged_df):
     for _, row in cluster_summary.iterrows():
         cid = int(row["Cluster"])
         tier_label = row["Tier"]
-        subset = grouped[grouped["Cluster"] == cid]
+        subset = grouped[grouped["RawCluster"] == cid]
 
         interpretation += (
             f"### Cluster {cid} – {tier_label}-Production Zone\n"
@@ -569,7 +569,7 @@ def hierarchical_clustering(merged_df):
         grouped[["State", "Total Fish Landing (Tonnes)",
                  "Total number of fishing vessels",
                  "Cluster", "Tier"]]
-        .sort_values("Cluster")
+        .sort_values("RawCluster")
         .reset_index(drop=True)
     )
     
