@@ -2069,12 +2069,19 @@ def main():
             ">
                         
            
-
-            <p style='color:#ccc; font-size:14px;'>
+            <p style="
+                color:#ccc; 
+                font-size:14px; 
+                max-width:260px; 
+                line-height:1.4;
+                word-wrap:break-word;
+                text-align:center;
+                margin:auto;
+            ">
                 HDBSCAN assigns each point a <b>probability from 0 to 1</b> showing
                 confidence in cluster membership (not the cluster number).
             </p>
-
+            
             <table style='color:white; font-size:14px; margin-top:10px;'>
                 <tr><td>🟣 <b>0.0</b></td><td>Very weak membership</td></tr>
                 <tr><td>🔵 <b>0.2</b></td><td>Weak membership</td></tr>
@@ -2085,7 +2092,7 @@ def main():
                 <tr><td>⭕ <b>Outlier</b></td><td>Explicit anomaly</td></tr>
             </table>
 
-            <p style='color:#ccc; margin-top:12px; font-size:13px;'>
+            <p style='color:#ccc; margin-top:14px; font-size:13px;'>
                 Higher membership = more reliable cluster.<br>
                 Red circle = true anomaly detected by HDBSCAN.
             </p>
