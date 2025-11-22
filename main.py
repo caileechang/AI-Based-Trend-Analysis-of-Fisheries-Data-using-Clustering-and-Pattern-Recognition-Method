@@ -2093,6 +2093,42 @@ def main():
         from scipy.spatial import ConvexHull
 
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
+        st.markdown("<p style='color:#ccc'>Detect unusual landing–vessel relationships at the state level.</p>", unsafe_allow_html=True)
+        
+        # ===========================
+        # HDBSCAN Membership Legend
+        # ===========================
+        st.markdown("""
+        <div style="
+            background-color:#111;
+            padding:15px;
+            border-radius:10px;
+            border-left:5px solid #4ec9b0;
+            margin-top:10px;
+            margin-bottom:15px;
+        ">
+        <h4 style='color:white;'>📘 How to Read HDBSCAN Membership Colors</h4>
+        <p style='color:#ccc;'>
+        HDBSCAN assigns each point a <b>probability from 0 to 1</b> representing how strongly 
+        it belongs to its cluster. This is <b>not the cluster number</b>.
+        </p>
+
+        <table style='color:white; font-size:14px;'>
+        <tr><td>🟣 <b>0.0</b></td><td>Almost noise (very weak membership)</td></tr>
+        <tr><td>🔵 <b>0.2</b></td><td>Weak membership</td></tr>
+        <tr><td>🟦 <b>0.4</b></td><td>Medium membership</td></tr>
+        <tr><td>🟩 <b>0.6</b></td><td>Strong membership</td></tr>
+        <tr><td>🟢 <b>0.8</b></td><td>Very strong membership</td></tr>
+        <tr><td>🟡 <b>1.0</b></td><td>Perfect membership</td></tr>
+        <tr><td>⭕ <b>Outlier</b></td><td>Explicitly flagged as noise</td></tr>
+        </table>
+
+        <p style='color:#ccc; margin-top:8px;'>
+        Higher membership probability = more reliable clustering.<br>
+        Red circle = true anomaly detected by HDBSCAN.
+        </p>
+        </div>
+        """, unsafe_allow_html=True)
 
         # -----------------------------
         # 1. FILTER VALID STATES
