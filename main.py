@@ -358,6 +358,10 @@ def hierarchical_clustering(merged_df):
     )
 
     features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
+    
+    # Keep a stable, unsorted copy for the dendrogram
+    grouped = grouped.reset_index(drop=True)
+    original_grouped = grouped.copy()
 
     # Scale landing only
     scaled = StandardScaler().fit_transform(
@@ -433,6 +437,8 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Cluster Summary (Average landing levels)
     # ----------------------------
+
+ 
     cluster_summary = (
         grouped.groupby("RawCluster")[features]
         .mean()
@@ -471,13 +477,12 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     Z_ordered = optimal_leaf_ordering(Z, scaled)
 
-   # ----------------------------
-    # Get leaf order from the dendrogram
-    # ----------------------------
+  
     leaf_order = leaves_list(Z_ordered)
 
     # Order states exactly as the dendrogram outputs them
-    ordered_states = grouped.iloc[leaf_order].copy()  # keep dendrogram order
+    # Use the original (unsorted) version to match the linkage
+    ordered_states = original_grouped.iloc[leaf_order].copy()
 
     # Tier color mapping
     tier_colors = {"Low": "blue", "Medium": "orange", "High": "red"}
