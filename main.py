@@ -296,6 +296,7 @@ def hierarchical_clustering(merged_df):
 
     import streamlit as st
     import pandas as pd
+    import seaborn as sns
     from scipy.cluster.hierarchy import (
         dendrogram, linkage, fcluster, leaves_list, optimal_leaf_ordering
     )
@@ -350,8 +351,7 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
-    # KEEP a stable index for alignment
-    grouped = grouped.reset_index(drop=False).rename(columns={"index": "OriginalIndex"})
+    grouped = grouped.reset_index(drop=True)
 
     features = ["Total Fish Landing (Tonnes)",
                 "Total number of fishing vessels"]
@@ -409,56 +409,46 @@ def hierarchical_clustering(merged_df):
     st.success(f"Optimal number of clusters: **k = {best_k}**  (Silhouette = {best_sil:.4f})")
 
     # ----------------------------
-    # Final Clustering (TRUE clusters)
+    # Final TRUE cluster assignment
     # ----------------------------
     grouped["Cluster"] = fcluster(Z, best_k, criterion="maxclust")
 
     # ----------------------------
-    # Optimal Leaf Ordering
+    # seaborn.clustermap (CORRECT dendrogram)
     # ----------------------------
-    Z_ordered = optimal_leaf_ordering(Z, scaled)
-    leaf_order = leaves_list(Z_ordered)
+    st.markdown("## Hierarchical Clustermap (Correct Dendrogram + Heatmap)")
 
-    # CORRECT: Align using OriginalIndex to avoid mismatching
-    ordered_states = grouped.iloc[leaf_order].reset_index(drop=True)
+    df_plot = pd.DataFrame(scaled, columns=["Landing", "Vessels"])
+    df_plot["Cluster"] = grouped["Cluster"].tolist()
+    df_plot.index = grouped["State"].tolist()
 
-    ordered_clusters = ordered_states["Cluster"].tolist()
-
-    # ----------------------------
-    # Colors for cluster labels
-    # ----------------------------
-    cluster_color_map = {
-        1: "blue", 2: "green", 3: "red",
-        4: "purple", 5: "orange", 6: "brown"
+    # Cluster color palette
+    lut = {
+        1: "blue",
+        2: "green",
+        3: "red",
+        4: "purple",
+        5: "orange",
+        6: "brown"
     }
+    row_colors = df_plot["Cluster"].map(lut)
 
-    leaf_colors = [cluster_color_map[c] for c in ordered_clusters]
-
-    # ----------------------------
-    # Final Dendrogram
-    # ----------------------------
-    fig2, ax2 = plt.subplots(figsize=(16, 6))
-
-    dend = dendrogram(
-        Z_ordered,
-        labels=ordered_states["State"].tolist(),
-        leaf_rotation=45,
-        leaf_font_size=10,
-        color_threshold=0,
-        link_color_func=lambda k: "black"
+    sns.set_theme(style="white")
+    g = sns.clustermap(
+        df_plot[["Landing", "Vessels"]],
+        method="ward",
+        metric="euclidean",
+        figsize=(14, 8),
+        row_colors=row_colors,
+        cmap="viridis",
+        dendrogram_ratio=0.2,
+        cbar_pos=(0.02, .8, .03, .18),
     )
 
-    # Color leaves
-    xticks = ax2.get_xmajorticklabels()
-    for lbl, c in zip(xticks, leaf_colors):
-        lbl.set_color(c)
-        x = lbl.get_position()[0]
-        ax2.plot(x, -0.2, "o", color=c, markersize=10, clip_on=False)
+    plt.suptitle(f"Hierarchical Clustering Heatmap – {selected_year} (k = {best_k})",
+                 y=1.05, fontsize=16)
 
-    ax2.set_ylim(bottom=-0.4)
-    ax2.set_title(f"Hierarchical Clustering Dendrogram – {selected_year} (k = {best_k})")
-    ax2.set_ylabel("Distance")
-    st.pyplot(fig2)
+    st.pyplot(g.fig)
 
     # ----------------------------
     # Interpretation of TRUE Clusters
@@ -474,7 +464,7 @@ def hierarchical_clustering(merged_df):
         avg_landing = subset["Total Fish Landing (Tonnes)"].mean()
         avg_vessels = subset["Total number of fishing vessels"].mean()
 
-        col_color = cluster_color_map[cid]
+        col_color = lut[cid]
 
         html = f"""
         <div style="
