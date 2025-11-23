@@ -330,7 +330,7 @@ def hierarchical_clustering(merged_df):
         return
 
     # ----------------------------
-    # Year selection
+    # Select Year
     # ----------------------------
     years = sorted(df["Year"].unique())
     selected_year = st.selectbox("Select Year:", years, index=len(years)-1)
@@ -350,6 +350,9 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
+    # KEEP a stable index for alignment
+    grouped = grouped.reset_index(drop=False).rename(columns={"index": "OriginalIndex"})
+
     features = ["Total Fish Landing (Tonnes)",
                 "Total number of fishing vessels"]
 
@@ -359,12 +362,12 @@ def hierarchical_clustering(merged_df):
     scaled = StandardScaler().fit_transform(grouped[features])
 
     # ----------------------------
-    # Linkage
+    # Ward Linkage
     # ----------------------------
     Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # Silhouette Validation: k = 2–6
+    # Silhouette Validation (k = 2–6)
     # ----------------------------
     st.markdown("### Silhouette Validation (k = 2–6)")
 
@@ -406,7 +409,7 @@ def hierarchical_clustering(merged_df):
     st.success(f"Optimal number of clusters: **k = {best_k}**  (Silhouette = {best_sil:.4f})")
 
     # ----------------------------
-    # Final TRUE cluster assignment
+    # Final Clustering (TRUE clusters)
     # ----------------------------
     grouped["Cluster"] = fcluster(Z, best_k, criterion="maxclust")
 
@@ -416,25 +419,23 @@ def hierarchical_clustering(merged_df):
     Z_ordered = optimal_leaf_ordering(Z, scaled)
     leaf_order = leaves_list(Z_ordered)
 
+    # CORRECT: Align using OriginalIndex to avoid mismatching
     ordered_states = grouped.iloc[leaf_order].reset_index(drop=True)
+
     ordered_clusters = ordered_states["Cluster"].tolist()
 
     # ----------------------------
-    # Cluster Colors (max 6)
+    # Colors for cluster labels
     # ----------------------------
     cluster_color_map = {
-        1: "blue",
-        2: "green",
-        3: "red",
-        4: "purple",
-        5: "orange",
-        6: "brown"
+        1: "blue", 2: "green", 3: "red",
+        4: "purple", 5: "orange", 6: "brown"
     }
 
     leaf_colors = [cluster_color_map[c] for c in ordered_clusters]
 
     # ----------------------------
-    # Dendrogram (correct cluster colors)
+    # Final Dendrogram
     # ----------------------------
     fig2, ax2 = plt.subplots(figsize=(16, 6))
 
@@ -444,10 +445,10 @@ def hierarchical_clustering(merged_df):
         leaf_rotation=45,
         leaf_font_size=10,
         color_threshold=0,
-        link_color_func=lambda k: "black",
+        link_color_func=lambda k: "black"
     )
 
-    # Color leaf labels
+    # Color leaves
     xticks = ax2.get_xmajorticklabels()
     for lbl, c in zip(xticks, leaf_colors):
         lbl.set_color(c)
@@ -460,7 +461,7 @@ def hierarchical_clustering(merged_df):
     st.pyplot(fig2)
 
     # ----------------------------
-    # Interpretation of REAL clusters
+    # Interpretation of TRUE Clusters
     # ----------------------------
     st.markdown("## Interpretation of TRUE Clusters")
 
@@ -473,12 +474,11 @@ def hierarchical_clustering(merged_df):
         avg_landing = subset["Total Fish Landing (Tonnes)"].mean()
         avg_vessels = subset["Total number of fishing vessels"].mean()
 
-        # Pick color
         col_color = cluster_color_map[cid]
 
         html = f"""
         <div style="
-            background-color:{col_color}33;
+            background-color:{col_color}22;
             border-radius:12px;
             padding:20px;
         ">
@@ -492,13 +492,12 @@ def hierarchical_clustering(merged_df):
             </ul>
         </div>
         """
-
         cols[idx].markdown(html, unsafe_allow_html=True)
 
     # ----------------------------
     # Final TRUE Cluster Table
     # ----------------------------
-    st.markdown("### Cluster Assignments (True Hierarchical Clusters)")
+    st.markdown("### Cluster Assignments (TRUE Hierarchical Clusters)")
     st.dataframe(
         grouped[["State",
                  "Total Fish Landing (Tonnes)",
