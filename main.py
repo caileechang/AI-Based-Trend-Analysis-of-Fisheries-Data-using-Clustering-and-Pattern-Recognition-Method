@@ -353,8 +353,6 @@ def hierarchical_clustering(merged_df):
     )
 
     grouped = grouped.reset_index(drop=True)
-    original_grouped = grouped.copy()
-
     features = ["Total Fish Landing (Tonnes)",
                 "Total number of fishing vessels"]
 
@@ -411,12 +409,12 @@ def hierarchical_clustering(merged_df):
     st.success(f"Optimal number of clusters chosen: **k = {best_k}** (Silhouette = {best_sil:.4f})")
 
     # ----------------------------
-    # Final clustering
+    # Final Clustering
     # ----------------------------
     grouped["Cluster"] = fcluster(Z, best_k, criterion="maxclust")
 
     # ----------------------------
-    # Tier assignment using qcut (Low / Medium / High)
+    # Assign Tier (Low / Medium / High)
     # ----------------------------
     cluster_summary = (
         grouped.groupby("Cluster")[features]
@@ -424,16 +422,15 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
+    # Tier by landing
     cluster_summary["Tier"] = pd.qcut(
         cluster_summary["Total Fish Landing (Tonnes)"],
         q=3, labels=["Low", "Medium", "High"]
     )
 
     # Map tier back
-    tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
-
+    tier_map = cluster_summary.set_index("Cluster")["Tier"].to_dict()
     grouped["Tier"] = grouped["Cluster"].map(tier_map)
-    original_grouped["Tier"] = grouped["Cluster"].map(tier_map)
 
     # ----------------------------
     # Optimal Leaf Order
@@ -441,12 +438,22 @@ def hierarchical_clustering(merged_df):
     Z_ordered = optimal_leaf_ordering(Z, scaled)
     leaf_order = leaves_list(Z_ordered)
 
-    ordered_states = original_grouped.iloc[leaf_order].reset_index(drop=True)
+    ordered_states = grouped.iloc[leaf_order].reset_index(drop=True)
 
     # ----------------------------
-    # FORCED COLOR DENDROGRAM  (ALWAYS MATCHES TABLE)
+    # TRUE CLUSTER COLORING (Correct dendrogram)
     # ----------------------------
-    tier_colors = {"Low": "blue", "Medium": "orange", "High": "red"}
+    cluster_color_map = {
+        1: "blue",
+        2: "green",
+        3: "red",
+        4: "purple",
+        5: "orange",
+        6: "brown"
+    }
+
+    ordered_clusters = ordered_states["Cluster"].tolist()
+    leaf_colors = [cluster_color_map[c] for c in ordered_clusters]
 
     fig2, ax2 = plt.subplots(figsize=(16, 6))
 
@@ -455,39 +462,31 @@ def hierarchical_clustering(merged_df):
         labels=ordered_states["State"].tolist(),
         leaf_rotation=45,
         leaf_font_size=10,
-        color_threshold=None   # do NOT let SciPy color branches
+        color_threshold=0,
+        link_color_func=lambda k: "black",  # branch colors stay neutral
     )
 
+    # Color labels according to TRUE cluster
     xticks = ax2.get_xmajorticklabels()
-
-    for lbl in xticks:
-        state = lbl.get_text()
-        tier = ordered_states.loc[
-            ordered_states["State"] == state, "Tier"
-        ].values[0]
-        color = tier_colors[tier]
-
-        # Color the text
-        lbl.set_color(color)
-
-        # Color dot under label (stronger visual guarantee)
+    for lbl, c in zip(xticks, leaf_colors):
+        lbl.set_color(c)
         x = lbl.get_position()[0]
-        ax2.plot(x, -0.2, "o", color=color, markersize=10, clip_on=False)
+        ax2.plot(x, -0.2, "o", color=c, markersize=10, clip_on=False)
 
     ax2.set_ylim(bottom=-0.4)
-    ax2.set_title(f"Tier-Colored Dendrogram – {selected_year} (k = {best_k})")
+    ax2.set_title(f"Hierarchical Clustering Dendrogram – {selected_year} (k = {best_k})")
     ax2.set_ylabel("Distance")
     st.pyplot(fig2)
 
-
+    # ----------------------------
     # Interpretation Summary
+    # ----------------------------
     st.markdown("### Interpretation of Clusters")
 
-    # Background + text colors for tiers
     tier_bg = {
-        "Low":   "#0a2a4a",
+        "Low": "#0a2a4a",
         "Medium": "#4a2a0a",
-        "High":  "#4a0a0a",
+        "High": "#4a0a0a",
     }
 
     tier_text_color = {
@@ -496,19 +495,17 @@ def hierarchical_clustering(merged_df):
         "High":  "#ff6b6b",
     }
 
-    # Sort clusters by Tier order: Low → Medium → High
     tier_order = ["Low", "Medium", "High"]
     cluster_summary_sorted = cluster_summary.sort_values(
-        "Tier", key=lambda x: x.map({t:i for i,t in enumerate(tier_order)})
+        "Tier", key=lambda x: x.map({t: i for i, t in enumerate(tier_order)})
     )
 
-    # One column per cluster
     cols = st.columns(len(cluster_summary_sorted))
 
     for idx, (_, row) in enumerate(cluster_summary_sorted.iterrows()):
-        cid = int(row["RawCluster"])
+        cid = int(row["Cluster"])
         tier_label = row["Tier"]
-        subset = grouped[grouped["RawCluster"] == cid]
+        subset = grouped[grouped["Cluster"] == cid]
 
         bg = tier_bg[tier_label]
         txt = tier_text_color[tier_label]
@@ -523,29 +520,26 @@ def hierarchical_clustering(merged_df):
             <h3 style="color:{txt}; text-align:center;">Cluster {cid}<br>{tier_label} zone</h3>
             <ul style="color:white; font-size:16px;">
                 <li><b>Avg landing:</b> {row['Total Fish Landing (Tonnes)']:.2f} tonnes</li>
-                <li><b>Range landing:</b> {subset['Total Fish Landing (Tonnes)'].min():.2f} → {subset['Total Fish Landing (Tonnes)'].max():.2f}</li>
                 <li><b>Avg vessels:</b> {row['Total number of fishing vessels']:.0f}</li>
-                <li><b>Range vessels:</b> {subset['Total number of fishing vessels'].min():.0f} → {subset['Total number of fishing vessels'].max():.0f}</li>
+                <li><b>States:</b> {", ".join(subset['State'].tolist())}</li>
             </ul>
         </div>
         """
-
         cols[idx].markdown(html_block, unsafe_allow_html=True)
 
-
-
     # ----------------------------
-    # Final Cluster Assignment Table
+    # Final Cluster Table
     # ----------------------------
     st.markdown("### Cluster Assignments")
     st.dataframe(
         grouped[["State",
                  "Total Fish Landing (Tonnes)",
                  "Total number of fishing vessels",
-                 "RawCluster", "Tier"]]
-        .sort_values("RawCluster")
+                 "Cluster", "Tier"]]
+        .sort_values("Cluster")
         .reset_index(drop=True)
     )
+
 
     
 def main():
