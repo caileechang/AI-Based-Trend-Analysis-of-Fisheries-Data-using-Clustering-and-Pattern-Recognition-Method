@@ -413,13 +413,13 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Final clustering
     # ----------------------------
-    grouped["RawCluster"] = fcluster(Z, best_k, criterion="maxclust")
+    grouped["Cluster"] = fcluster(Z, best_k, criterion="maxclust")
 
     # ----------------------------
     # Tier assignment using qcut (Low / Medium / High)
     # ----------------------------
     cluster_summary = (
-        grouped.groupby("RawCluster")[features]
+        grouped.groupby("Cluster")[features]
         .mean()
         .reset_index()
     )
@@ -430,10 +430,10 @@ def hierarchical_clustering(merged_df):
     )
 
     # Map tier back
-    tier_map = dict(zip(cluster_summary["RawCluster"], cluster_summary["Tier"]))
+    tier_map = dict(zip(cluster_summary["Cluster"], cluster_summary["Tier"]))
 
-    grouped["Tier"] = grouped["RawCluster"].map(tier_map)
-    original_grouped["Tier"] = grouped["RawCluster"].map(tier_map)
+    grouped["Tier"] = grouped["Cluster"].map(tier_map)
+    original_grouped["Tier"] = grouped["Cluster"].map(tier_map)
 
     # ----------------------------
     # Optimal Leaf Order
