@@ -297,9 +297,7 @@ def hierarchical_clustering(merged_df):
     import streamlit as st
     import pandas as pd
     import seaborn as sns
-    from scipy.cluster.hierarchy import (
-        dendrogram, linkage, fcluster, leaves_list, optimal_leaf_ordering
-    )
+    from scipy.cluster.hierarchy import linkage, fcluster
     from sklearn.preprocessing import StandardScaler
     from sklearn.metrics import silhouette_score
     import matplotlib.pyplot as plt
@@ -308,7 +306,7 @@ def hierarchical_clustering(merged_df):
     st.subheader("Hierarchical Clustering (Silhouette-Optimized)")
 
     # ----------------------------
-    # Clean Valid States
+    # Clean valid states
     # ----------------------------
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
@@ -318,31 +316,35 @@ def hierarchical_clustering(merged_df):
     ]
 
     df = merged_df.copy()
+
     df["State"] = (
-        df["State"].astype(str).str.upper()
+        df["State"]
+        .astype(str)
+        .str.upper()
         .str.strip()
         .str.replace(r"\s*/\s*", "/", regex=True)
         .str.replace(r"\s+", " ", regex=True)
     )
+
     df = df[df["State"].isin(valid_states)]
 
     if df.empty:
-        st.warning("No valid state records after filtering.")
+        st.warning("No valid states after filtering.")
         return
 
     # ----------------------------
-    # Select Year
+    # Year selection
     # ----------------------------
     years = sorted(df["Year"].unique())
-    selected_year = st.selectbox("Select Year:", years, index=len(years)-1)
+    selected_year = st.selectbox("Select Year:", years, index=len(years) - 1)
 
     df_year = df[df["Year"] == selected_year]
     if df_year.empty:
-        st.warning("No data available for this year.")
+        st.warning("No data for this year.")
         return
 
     # ----------------------------
-    # Group state averages
+    # Group by state averages
     # ----------------------------
     grouped = (
         df_year.groupby("State")[["Total Fish Landing (Tonnes)",
@@ -351,23 +353,21 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
-    grouped = grouped.reset_index(drop=True)
-
-    features = ["Total Fish Landing (Tonnes)",
-                "Total number of fishing vessels"]
+    features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
 
     # ----------------------------
     # Scaling
     # ----------------------------
-    scaled = StandardScaler().fit_transform(grouped[features])
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(grouped[features])
 
     # ----------------------------
-    # Ward Linkage
+    # Ward linkage
     # ----------------------------
     Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # Silhouette Validation (k = 2–6)
+    # Silhouette validation k = 2–6
     # ----------------------------
     st.markdown("### Silhouette Validation (k = 2–6)")
 
@@ -382,12 +382,11 @@ def hierarchical_clustering(merged_df):
             sil_scores[k] = -1
 
     best_k = max(sil_scores, key=sil_scores.get)
-    best_sil = sil_scores[best_k]
 
-    col1, col2 = st.columns([1, 1.2])
+    col1, col2 = st.columns([1, 1])
 
+    # Silhouette plot
     with col1:
-        st.write("#### Silhouette Score Curve")
         fig, ax = plt.subplots(figsize=(5, 3))
         ax.plot(cand_k, [sil_scores[k] for k in cand_k], marker="o")
         ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
@@ -396,8 +395,8 @@ def hierarchical_clustering(merged_df):
         ax.legend()
         st.pyplot(fig)
 
+    # Table
     with col2:
-        st.write("#### Silhouette Scores Table")
         st.dataframe(
             pd.DataFrame({
                 "k": cand_k,
@@ -406,23 +405,22 @@ def hierarchical_clustering(merged_df):
             height=230
         )
 
-    st.success(f"Optimal number of clusters: **k = {best_k}**  (Silhouette = {best_sil:.4f})")
+    st.success(f"Optimal clusters: **k = {best_k}**")
 
     # ----------------------------
-    # Final TRUE cluster assignment
+    # Final cluster assignment
     # ----------------------------
     grouped["Cluster"] = fcluster(Z, best_k, criterion="maxclust")
 
     # ----------------------------
-    # seaborn.clustermap (CORRECT dendrogram)
+    # Seaborn Clustermap (Correct)
     # ----------------------------
     st.markdown("## Hierarchical Clustermap (Correct Dendrogram + Heatmap)")
 
     df_plot = pd.DataFrame(scaled, columns=["Landing", "Vessels"])
-    df_plot["Cluster"] = grouped["Cluster"].tolist()
+    df_plot["Cluster"] = grouped["Cluster"].values
     df_plot.index = grouped["State"].tolist()
 
-    # Cluster color palette
     lut = {
         1: "blue",
         2: "green",
@@ -434,24 +432,29 @@ def hierarchical_clustering(merged_df):
     row_colors = df_plot["Cluster"].map(lut)
 
     sns.set_theme(style="white")
+
     g = sns.clustermap(
         df_plot[["Landing", "Vessels"]],
         method="ward",
         metric="euclidean",
-        figsize=(14, 8),
+        figsize=(10, 6),
         row_colors=row_colors,
         cmap="viridis",
         dendrogram_ratio=0.2,
-        cbar_pos=(0.02, .8, .03, .18),
+        cbar_pos=(0.02, .8, .03, .18)
     )
 
-    plt.suptitle(f"Hierarchical Clustering Heatmap – {selected_year} (k = {best_k})",
-                 y=1.05, fontsize=16)
+    with st.container():
+        st.pyplot(g.fig)
 
-    st.pyplot(g.fig)
+    # --- FIX: allow Streamlit to continue rendering ---
+    st.write("")
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.divider()
 
-    # Interpretation of TRUE Clusters
-
+    # ----------------------------
+    # INTERPRETATION CARDS
+    # ----------------------------
     st.markdown("## Interpretation of TRUE Clusters")
 
     real_clusters = sorted(grouped["Cluster"].unique())
@@ -459,49 +462,30 @@ def hierarchical_clustering(merged_df):
 
     for idx, cid in enumerate(real_clusters):
         subset = grouped[grouped["Cluster"] == cid]
-
         avg_landing = subset["Total Fish Landing (Tonnes)"].mean()
         avg_vessels = subset["Total number of fishing vessels"].mean()
+        col_color = lut[cid]
 
-        col_color = lut[cid]  # your cluster color palette
-
-        # Modern dashboard widget style
-        html = f"""
+        card = f"""
         <div style="
-            background: linear-gradient(135deg, rgba(35,35,50,0.85), rgba(20,20,30,0.85));
-            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(135deg, rgba(40,40,60,0.85), rgba(18,18,25,0.9));
+            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 18px;
-            padding: 24px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.45);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.45);
+            color: rgba(250,250,255,0.92);
             margin-bottom: 20px;
-            color: rgba(240,240,255,0.9);
         ">
-            <h3 style="
-                text-align:center;
-                color:{col_color};
-                font-weight:700;
-                margin-top:0;
-                margin-bottom:15px;
-                letter-spacing:0.5px;
-            ">
-                Cluster {cid}
-            </h3>
-
-            <div style="font-size:16px; line-height:1.7;">
-                <p><b style="color:{col_color};">Avg landing:</b> {avg_landing:.2f} tonnes</p>
-                <p><b style="color:{col_color};">Avg vessels:</b> {avg_vessels:.0f}</p>
-                <p><b style="color:{col_color};">States:</b><br>
-                    {", ".join(subset['State'].tolist())}
-                </p>
-            </div>
+            <h3 style="text-align:center; color:{col_color};">Cluster {cid}</h3>
+            <p><b style="color:{col_color};">Avg landing:</b> {avg_landing:.2f} tonnes</p>
+            <p><b style="color:{col_color};">Avg vessels:</b> {avg_vessels:.0f}</p>
+            <p><b style="color:{col_color};">States:</b><br>{", ".join(subset["State"].tolist())}</p>
         </div>
         """
-        cols[idx].markdown(html, unsafe_allow_html=True)
+        cols[idx].markdown(card, unsafe_allow_html=True)
 
     # ----------------------------
-    # Final TRUE Cluster Table
+    # Final table
     # ----------------------------
     st.markdown("### Cluster Assignments (TRUE Hierarchical Clusters)")
     st.dataframe(
