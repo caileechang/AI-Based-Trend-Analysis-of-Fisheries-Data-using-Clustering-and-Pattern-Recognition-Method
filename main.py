@@ -301,13 +301,13 @@ def hierarchical_clustering(merged_df):
     from sklearn.preprocessing import StandardScaler
     from sklearn.metrics import silhouette_score
     import matplotlib.pyplot as plt
-    import numpy as np
 
-    # ----------------------------
-    # GLOBAL CSS for Dashboard Cards
-    # ----------------------------
+    # =======================================================
+    # GLOBAL CSS (Dashboard Cards + Glass Effect)
+    # =======================================================
     st.markdown("""
     <style>
+
     .cluster-card {
         background: linear-gradient(135deg, rgba(40,40,55,0.85), rgba(15,15,25,0.85));
         border-radius: 18px;
@@ -323,7 +323,7 @@ def hierarchical_clustering(merged_df):
 
     .cluster-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 28px rgba(0,0,0,0.55);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.55);
     }
 
     .cluster-title {
@@ -337,14 +337,15 @@ def hierarchical_clustering(merged_df):
     .cluster-text {
         font-size: 16px;
         line-height: 1.55;
+        margin-top: 10px;
     }
+
     </style>
     """, unsafe_allow_html=True)
 
-
-    # ----------------------------
-    # Clean Valid States
-    # ----------------------------
+    # =======================================================
+    # VALID STATES CLEANING
+    # =======================================================
     st.subheader("Hierarchical Clustering (Silhouette-Optimized)")
 
     valid_states = [
@@ -364,45 +365,48 @@ def hierarchical_clustering(merged_df):
     df = df[df["State"].isin(valid_states)]
 
     if df.empty:
-        st.warning("No valid state records after filtering.")
+        st.warning("No valid state data available.")
         return
 
-    # ----------------------------
-    # Select Year
-    # ----------------------------
+    # =======================================================
+    # SELECT YEAR
+    # =======================================================
     years = sorted(df["Year"].unique())
     selected_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
     df_year = df[df["Year"] == selected_year]
+
     if df_year.empty:
-        st.warning("No data available for this year.")
+        st.warning("No data for this year.")
         return
 
-    # ----------------------------
-    # Group State Averages
-    # ----------------------------
+    # =======================================================
+    # GROUP BY STATE
+    # =======================================================
     grouped = (
-        df_year.groupby("State")[["Total Fish Landing (Tonnes)",
-                                  "Total number of fishing vessels"]]
+        df_year.groupby("State")[[
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]]
         .mean()
         .reset_index()
     )
 
     features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
 
-    # ----------------------------
-    # Scaling
-    # ----------------------------
+    # =======================================================
+    # SCALING
+    # =======================================================
     scaled = StandardScaler().fit_transform(grouped[features])
 
-    # ----------------------------
-    # Ward Linkage
-    # ----------------------------
+    # =======================================================
+    # WARD LINKAGE
+    # =======================================================
     Z = linkage(scaled, method="ward")
 
-    # ----------------------------
-    # Silhouette Validation (k = 2–6)
-    # ----------------------------
+    # =======================================================
+    # SILHOUETTE VALIDATION
+    # =======================================================
     st.markdown("### Silhouette Validation (k = 2–6)")
 
     cand_k = [2, 3, 4, 5, 6]
@@ -416,6 +420,7 @@ def hierarchical_clustering(merged_df):
             sil_scores[k] = -1
 
     best_k = max(sil_scores, key=sil_scores.get)
+    best_score = sil_scores[best_k]
 
     col1, col2 = st.columns([1, 1.2])
 
@@ -434,35 +439,28 @@ def hierarchical_clustering(merged_df):
                 "k": cand_k,
                 "Silhouette Score": [sil_scores[k] for k in cand_k]
             }),
-            height=230
+            height=220
         )
 
-    st.success(f"Optimal number of clusters: **k = {best_k}**")
+    st.success(f"Optimal number of clusters: **k = {best_k}** (Silhouette = {best_score:.3f})")
 
-    # ----------------------------
-    # Final TRUE Cluster Assignment
-    # ----------------------------
+    # =======================================================
+    # FINAL CLUSTER ASSIGNMENT
+    # =======================================================
     grouped["Cluster"] = fcluster(Z, best_k, criterion="maxclust")
 
-    # ----------------------------
-    # Clustermap
-    # ----------------------------
+    # =======================================================
+    # CLUSTERMAP
+    # =======================================================
     st.markdown("## Hierarchical Clustermap")
 
     df_plot = pd.DataFrame(scaled, columns=["Landing", "Vessels"])
-    df_plot["Cluster"] = grouped["Cluster"].tolist()
-    df_plot.index = grouped["State"].tolist()
+    df_plot["Cluster"] = grouped["Cluster"]
+    df_plot.index = grouped["State"]
 
     lut = {
-        1: "blue",
-        2: "green",
-        3: "red",
-        4: "purple",
-        5: "orange",
-        6: "brown"
+        1: "blue", 2: "green", 3: "red", 4: "purple", 5: "orange", 6: "brown"
     }
-
-    row_colors = df_plot["Cluster"].map(lut)
 
     sns.set_theme(style="white")
     g = sns.clustermap(
@@ -470,7 +468,7 @@ def hierarchical_clustering(merged_df):
         method="ward",
         metric="euclidean",
         figsize=(14, 8),
-        row_colors=row_colors,
+        row_colors=df_plot["Cluster"].map(lut),
         cmap="viridis",
         dendrogram_ratio=0.2,
         cbar_pos=(0.02, .8, .03, .18),
@@ -478,15 +476,16 @@ def hierarchical_clustering(merged_df):
 
     plt.suptitle(f"Hierarchical Heatmap – {selected_year} (k = {best_k})",
                  y=1.05, fontsize=16)
+
     st.pyplot(g.fig)
 
-    # ----------------------------
-    # Interpretation of TRUE Clusters
-    # ----------------------------
+    # =======================================================
+    # INTERPRETATION OF TRUE CLUSTERS
+    # =======================================================
     st.markdown("## Interpretation of TRUE Clusters")
 
     real_clusters = sorted(grouped["Cluster"].unique())
-    cols = st.columns(len(real_clusters))
+    ccols = st.columns(len(real_clusters))
 
     for idx, cid in enumerate(real_clusters):
         subset = grouped[grouped["Cluster"] == cid]
@@ -496,9 +495,13 @@ def hierarchical_clustering(merged_df):
 
         col_color = lut[cid]
 
+        # ✔ CORRECT HTML — NO NESTED <p> AROUND <div>
         html = f"""
         <div class="cluster-card">
-            <h3 class="cluster-title" style="color:{col_color};">Cluster {cid}</h3>
+
+            <div class="cluster-title" style="color:{col_color};">
+                Cluster {cid}
+            </div>
 
             <div class="cluster-text">
                 <p><b style="color:{col_color};">Avg landing:</b> {avg_landing:.2f} tonnes</p>
@@ -507,15 +510,17 @@ def hierarchical_clustering(merged_df):
                     {", ".join(subset['State'].tolist())}
                 </p>
             </div>
+
         </div>
         """
 
-        cols[idx].markdown(html, unsafe_allow_html=True)
+        ccols[idx].markdown(html, unsafe_allow_html=True)
 
-    # ----------------------------
-    # Final Cluster Table
-    # ----------------------------
+    # =======================================================
+    # FINAL CLUSTER TABLE
+    # =======================================================
     st.markdown("### Cluster Assignments (Final)")
+
     st.dataframe(
         grouped[["State",
                  "Total Fish Landing (Tonnes)",
@@ -524,6 +529,7 @@ def hierarchical_clustering(merged_df):
         .sort_values("Cluster")
         .reset_index(drop=True)
     )
+
 
     
 def main():
