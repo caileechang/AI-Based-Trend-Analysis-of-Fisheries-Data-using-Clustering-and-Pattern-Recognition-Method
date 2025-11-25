@@ -464,6 +464,58 @@ def hierarchical_clustering(merged_df):
         avg_landing = subset["Total Fish Landing (Tonnes)"].mean()
         avg_vessels = subset["Total number of fishing vessels"].mean()
 
+        col_color = lut[cid]  # your cluster color palette
+
+        # Modern dashboard widget style
+        html = f"""
+        <div style="
+            background: linear-gradient(135deg, rgba(35,35,50,0.85), rgba(20,20,30,0.85));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            margin-bottom: 20px;
+            color: rgba(240,240,255,0.9);
+        ">
+            <h3 style="
+                text-align:center;
+                color:{col_color};
+                font-weight:700;
+                margin-top:0;
+                margin-bottom:15px;
+                letter-spacing:0.5px;
+            ">
+                Cluster {cid}
+            </h3>
+
+            <div style="font-size:16px; line-height:1.7;">
+                <p><b style="color:{col_color};">Avg landing:</b> {avg_landing:.2f} tonnes</p>
+                <p><b style="color:{col_color};">Avg vessels:</b> {avg_vessels:.0f}</p>
+                <p><b style="color:{col_color};">States:</b><br>
+                    {", ".join(subset['State'].tolist())}
+                </p>
+            </div>
+        </div>
+        """
+        cols[idx].markdown(html, unsafe_allow_html=True)
+
+
+    # ----------------------------
+    # Interpretation of TRUE Clusters
+    # ----------------------------
+    st.markdown("## Interpretation of TRUE Clusters")
+
+    real_clusters = sorted(grouped["Cluster"].unique())
+    cols = st.columns(len(real_clusters))
+
+    for idx, cid in enumerate(real_clusters):
+        subset = grouped[grouped["Cluster"] == cid]
+
+        avg_landing = subset["Total Fish Landing (Tonnes)"].mean()
+        avg_vessels = subset["Total number of fishing vessels"].mean()
+
         col_color = lut[cid]
 
         html = f"""
