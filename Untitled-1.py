@@ -1795,3 +1795,13 @@ def hierarchical_clustering(merged_df):
         .sort_values("Cluster")
         .reset_index(drop=True)
     )
+
+
+ def growth_html(curr, prev):
+                if prev == 0:
+                    return "<span style='color:gray;'>–</span>"
+                ratio = curr / prev
+                if ratio >= 1:
+                    return f"<span style='color:lightgreen; font-size:20px;'>↑ {ratio:.2f}x</span>"
+                else:
+                    return f"<span style='color:#ff4d4d; font-size:20px;'>↓ {ratio:.2f}x</span>"

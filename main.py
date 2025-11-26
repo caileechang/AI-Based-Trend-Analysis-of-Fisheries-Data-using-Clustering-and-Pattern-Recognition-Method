@@ -1024,15 +1024,37 @@ def main():
             def safe_get(df, year, col):
                 row = df.loc[df["Year"] == year, col]
                 return row.values[0] if len(row) else 0
-    
+
             def growth_html(curr, prev):
+                # Handle missing or zero previous value
+                try:
+                    prev = float(prev)
+                    curr = float(curr)
+                except:
+                    return "<span style='color:gray;'>–</span>"
+
                 if prev == 0:
                     return "<span style='color:gray;'>–</span>"
+
                 ratio = curr / prev
+                diff = curr - prev  # actual difference
+
+                # Determine direction
                 if ratio >= 1:
-                    return f"<span style='color:lightgreen; font-size:20px;'>↑ {ratio:.2f}x</span>"
+                    color = "lightgreen"
+                    arrow = "↑"
+                    word = "increased"
                 else:
-                    return f"<span style='color:#ff4d4d; font-size:20px;'>↓ {ratio:.2f}x</span>"
+                    color = "#ff4d4d"
+                    arrow = "↓"
+                    word = "decreased"
+
+                return (
+                    f"<span style='color:{color}; font-size:18px;'>"
+                    f"{arrow} {ratio:.2f}x • {word} by <b>{abs(diff):,.0f}</b> tonnes"
+                    "</span>"
+                )
+
     
             fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
             fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
