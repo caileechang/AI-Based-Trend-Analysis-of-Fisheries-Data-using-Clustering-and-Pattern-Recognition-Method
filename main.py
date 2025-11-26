@@ -1039,33 +1039,32 @@ def main():
             ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
             ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
-            # ---------------------------
-            # BEAUTIFUL CARD DESIGN CSS
-            # ---------------------------
+           # ----------------------------------------------------
+            # PREMIUM GRADIENT CARD (LIKE YOUR SCREENSHOT)
+            # ----------------------------------------------------
 
             card_style = """
-            background: #f5f5f5; 
-            padding: 28px 32px;
-            border-radius: 18px;
-            border: 1px solid rgba(0,0,0,0.08);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
+            padding: 30px 35px;
+            border-radius: 20px;
+            border: 1.2px solid rgba(0, 255, 200, 0.25);
+            box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
             transition: all 0.25s ease;
             """
 
-            # Hover effect
             st.markdown("""
             <style>
             .card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+                transform: translateY(-5px);
+                box-shadow: 0 0 25px rgba(0,255,200,0.25);
             }
             </style>
             """, unsafe_allow_html=True)
 
 
-            # ---------------------------
-            #      SUMMARY CARDS
-            # ---------------------------
+            # ----------------------------------------------------
+            #                 SUMMARY CARDS
+            # ----------------------------------------------------
 
             col1, col2 = st.columns(2)
 
@@ -1073,10 +1072,12 @@ def main():
                 st.markdown(
                     f"""
                     <div class="card" style="{card_style}">
-                        <h3 style="color:#222; margin:0;">Freshwater Landing</h3>
-                        <h1 style="color:#000; font-size:42px; margin-top:10px;">
-                            <b>{fw_latest:,.0f}</b> tonnes
+                        <h3 style="color:#d9faff; margin:0;">Freshwater Landing</h3>
+
+                        <h1 style="color:#ffffff; font-size:46px; margin-top:10px;">
+                            <b>{fw_latest:,.0f}</b> <span style="font-size:32px;opacity:0.8;">tonnes</span>
                         </h1>
+
                         <div style="margin-top:5px;">
                             {growth_html(fw_latest, fw_prev)}
                         </div>
@@ -1089,10 +1090,12 @@ def main():
                 st.markdown(
                     f"""
                     <div class="card" style="{card_style}">
-                        <h3 style="color:#222; margin:0;">Marine Landing</h3>
-                        <h1 style="color:#000; font-size:42px; margin-top:10px;">
-                            <b>{ma_latest:,.0f}</b> tonnes
+                        <h3 style="color:#d9faff; margin:0;">Marine Landing</h3>
+
+                        <h1 style="color:#ffffff; font-size:46px; margin-top:10px;">
+                            <b>{ma_latest:,.0f}</b> <span style="font-size:32px;opacity:0.8;">tonnes</span>
                         </h1>
+
                         <div style="margin-top:5px;">
                             {growth_html(ma_latest, ma_prev)}
                         </div>
@@ -1102,6 +1105,7 @@ def main():
                 )
 
             st.markdown("---")
+
 
     
             st.markdown(f"## Landing Summary in {latest_year}")
