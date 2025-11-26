@@ -1062,52 +1062,6 @@ def main():
             """, unsafe_allow_html=True)
 
 
-            # ----------------------------------------------------
-            #                 SUMMARY CARDS
-            # ----------------------------------------------------
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.markdown(
-                    f"""
-                    <div class="card" style="{card_style}">
-                        <h3 style="color:#d9faff; margin:0;">Freshwater Landing</h3>
-
-                        <h1 style="color:#ffffff; font-size:46px; margin-top:10px;">
-                            <b>{fw_latest:,.0f}</b> <span style="font-size:32px;opacity:0.8;">tonnes</span>
-                        </h1>
-
-                        <div style="margin-top:5px;">
-                            {growth_html(fw_latest, fw_prev)}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            with col2:
-                st.markdown(
-                    f"""
-                    <div class="card" style="{card_style}">
-                        <h3 style="color:#d9faff; margin:0;">Marine Landing</h3>
-
-                        <h1 style="color:#ffffff; font-size:46px; margin-top:10px;">
-                            <b>{ma_latest:,.0f}</b> <span style="font-size:32px;opacity:0.8;">tonnes</span>
-                        </h1>
-
-                        <div style="margin-top:5px;">
-                            {growth_html(ma_latest, ma_prev)}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            st.markdown("---")
-
-
-    
             st.markdown(f"## Landing Summary in {latest_year}")
     
             col1, col2 = st.columns(2)
