@@ -1025,34 +1025,36 @@ def main():
                 row = df.loc[df["Year"] == year, col]
                 return row.values[0] if len(row) else 0
 
-            def growth_html(curr, prev, year_label="previous year"):
-                # Handle missing previous-year value
+            def growth_html(curr, prev):
+                # Handle missing or zero previous value
                 try:
                     prev = float(prev)
                     curr = float(curr)
                 except:
-                    return "<span style='color:#ccc;'>No comparison</span>"
+                    return "<span style='color:gray;'>–</span>"
 
-                # Prevent division by zero
                 if prev == 0:
-                    return "<span style='color:#ccc;'>No comparison</span>"
+                    return "<span style='color:gray;'>–</span>"
 
-                # Compute changes
                 ratio = curr / prev
-                percent_change = (curr - prev) / prev * 100
-                diff = curr - prev
+                diff = curr - prev  # actual difference
 
                 # Determine direction
-                arrow = "↑" if diff >= 0 else "↓"
-                color = "#4CAF50" if diff >= 0 else "#ff4d4d"
-                word = "increased" if diff >= 0 else "decreased"
+                if ratio >= 1:
+                    color = "lightgreen"
+                    arrow = "↑"
+                    word = "increased"
+                else:
+                    color = "#ff4d4d"
+                    arrow = "↓"
+                    word = "decreased"
 
-                return f"""
-                <span style="color:{color}; font-size:17px;">
-                    {arrow} {ratio:.2f}x 
-                    • {word} by <b>{abs(diff):,.0f}</b> tonnes vs {year_label}
-                </span>
-                """
+                return (
+                    f"<span style='color:{color}; font-size:18px;'>"
+                    f"{arrow} {ratio:.2f}x • {word} by <b>{abs(diff):,.0f}</b> tonnes"
+                    "</span>"
+                )
+
 
     
             fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
