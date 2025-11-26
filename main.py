@@ -3117,17 +3117,8 @@ def main():
         from streamlit_folium import st_folium
         from branca.colormap import linear
 
-        st.subheader("🌍 Upgraded Geospatial Heatmap (Landing + Vessels + Efficiency)")
-        st.markdown("""
-        <p style='color:#ccc'>
-        This upgraded geospatial map shows:
-        <br>• Fish Landing Heatmap
-        <br>• Vessel Count Heatmap
-        <br>• Efficiency Heatmap (Landing ÷ Vessel)
-        <br>• State markers with efficiency categories
-        <br>• Efficiency comparison chart
-        </p>
-        """, unsafe_allow_html=True)
+        st.subheader("🌍 Geospatial Heatmap ")
+       
 
         # -------------------------------------------------------------------
         # CONTAINERS
