@@ -1114,60 +1114,7 @@ def main():
         
             st.markdown("---")
 
-            card_style = """
-            background: linear-gradient(135deg, #1b2631 0%, #111820 100%);
-            padding: 30px 35px;
-            border-radius: 20px;
-            border: 1px solid rgba(80,160,255,0.14);
-            box-shadow: 0 4px 14px rgba(80,160,255,0.05);
-            transition: all 0.25s ease;
-            """
-
-            # Hover effect – subtle, professional
-            st.markdown("""
-            <style>
-            .card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 6px 20px rgba(80,160,255,0.15);
-            }
-            </style>
-            """, unsafe_allow_html=True)
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.markdown(
-                    f"""
-                    <div class="card" style="{card_style}">
-                        <h3 style="color:#dfe8f2; margin:0;">Freshwater Landing</h3>
-
-                        <h1 style="color:white; font-size:46px; margin-top:10px;">
-                            <b>{fw_latest:,.0f}</b> <span style="font-size:32px; opacity:0.7;">tonnes</span>
-                        </h1>
-
-                        <div style="margin-top:5px;">{growth_html(fw_latest, fw_prev, latest_year)}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            with col2:
-                st.markdown(
-                    f"""
-                    <div class="card" style="{card_style}">
-                        <h3 style="color:#dfe8f2; margin:0;">Marine Landing</h3>
-
-                        <h1 style="color:white; font-size:46px; margin-top:10px;">
-                            <b>{ma_latest:,.0f}</b> <span style="font-size:32px; opacity:0.7;">tonnes</span>
-                        </h1>
-
-                        <div style="margin-top:5px;">{growth_html(ma_latest, ma_prev, latest_year)}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-
+           
    
             # YEARLY CLUSTER PLOT
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
