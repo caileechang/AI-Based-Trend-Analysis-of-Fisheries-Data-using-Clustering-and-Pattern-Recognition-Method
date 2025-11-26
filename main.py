@@ -1026,7 +1026,6 @@ def main():
                 return row.values[0] if len(row) else 0
 
             def growth_html(curr, prev, curr_year):
-                # Handle missing or zero previous value
                 try:
                     prev = float(prev)
                     curr = float(curr)
