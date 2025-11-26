@@ -3204,60 +3204,87 @@ def main():
             "No Data": "lightgray",
         }
 
-        # -------------------------------------------------------------------
-        # SUMMARY CARDS
-        # -------------------------------------------------------------------
+        # -------------------------
+        # SUMMARY CARDS (UPGRADED)
+        # -------------------------
         with summary_c:
             total_land = df_year["Landing"].sum()
             total_vess = df_year["Vessels"].sum()
-
             high = df_year.loc[df_year["Landing"].idxmax()]
             low = df_year.loc[df_year["Landing"].idxmin()]
 
+            # BEAUTIFUL GRADIENT CARD STYLE
             style_card = """
-                background: #1e1e1e;
-                padding: 15px;
-                border-radius: 10px;
-                border: 1px solid #333;
+                background: linear-gradient(135deg, #003a57 0%, #005a7a 100%);
+                padding: 22px;
+                border-radius: 16px;
+                border: 1px solid rgba(255,255,255,0.12);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            """
+
+            style_high = """
+                background: linear-gradient(135deg, #064e3b 0%, #0f766e 100%); /* green tone */
+                padding: 22px;
+                border-radius: 16px;
+                border: 1px solid rgba(255,255,255,0.12);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            """
+
+            style_low = """
+                background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); /* red tone */
+                padding: 22px;
+                border-radius: 16px;
+                border: 1px solid rgba(255,255,255,0.12);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             """
 
             col1, col2, col3, col4 = st.columns(4)
 
+            # Total Landing
             with col1:
                 st.markdown(f"""
                 <div style="{style_card}">
-                    <div style="color:#ccc">Total Landing</div>
-                    <div style="color:white; font-size:26px;"><b>{total_land:,.0f}</b></div>
+                    <div style="color:#d0d0d0; font-size:16px;">Total Landing</div>
+                    <div style="color:white; font-size:32px; font-weight:600;">
+                        {total_land:,.0f}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
+            # Total Vessels
             with col2:
                 st.markdown(f"""
                 <div style="{style_card}">
-                    <div style="color:#ccc">Total Vessels</div>
-                    <div style="color:white; font-size:26px;"><b>{total_vess:,.0f}</b></div>
+                    <div style="color:#d0d0d0; font-size:16px;">Total Vessels</div>
+                    <div style="color:white; font-size:32px; font-weight:600;">
+                        {total_vess:,.0f}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
+            # Highest Landing
             with col3:
                 st.markdown(f"""
-                <div style="{style_card}">
-                    <div style="color:#ccc">Highest Landing</div>
-                    <div style="color:#4ade80;font-size:18px;"><b>{high['State']}</b></div>
-                    <div style="color:white;font-size:26px;"><b>{high['Landing']:,.0f}</b></div>
+                <div style="{style_high}">
+                    <div style="color:#d0ffd2; font-size:16px;">Highest Landing</div>
+                    <div style="color:#86efac; font-size:20px; font-weight:600;">{high['State']}</div>
+                    <div style="color:white; font-size:32px; font-weight:600;">
+                        {high['Landing']:,.0f}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
+            # Lowest Landing
             with col4:
                 st.markdown(f"""
-                <div style="{style_card}">
-                    <div style="color:#ccc">Lowest Landing</div>
-                    <div style="color:#f87171;font-size:18px;"><b>{low['State']}</b></div>
-                    <div style="color:white;font-size:26px;"><b>{low['Landing']:,.0f}</b></div>
+                <div style="{style_low}">
+                    <div style="color:#ffd0d0; font-size:16px;">Lowest Landing</div>
+                    <div style="color:#fecaca; font-size:20px; font-weight:600;">{low['State']}</div>
+                    <div style="color:white; font-size:32px; font-weight:600;">
+                        {low['Landing']:,.0f}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
-
-        st.markdown("---")
 
         # -------------------------------------------------------------------
         # STATE FILTER
