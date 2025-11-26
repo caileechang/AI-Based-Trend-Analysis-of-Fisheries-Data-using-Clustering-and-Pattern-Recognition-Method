@@ -1039,7 +1039,6 @@ def main():
             ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
             ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
-
             # ---------------------------
             # BEAUTIFUL CARD DESIGN CSS
             # ---------------------------
@@ -1067,7 +1066,7 @@ def main():
             # ---------------------------
             #      SUMMARY CARDS
             # ---------------------------
-            st.markdown(f"## Landing Summary in {latest_year}")
+
             col1, col2 = st.columns(2)
 
             with col1:
