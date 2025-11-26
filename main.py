@@ -3111,11 +3111,11 @@ def main():
         import folium
         import numpy as np
         import pandas as pd
+        import seaborn as sns
+        import matplotlib.pyplot as plt
         from folium.plugins import HeatMap, MiniMap, Fullscreen
         from streamlit_folium import st_folium
         from branca.colormap import linear
-        import matplotlib.pyplot as plt
-        import seaborn as sns
 
         st.subheader("🌍 Upgraded Geospatial Heatmap (Landing + Vessels + Efficiency)")
         st.markdown("""
@@ -3124,8 +3124,8 @@ def main():
         <br>• Fish Landing Heatmap
         <br>• Vessel Count Heatmap
         <br>• Efficiency Heatmap (Landing ÷ Vessel)
-        <br>• State markers with detailed popup info + efficiency category
-        <br>• Comparison chart for efficiency
+        <br>• State markers with efficiency categories
+        <br>• Efficiency comparison chart
         </p>
         """, unsafe_allow_html=True)
 
@@ -3148,7 +3148,6 @@ def main():
 
         df_year = merged_df[merged_df["Year"] == sel_year].copy()
 
-        # Group by state
         df_year = df_year.groupby("State", as_index=False)[
             ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
         ].sum()
@@ -3161,7 +3160,7 @@ def main():
         df_year = df_year[df_year["Landing"] > 0].copy()
 
         # -------------------------------------------------------------------
-        # STATE COORDINATES
+        # COORDINATES
         # -------------------------------------------------------------------
         coordinates = {
             "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
@@ -3186,7 +3185,7 @@ def main():
         df_year = df_year.dropna(subset=["Coords"]).copy()
 
         # -------------------------------------------------------------------
-        # EFFICIENCY = Landing / Vessels
+        # EFFICIENCY
         # -------------------------------------------------------------------
         df_year["Efficiency"] = (
             df_year["Landing"] / df_year["Vessels"].replace(0, np.nan)
@@ -3196,26 +3195,25 @@ def main():
         eff_avg = eff_valid.mean()
 
         # Efficiency category thresholds
-        q_low, q_high = eff_valid.quantile([0.33, 0.66])
+        q_low, q_mid = eff_valid.quantile([0.33, 0.66])
 
         def eff_category(x):
             if np.isnan(x):
                 return "No Data"
             if x <= q_low:
                 return "Low"
-            elif x <= q_high:
+            elif x <= q_mid:
                 return "Medium"
             else:
                 return "High"
 
         df_year["Eff_Category"] = df_year["Efficiency"].apply(eff_category)
 
-        # Colors for efficiency category
         eff_colors = {
-            "High":   "#00c853",     # green
-            "Medium": "#ffd54f",     # amber
-            "Low":    "#ff5252",     # red
-            "No Data": "lightgray"
+            "High": "#00c853",
+            "Medium": "#ffd54f",
+            "Low": "#ff5252",
+            "No Data": "lightgray",
         }
 
         # -------------------------------------------------------------------
@@ -3224,6 +3222,7 @@ def main():
         with summary_c:
             total_land = df_year["Landing"].sum()
             total_vess = df_year["Vessels"].sum()
+
             high = df_year.loc[df_year["Landing"].idxmax()]
             low = df_year.loc[df_year["Landing"].idxmin()]
 
@@ -3281,10 +3280,6 @@ def main():
 
         df = df_year[df_year["State"].isin(selected_states)].copy()
 
-        if df.empty:
-            st.warning("No states selected.")
-            st.stop()
-
         # -------------------------------------------------------------------
         # MAP THEME
         # -------------------------------------------------------------------
@@ -3295,7 +3290,7 @@ def main():
             "Light": "CartoDB positron",
             "Dark": "CartoDB dark_matter",
             "Satellite": "Esri.WorldImagery",
-            "Default": "OpenStreetMap"
+            "Default": "OpenStreetMap",
         }
 
         # -------------------------------------------------------------------
@@ -3304,11 +3299,11 @@ def main():
         m = folium.Map(location=[4.2, 108.5], zoom_start=6, tiles=None)
         folium.TileLayer(tile_map[map_theme], name="Base Map", control=False).add_to(m)
 
-        # Fit bounds
         lat_min = df["Coords"].apply(lambda x: x[0]).min()
         lat_max = df["Coords"].apply(lambda x: x[0]).max()
         lon_min = df["Coords"].apply(lambda x: x[1]).min()
         lon_max = df["Coords"].apply(lambda x: x[1]).max()
+
         m.fit_bounds([[lat_min, lon_min], [lat_max, lon_max]])
 
         # -------------------------------------------------------------------
@@ -3318,38 +3313,49 @@ def main():
         layer_vess = folium.FeatureGroup("Vessels Heatmap")
         layer_eff = folium.FeatureGroup("Efficiency Heatmap")
 
-        # Heatmaps
-        HeatMap([[c[0], c[1], v] for c, v in zip(df["Coords"], df["Landing"])],
-                radius=40, blur=25, min_opacity=0.4).add_to(layer_land)
+        # Landing Heatmap
+        HeatMap(
+            [[lat, lon, val] for (lat, lon), val in zip(df["Coords"], df["Landing"])],
+            radius=40, blur=25, min_opacity=0.4
+        ).add_to(layer_land)
 
-        HeatMap([[c[0], c[1], v] for c, v in zip(df["Coords"], df["Vessels"])],
-                radius=40, blur=25,
-                gradient={0.2:"blue", 0.5:"cyan", 0.7:"lime", 1:"red"}).add_to(layer_vess)
+        # Vessels Heatmap
+        HeatMap(
+            [[lat, lon, val] for (lat, lon), val in zip(df["Coords"], df["Vessels"])],
+            radius=40, blur=25,
+            gradient={0.2:"blue", 0.5:"cyan", 0.7:"lime", 1:"red"}
+        ).add_to(layer_vess)
 
-        HeatMap([[c[0], c[1], v] for c, v in zip(df["Coords"], df["Efficiency"])],
-                radius=40, blur=30,
-                gradient={0.2:"purple", 0.5:"magenta", 0.8:"pink", 1:"white"}).add_to(layer_eff)
+        # -------------------------------------------------------------------
+        # EFFICIENCY HEATMAP — FIXED (NO NaN)
+        # -------------------------------------------------------------------
+        eff_df = df.dropna(subset=["Efficiency"]).copy()
+
+        HeatMap(
+            [[lat, lon, val] for (lat, lon), val in zip(eff_df["Coords"], eff_df["Efficiency"])],
+            radius=40, blur=30,
+            gradient={0.2:"purple", 0.5:"magenta", 0.8:"pink", 1:"white"}
+        ).add_to(layer_eff)
 
         layer_land.add_to(m)
         layer_vess.add_to(m)
         layer_eff.add_to(m)
 
         # -------------------------------------------------------------------
-        # STATE MARKERS (NOW COLORED BY EFFICIENCY CATEGORY)
+        # STATE MARKERS (Efficiency Category Colors)
         # -------------------------------------------------------------------
         marker_layer = folium.FeatureGroup("State Markers")
 
         for _, r in df.iterrows():
             lat, lon = r["Coords"]
-            eff = r["Efficiency"]
             cat = r["Eff_Category"]
-            color = eff_colors.get(cat, "lightgray")
+            col = eff_colors.get(cat, "lightgray")
 
             popup = f"""
             <b>{r['State']}</b><br>
             Landing: {r['Landing']:,.0f} t<br>
             Vessels: {r['Vessels']:,.0f}<br>
-            Efficiency: {eff:.2f} t/v<br>
+            Efficiency: {r['Efficiency']:.2f}<br>
             Category: <b>{cat}</b>
             """
 
@@ -3359,7 +3365,7 @@ def main():
                 color="black",
                 weight=1,
                 fill=True,
-                fill_color=color,
+                fill_color=col,
                 fill_opacity=0.9,
                 popup=folium.Popup(popup, max_width=250),
                 tooltip=r["State"]
@@ -3367,9 +3373,8 @@ def main():
 
         marker_layer.add_to(m)
 
-        # MiniMap + Fullscreen
-        MiniMap(toggle_display=True, zoom_level_fixed=6).add_to(m)
-        Fullscreen(position='topright').add_to(m)
+        MiniMap(toggle_display=True).add_to(m)
+        Fullscreen().add_to(m)
         folium.LayerControl(collapsed=False).add_to(m)
 
         # -------------------------------------------------------------------
@@ -3379,7 +3384,7 @@ def main():
             st_folium(m, height=600, width="100%")
 
         # -------------------------------------------------------------------
-        # TABLE (LANDING / VESSELS / EFF)
+        # TABLE
         # -------------------------------------------------------------------
         with table_c:
             st.markdown("### 📊 State Landing / Vessels / Efficiency")
@@ -3395,8 +3400,7 @@ def main():
         with chart_c:
             st.markdown("### 📈 Efficiency Comparison Across States")
 
-            df_chart = df.dropna(subset=["Efficiency"]).copy()
-            df_chart = df_chart.sort_values("Efficiency", ascending=False)
+            df_chart = df.dropna(subset=["Efficiency"]).sort_values("Efficiency", ascending=False)
 
             fig, ax = plt.subplots(figsize=(11, 4))
             sns.barplot(
@@ -3406,14 +3410,12 @@ def main():
                 hue="Eff_Category",
                 palette=eff_colors,
                 dodge=False,
-                ax=ax,
+                ax=ax
             )
 
-            ax.axhline(eff_avg, linestyle="--", linewidth=1.3, color="gray", label="National Avg")
-            ax.set_ylabel("Efficiency (tonnes per vessel)")
-            ax.set_xlabel("")
+            ax.axhline(eff_avg, linestyle="--", color="gray", linewidth=1.3, label="National Avg")
             ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
-            ax.legend(title="Category", bbox_to_anchor=(1.02, 1), loc="upper left")
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             st.pyplot(fig)
 
@@ -3425,18 +3427,20 @@ def main():
                 st.markdown("""
                 ### Layers Explained:
                 - **Landing Heatmap (Blue)** – total fish landing  
-                - **Vessels Heatmap (Red gradient)** – fishing vessel count  
-                - **Efficiency Heatmap (Purple → White)** – tonnes per vessel  
-
-                ### Efficiency Categories:
-                - 🟢 **High Efficiency** – top 33% of states  
-                - 🟡 **Medium Efficiency** – middle group  
-                - 🔴 **Low Efficiency** – bottom 33% of states  
+                - **Vessels Heatmap (Red gradient)** – number of fishing vessels  
+                - **Efficiency Heatmap (Purple → White)** – landing per vessel  
 
                 ### Marker Colors:
-                - Markers are colored by **efficiency category**  
-                - Hover for landing, vessels, efficiency & category  
+                - 🟢 High Efficiency  
+                - 🟡 Medium  
+                - 🔴 Low  
+
+                ### Tips:
+                • High Landing + High Efficiency = 🔥 Highly productive region  
+                • High Landing + Low Efficiency = ⚠️ Many vessels, low productivity  
+                • Low Landing + High Efficiency = 💡 Small fleets but very efficient  
                 """)
+
 
 
            
