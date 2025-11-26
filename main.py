@@ -1025,7 +1025,7 @@ def main():
                 row = df.loc[df["Year"] == year, col]
                 return row.values[0] if len(row) else 0
 
-            def growth_html(curr, prev):
+            def growth_html(curr, prev, curr_year):
                 # Handle missing or zero previous value
                 try:
                     prev = float(prev)
@@ -1037,9 +1037,9 @@ def main():
                     return "<span style='color:gray;'>–</span>"
 
                 ratio = curr / prev
-                diff = curr - prev  # actual difference
+                diff = curr - prev
+                prev_year = curr_year - 1
 
-                # Determine direction
                 if ratio >= 1:
                     color = "lightgreen"
                     arrow = "↑"
@@ -1051,7 +1051,8 @@ def main():
 
                 return (
                     f"<span style='color:{color}; font-size:18px;'>"
-                    f"{arrow} {ratio:.2f}x • {word} by <b>{abs(diff):,.0f}</b> tonnes"
+                    f"{arrow} {ratio:.2f}x • {word} by <b>{abs(diff):,.0f}</b> tonnes "
+                    f"vs {prev_year}"
                     "</span>"
                 )
 
