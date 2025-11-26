@@ -1038,6 +1038,72 @@ def main():
             fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
             ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
             ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
+
+
+            # ---------------------------
+            # BEAUTIFUL CARD DESIGN CSS
+            # ---------------------------
+
+            card_style = """
+            background: #f5f5f5; 
+            padding: 28px 32px;
+            border-radius: 18px;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.25s ease;
+            """
+
+            # Hover effect
+            st.markdown("""
+            <style>
+            .card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+
+            # ---------------------------
+            #      SUMMARY CARDS
+            # ---------------------------
+            st.markdown(f"## Landing Summary in {latest_year}")
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown(
+                    f"""
+                    <div class="card" style="{card_style}">
+                        <h3 style="color:#222; margin:0;">Freshwater Landing</h3>
+                        <h1 style="color:#000; font-size:42px; margin-top:10px;">
+                            <b>{fw_latest:,.0f}</b> tonnes
+                        </h1>
+                        <div style="margin-top:5px;">
+                            {growth_html(fw_latest, fw_prev)}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with col2:
+                st.markdown(
+                    f"""
+                    <div class="card" style="{card_style}">
+                        <h3 style="color:#222; margin:0;">Marine Landing</h3>
+                        <h1 style="color:#000; font-size:42px; margin-top:10px;">
+                            <b>{ma_latest:,.0f}</b> tonnes
+                        </h1>
+                        <div style="margin-top:5px;">
+                            {growth_html(ma_latest, ma_prev)}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            st.markdown("---")
+
     
             st.markdown(f"## Landing Summary in {latest_year}")
     
