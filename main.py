@@ -3120,9 +3120,6 @@ def main():
         st.subheader("🌍 Geospatial Heatmap ")
        
 
-        # -------------------------------------------------------------------
-        # CONTAINERS
-        # -------------------------------------------------------------------
         summary_c = st.container()
         selection_c = st.container()
         map_c = st.container()
