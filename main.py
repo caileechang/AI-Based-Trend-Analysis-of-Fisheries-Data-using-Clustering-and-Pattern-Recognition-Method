@@ -736,6 +736,9 @@ def main():
 
         st.session_state.yearly_summary = yearly_summary
 
+        st.write("DEBUG yearly_summary columns:", yearly_summary.columns.tolist())
+        st.write(yearly_summary.head())
+
         # ===============================
         # BASIC INFO
         # ===============================
@@ -895,52 +898,6 @@ def main():
 
         st.markdown(f"### Fish Landing by State — {selected_year}")
         st.dataframe(filtered_selected, use_container_width=True, height=350)
-
-
-        # If user uploaded a new dataset, re-prepare merged_df dynamically
-        #if uploaded_file:
-           # merged_df = prepare_yearly(df_land, df_vess)
-
-        # --- Summarize yearly totals ---
-        #yearly_summary = (
-           # merged_df.groupby(['Year', 'State'])[
-               # ['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']
-            #]
-            #.sum()
-           # .reset_index()
-            #.sort_values(['Year', 'State'])
-       # )
-        #yearly_summary = merged_df.groupby(['Year','State'])[['Freshwater (Tonnes)', 'Marine (Tonnes)', 'Total Fish Landing (Tonnes)']].sum().reset_index()
-        #st.dataframe(yearly_summary, use_container_width=True, height=400)
-
-       
-    # Dynamically include newly uploaded years in dropdown
-      
-
-       # ax.set_xticklabels(filtered_sorted['State'], rotation=45, ha='right')
-    
-        # Labels & design
-        #ax.set_title(f"Total Fish Landing by State - {selected_year}", fontsize=14, pad=15)
-        #ax.set_xlabel("State", fontsize=12)
-        #ax.set_ylabel("Total Fish Landing (Tonnes)", fontsize=12)
-        #plt.xticks(rotation=45, ha='center')
-        #plt.tight_layout()
-    
-        # Display bar chart
-        #st.pyplot(fig)
-    
-       
-    # Allow filtering by year
-        #selected_year = st.selectbox("Select a year to view state-level details:", sorted(yearly_summary['Year'].unique()))
-       # filtered = yearly_summary[yearly_summary['Year'] == selected_year]
-        
-        #st.dataframe(filtered, use_container_width=True, height=300)
-
-# Sort states by total landing for better visual clarity
-        #filtered_sorted = filtered.sort_values('Total Fish Landing (Tonnes)', ascending=False)
-
-# Make the figure a bit wider to prevent label overlap
-       # fig, ax = plt.subplots(figsize=(14, 6))
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
 
