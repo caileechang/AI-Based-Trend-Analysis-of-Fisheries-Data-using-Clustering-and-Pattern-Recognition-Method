@@ -940,70 +940,157 @@ def main():
         import matplotlib.pyplot as plt
         import seaborn as sns
         import numpy as np
-        st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
-    
-        # --- Step 1: Prepare data ---
-        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
-        scaled = StandardScaler().fit_transform(features)
-    
-        # --- Step 2: Compute inertia (Elbow) and silhouette for k = 2–10 ---
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.cluster import KMeans
+        from sklearn.metrics import silhouette_score
+
+        st.subheader("Automatic 2D K-Means Clustering (Elbow + Silhouette)")
+
+        # ============================================================
+        # 0. SAFETY CHECKS
+        # ============================================================
+        # Ensure merged_df exists
+        if "merged_df" in st.session_state:
+            merged_df = st.session_state["merged_df"].copy()
+        else:
+            st.error("❌ merged_df is missing. Please load data first.")
+            st.stop()
+
+        # Confirm required columns
+        required_cols = [
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]
+
+        missing = [c for c in required_cols if c not in merged_df.columns]
+        if missing:
+            st.error(f"❌ Missing required columns: {missing}")
+            st.stop()
+
+        # Dataset check
+        if merged_df.empty:
+            st.error("❌ Dataset is empty. Cannot perform clustering.")
+            st.stop()
+
+        # ============================================================
+        # 1. PREPARE FEATURES
+        # ============================================================
+        try:
+            features = merged_df[required_cols].astype(float)
+        except Exception as e:
+            st.error(f"❌ Error preparing features: {e}")
+            st.stop()
+
+        if features.isna().any().any():
+            st.warning("⚠ Missing values detected — filling with 0.")
+            features = features.fillna(0)
+
+        # Scaling
+        try:
+            scaled = StandardScaler().fit_transform(features)
+        except Exception as e:
+            st.error(f"❌ Scaling failed: {e}")
+            st.stop()
+
+        # ============================================================
+        # 2. ELBOW & SILHOUETTE (k=2–10)
+        # ============================================================
         ks = range(2, 11)
-        inertia = []
-        silhouette = []
-    
+        inertia_vals = []
+        sil_vals = []
+
         for k in ks:
-            kmeans = KMeans(n_clusters=k, random_state=42)
-            labels = kmeans.fit_predict(scaled)
-            inertia.append(kmeans.inertia_)
-            sil = silhouette_score(scaled, labels)
-            silhouette.append(sil)
-    
-        # --- Step 3: Determine the best k (highest silhouette) ---
-        best_k = ks[np.argmax(silhouette)]
-    
-        # --- Step 4: Plot both metrics side by side ---
+            try:
+                kmeans = KMeans(n_clusters=k, random_state=42)
+                labels = kmeans.fit_predict(scaled)
+                inertia_vals.append(kmeans.inertia_)
+                sil_vals.append(silhouette_score(scaled, labels))
+            except Exception:
+                inertia_vals.append(None)
+                sil_vals.append(-1)
+
+        # Determine best k (highest silhouette)
+        best_k = ks[int(np.argmax(sil_vals))]
+
+        # ============================================================
+        # 3. SHOW ELBOW + SILHOUETTE SIDE BY SIDE
+        # ============================================================
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-    
+
         # Elbow plot
-        ax1.plot(ks, inertia, marker='o')
+        ax1.plot(ks, inertia_vals, marker='o')
         ax1.set_title("Elbow Method")
         ax1.set_xlabel("k")
         ax1.set_ylabel("Inertia")
         ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
         ax1.legend()
-    
+
         # Silhouette plot
-        ax2.plot(ks, silhouette, marker='o', color='orange')
+        ax2.plot(ks, sil_vals, marker='o', color='orange')
         ax2.set_title("Silhouette Score")
         ax2.set_xlabel("k")
         ax2.set_ylabel("Score")
         ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
         ax2.legend()
-    
+
         st.pyplot(fig)
-    
-        # --- Step 5: Fit the final model using best_k ---
+
+        # ============================================================
+        # 4. FIT FINAL MODEL WITH best_k
+        # ============================================================
         final_model = KMeans(n_clusters=best_k, random_state=42)
-        merged_df['Cluster'] = final_model.fit_predict(scaled)
-    
-        # --- Step 6: Display summary ---
-        st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
-        st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
-    
-        # --- Step 7: Show 2D scatter ---
-        fig2, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(
-            data=merged_df,
-            x='Total number of fishing vessels',
-            y='Total Fish Landing (Tonnes)',
-            hue='Cluster',
-            palette='viridis',
-            s=70,
-            ax=ax
+        merged_df["Cluster"] = final_model.fit_predict(scaled)
+
+        st.success(f"✔ Final model fitted using k = {best_k}")
+
+        # ============================================================
+        # 5. SCATTER PLOT (Premium Look)
+        # ============================================================
+        fig2, ax = plt.subplots(figsize=(10, 7))
+
+        scatter = ax.scatter(
+            merged_df["Total number of fishing vessels"],
+            merged_df["Total Fish Landing (Tonnes)"],
+            c=merged_df["Cluster"],
+            cmap="viridis",
+            s=80,
+            edgecolor="black",
+            alpha=0.85
         )
-        ax.set_title(f"Automatic 2D K-Means Clustering (k={best_k})")
+
+        # cluster centers
+        centers = final_model.cluster_centers_
+        centers_unscaled = StandardScaler().fit(features).inverse_transform(centers)
+
+        ax.scatter(
+            centers_unscaled[:, 1],
+            centers_unscaled[:, 0],
+            s=250,
+            c="red",
+            marker="X",
+            edgecolor="white",
+            linewidth=2.5,
+            label="Cluster Centers"
+        )
+
+        # labels
+        for i, row in merged_df.iterrows():
+            ax.text(
+                row["Total number of fishing vessels"] + 0.5,
+                row["Total Fish Landing (Tonnes)"] + 0.5,
+                row["State"],
+                fontsize=7,
+                color="white"
+            )
+
+        ax.set_xlabel("Total number of fishing vessels")
+        ax.set_ylabel("Total Fish Landing (Tonnes)")
+        ax.set_title(f"2D K-Means Clustering (k = {best_k})")
+        ax.grid(alpha=0.3)
+        ax.legend()
+
         st.pyplot(fig2)
-    
+
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         import matplotlib.pyplot as plt
