@@ -939,6 +939,7 @@ def main():
     elif plot_option == "2D KMeans Scatter":
         import matplotlib.pyplot as plt
         import seaborn as sns
+        import numpy as np
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
     
         # --- Step 1: Prepare data ---
