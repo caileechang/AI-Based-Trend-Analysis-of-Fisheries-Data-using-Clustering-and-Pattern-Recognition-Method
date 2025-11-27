@@ -1379,7 +1379,113 @@ def main():
 
     
         
- 
+    elif plot_option == "2D KMeans Scatter":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.cluster import KMeans
+        from sklearn.metrics import silhouette_score
+        import plotly.express as px
+
+        st.subheader("Automatic 2D K-Means Clustering")
+
+        # ---------------------------------------------------
+        # STEP 1: PREPARE DATA
+        # ---------------------------------------------------
+        features = merged_df[['Total number of fishing vessels',
+                            'Total Fish Landing (Tonnes)']]
+        scaled = StandardScaler().fit_transform(features)
+
+        # ---------------------------------------------------
+        # STEP 2: AUTOMATICALLY FIND BEST k
+        # ---------------------------------------------------
+        sil_scores = {}
+        for k in range(2, 11):
+            model = KMeans(n_clusters=k, random_state=42)
+            labels = model.fit_predict(scaled)
+            sil_scores[k] = silhouette_score(scaled, labels)
+
+        best_k = max(sil_scores, key=sil_scores.get)
+
+        # ---------------------------------------------------
+        # STEP 3: FIT FINAL MODEL
+        # ---------------------------------------------------
+        final_model = KMeans(n_clusters=best_k, random_state=42)
+        merged_df['Cluster'] = final_model.fit_predict(scaled)
+
+        st.markdown(f"**Optimal clusters determined:** {best_k}")
+        st.markdown("Using Silhouette Score (higher = better cluster separation).")
+
+        # ---------------------------------------------------
+        # STEP 4: VISUALIZATION MODE
+        # ---------------------------------------------------
+        mode = st.radio(
+            "Select visualisation type:",
+            ["Static", "Interactive"],
+            horizontal=True
+        )
+
+        # ---------------------------------------------------
+        # STATIC VERSION (MATPLOTLIB)
+        # ---------------------------------------------------
+        if mode == "Static":
+            fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
+
+            scatter = ax.scatter(
+                merged_df['Total number of fishing vessels'],
+                merged_df['Total Fish Landing (Tonnes)'],
+                c=merged_df['Cluster'],
+                cmap='coolwarm',
+                s=60,
+                edgecolor='white',
+                linewidth=0.7,
+                alpha=0.9
+            )
+
+            ax.set_title(f"2D K-Means Clustering (k={best_k})", fontsize=12)
+            ax.set_xlabel("Total number of fishing vessels", fontsize=10)
+            ax.set_ylabel("Total Fish Landing (Tonnes)", fontsize=10)
+            ax.grid(True, linestyle='--', alpha=0.3)
+
+            # Colorbar
+            cbar = plt.colorbar(scatter)
+            cbar.set_label("Cluster")
+
+            st.pyplot(fig)
+
+        # ---------------------------------------------------
+        # INTERACTIVE VERSION (PLOTLY)
+        # ---------------------------------------------------
+        else:
+            fig = px.scatter(
+                merged_df,
+                x='Total number of fishing vessels',
+                y='Total Fish Landing (Tonnes)',
+                color='Cluster',
+                hover_data=['State', 'Year',
+                            'Total Fish Landing (Tonnes)',
+                            'Total number of fishing vessels'],
+                title=f"Interactive 2D K-Means Clustering (k={best_k})",
+                color_continuous_scale='Viridis',
+                height=600
+            )
+
+            fig.update_traces(
+                marker=dict(
+                    size=10,
+                    line=dict(width=0.8, color='black')
+                )
+            )
+
+            fig.update_layout(
+                paper_bgcolor='#111111',
+                plot_bgcolor='#111111',
+                font_color='white',
+                margin=dict(l=20, r=20, t=50, b=20)
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
 
 
     elif plot_option == "3D KMeans Clustering":
