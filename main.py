@@ -720,13 +720,10 @@ def main():
 
         import seaborn as sns
         import matplotlib.pyplot as plt
-        import plotly.graph_objects as go
 
         st.markdown("##  Yearly Fish Landing")
 
-        # ===============================
-        # LOAD YEARLY SUMMARY
-        # ===============================
+        # Load processed yearly summary
         if uploaded_file:
             yearly_summary = prepare_yearly(df_land, df_vess)
         else:
@@ -736,133 +733,126 @@ def main():
 
         st.session_state.yearly_summary = yearly_summary
 
-        st.write("DEBUG yearly_summary columns:", yearly_summary.columns.tolist())
-        st.write(yearly_summary.head())
-
-        # ===============================
-        # BASIC INFO
-        # ===============================
+        # ----------------------------
+        # A) TOP 3 STATES SUMMARY
+        # ----------------------------
         latest_year = int(yearly_summary["Year"].max())
         prev_year = latest_year - 1
 
-        filtered_latest = yearly_summary[yearly_summary["Year"] == latest_year].copy()
+        latest_df = yearly_summary[yearly_summary["Year"] == latest_year].copy()
 
-        # Top 3 sorted by landing
-        sorted_desc = filtered_latest.sort_values(
+        # Sort by landing
+        sorted_desc = latest_df.sort_values(
             "Total Fish Landing (Tonnes)", ascending=False
         )
         top3 = sorted_desc.head(3).copy()
 
-        # ===============================
-        # FIXED: SAFE PREVIOUS-YEAR LOOKUP
-        # ===============================
-        def get_prev(state):
-            row = yearly_summary.loc[
-                (yearly_summary["Year"] == prev_year) &
-                (yearly_summary["State"] == state),
-                "Total Fish Landing (Tonnes)"
+        # ---- FIXED & SAFE PREVIOUS YEAR FUNCTION ----
+        def get_prev_value(state):
+            row = yearly_summary[
+                (yearly_summary["Year"] == prev_year)
+                & (yearly_summary["State"].str.upper() == state.upper())
             ]
-            return float(row.values[0]) if len(row) else np.nan
 
-        top3["Prev_Year"] = top3["State"].apply(get_prev)
+            if row.empty:
+                return np.nan
+            return float(row["Total Fish Landing (Tonnes)"].iloc[0])
 
-        # ===============================
-        # FIXED: SAFE GROWTH CALCULATION
-        # ===============================
+        top3["Prev_Year"] = top3["State"].apply(get_prev_value)
+
+        # ---- SAFE GROWTH TEXT ----
         def growth_text(curr, prev):
-            if prev is None or pd.isna(prev) or prev == 0:
+            try:
+                prev = float(prev)
+                curr = float(curr)
+            except:
                 return "<span style='color:#888;'>No comparison</span>"
 
-            curr = float(curr)
-            prev = float(prev)
+            if prev == 0 or np.isnan(prev):
+                return "<span style='color:#888;'>No comparison</span>"
 
             change = (curr - prev) / prev * 100
             arrow = "↑" if change >= 0 else "↓"
             color = "#4CAF50" if change >= 0 else "#ff4d4d"
-            label = f" vs {prev_year}"
 
-            return (
-                f"<span style='color:{color}; font-size:16px;'>"
-                f"{arrow} {change:.1f}%{label}</span>"
-            )
+            return f"""
+            <span style='color:{color}; font-size:16px;'>
+                {arrow} {change:.1f}% vs {prev_year}
+            </span>
+            """
 
         medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
-        # ===============================
-        # TOP 3 SUMMARY CARDS
-        # ===============================
+        # ----------------------------
+        # SHOW TOP 3 CARDS
+        # ----------------------------
         st.markdown(f"### 🏅 Top 3 States in {latest_year}")
 
-        card_cols = st.columns(3)
+        cols = st.columns(3)
 
         for idx, (_, row) in enumerate(top3.iterrows()):
-            with card_cols[idx]:
+            with cols[idx]:
                 state = row["State"]
                 total = row["Total Fish Landing (Tonnes)"]
                 prev_val = row["Prev_Year"]
-
-                growth_html = growth_text(total, prev_val)
 
                 card_html = f"""
                 <div style="
                     background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
                     border-radius: 14px;
-                    padding: 18px 18px 14px 18px;
+                    padding: 18px;
                     border: 1px solid rgba(0,255,255,0.35);
                     box-shadow: 0 0 18px rgba(0,255,255,0.18);
-                    min-height: 150px;
                 ">
-                    <div style="font-size:18px; color:white; margin-bottom:6px;">
+                    <div style="font-size:18px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
                         <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
+
                     <div style="font-size:30px; color:white; font-weight:bold;">
                         {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
                     </div>
+
                     <div style="margin-top:8px;">
-                        {growth_html}
+                        {growth_text(total, prev_val)}
                     </div>
                 </div>
                 """
+
                 st.markdown(card_html, unsafe_allow_html=True)
 
         st.markdown("---")
 
-        # ===============================
-        # LOLLIPOP CHART
-        # ===============================
+        # ----------------------------
+        # B) LOLLIPOP CHART
+        # ----------------------------
         st.markdown(f"### Total Fish Landing by State ({latest_year})")
 
-        filtered_sorted = filtered_latest.sort_values(
+        sorted_latest = latest_df.sort_values(
             "Total Fish Landing (Tonnes)", ascending=True
         )
 
         fig = go.Figure()
 
-        # Stem lines
         fig.add_trace(
             go.Scatter(
-                x=filtered_sorted["Total Fish Landing (Tonnes)"],
-                y=filtered_sorted["State"],
+                x=sorted_latest["Total Fish Landing (Tonnes)"],
+                y=sorted_latest["State"],
                 mode="lines",
                 line=dict(color="rgba(0,255,255,0.3)", width=3),
-                hoverinfo="skip",
-                showlegend=False,
+                hoverinfo="skip"
             )
         )
 
-        # Neon markers
         fig.add_trace(
             go.Scatter(
-                x=filtered_sorted["Total Fish Landing (Tonnes)"],
-                y=filtered_sorted["State"],
+                x=sorted_latest["Total Fish Landing (Tonnes)"],
+                y=sorted_latest["State"],
                 mode="markers+text",
                 marker=dict(color="#00E5FF", size=11, line=dict(color="white", width=1)),
-                text=[f"{v:,.0f}" for v in filtered_sorted["Total Fish Landing (Tonnes)"]],
+                text=[f"{v:,.0f}" for v in sorted_latest["Total Fish Landing (Tonnes)"]],
                 textposition="middle right",
                 textfont=dict(color="white", size=11),
-                hovertemplate="State: %{y}<br>Landing: %{x:,.0f}<extra></extra>",
-                showlegend=False,
             )
         )
 
@@ -870,34 +860,31 @@ def main():
             template="plotly_dark",
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
-            xaxis=dict(
-                title="Total Fish Landing (Tonnes)",
-                gridcolor="rgba(255,255,255,0.08)",
-            ),
-            yaxis=dict(title="", categoryorder="array", categoryarray=filtered_sorted["State"]),
+            xaxis_title="Total Fish Landing (Tonnes)",
             margin=dict(l=40, r=20, t=50, b=40),
         )
-        st.plotly_chart(fig, use_container_width=True)
 
+        st.plotly_chart(fig, use_container_width=True)
         st.markdown("---")
 
-        # ===============================
-        # YEAR SELECTOR
-        # ===============================
+        # ----------------------------
+        # C) YEAR SELECTOR & TABLE
+        # ----------------------------
         st.markdown("### Select a Year to View Full Details")
 
         selected_year = st.selectbox(
             "Choose a year:",
             sorted(yearly_summary["Year"].unique()),
-            index=len(yearly_summary["Year"].unique()) - 1,
+            index=len(yearly_summary["Year"].unique()) - 1
         )
 
-        filtered_selected = yearly_summary[
+        filtered_year = yearly_summary[
             yearly_summary["Year"] == selected_year
         ].sort_values("Total Fish Landing (Tonnes)", ascending=False)
 
         st.markdown(f"### Fish Landing by State — {selected_year}")
-        st.dataframe(filtered_selected, use_container_width=True, height=350)
+        st.dataframe(filtered_year, use_container_width=True, height=350)
+
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
 
