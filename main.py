@@ -716,7 +716,7 @@ def main():
         plt.xticks(rotation=45)
         st.pyplot(fig)
 
-     elif plot_option == "Yearly Fish Landing Summary":
+    elif plot_option == "Yearly Fish Landing Summary":
            
         import seaborn as sns
         import matplotlib.pyplot as plt
