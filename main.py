@@ -452,7 +452,20 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # INTERPRETATION CARDS
     # ----------------------------
+    # ----------------------------
+# INTERPRETATION CARDS — FULL COLOR UI
+# ----------------------------
     st.markdown("## Interpretation of TRUE Clusters")
+
+    # Define full-color card backgrounds
+    cluster_colors = {
+        1: "#1E90FF",   # Blue
+        2: "#2ECC71",   # Green
+        3: "#E74C3C",   # Red
+        4: "#9B59B6",   # Purple
+        5: "#F39C12",   # Orange
+        6: "#16A085"    # Teal
+    }
 
     real_clusters = sorted(grouped["Cluster"].unique())
     cols = st.columns(len(real_clusters))
@@ -461,25 +474,48 @@ def hierarchical_clustering(merged_df):
         subset = grouped[grouped["Cluster"] == cid]
         avg_landing = subset["Total Fish Landing (Tonnes)"].mean()
         avg_vessels = subset["Total number of fishing vessels"].mean()
-        col_color = lut[cid]
 
-        card = f"""
+        # Main color
+        base = cluster_colors.get(cid, "#333333")
+
+        # Modern gradient color
+        gradient = base + "CC"   # add transparency for smooth effect
+
+        card_html = f"""
         <div style="
-            background: linear-gradient(135deg, rgba(40,40,60,0.85), rgba(18,18,25,0.9));
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 18px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.45);
-            color: rgba(250,250,255,0.92);
-            margin-bottom: 20px;
+            background: linear-gradient(145deg, {base}, {gradient});
+            border-radius: 20px;
+            padding: 28px;
+            color: white;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.35);
+            min-height: 260px;
         ">
-            <h3 style="text-align:center; color:{col_color};">Cluster {cid}</h3>
-            <p><b style="color:{col_color};">Avg landing:</b> {avg_landing:.2f} tonnes</p>
-            <p><b style="color:{col_color};">Avg vessels:</b> {avg_vessels:.0f}</p>
-            <p><b style="color:{col_color};">States:</b><br>{", ".join(subset["State"].tolist())}</p>
+
+            <h2 style="text-align:center; margin-top:0; font-size:28px; font-weight:700;">
+                Cluster {cid}
+            </h2>
+
+            <p style="font-size:18px; line-height:1.5;">
+                <b>Avg landing:</b> {avg_landing:,.2f} tonnes
+            </p>
+
+            <p style="font-size:18px; line-height:1.5;">
+                <b>Avg vessels:</b> {avg_vessels:,.0f}
+            </p>
+
+            <p style="font-size:18px; line-height:1.5; margin-bottom:4px;">
+                <b>States:</b>
+            </p>
+
+            <p style="font-size:17px; opacity:0.95;">
+                {", ".join(subset["State"].tolist())}
+            </p>
+
         </div>
         """
-        cols[idx].markdown(card, unsafe_allow_html=True)
+
+        cols[idx].markdown(card_html, unsafe_allow_html=True)
+
 
     # ----------------------------
     # Final table
