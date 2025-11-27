@@ -1181,7 +1181,7 @@ def main():
         # ======================================
         st.markdown("""
             <h3 style='color:white;'>
-                 Display Controls 
+                 Trend Selection 
             </h3>
             <p style='color:#bbb; margin-top:-8px; font-size:15px;'>
                 Please select the period and trend to display the fish landing analysis.
