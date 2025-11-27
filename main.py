@@ -400,16 +400,21 @@ def hierarchical_clustering(merged_df):
 
     best_k = max(valid_scores, key=valid_scores.get)
 
+    # ----------------------------
+    # Silhouette Validation (k = 2–6)
+    # ----------------------------
     st.markdown("### Silhouette Validation (k = 2–6)")
 
     cand_k = [2, 3, 4, 5, 6]
     sil_scores = {}
 
     for k in cand_k:
+        # Assign hierarchical clusters
         labels = fcluster(Z, k, criterion="maxclust")
+        unique_labels = np.unique(labels)
 
-        # must have 2–(n-1) clusters
-        if len(np.unique(labels)) <= 1:
+        # --- VALIDATION: Silhouette requires at least 2 clusters and less than n samples
+        if len(unique_labels) < 2 or len(unique_labels) >= len(labels):
             sil_scores[k] = None
             continue
 
@@ -418,14 +423,57 @@ def hierarchical_clustering(merged_df):
         except:
             sil_scores[k] = None
 
+    # --- Filter valid scores only ---
     valid_scores = {k: v for k, v in sil_scores.items() if v is not None}
 
-    if not valid_scores:
-        st.warning("Not enough states to compute silhouette scores.")
-    else:
-        best_k = max(valid_scores, key=valid_scores.get)
+    if len(valid_scores) == 0:
+        st.error("Silhouette cannot be computed for this dataset.")
+        return
 
-        st.write(valid_scores)
+    best_k = max(valid_scores, key=valid_scores.get)
+
+    # ----------------------------
+    # Visualisation Layout
+    # ----------------------------
+    col1, col2 = st.columns([1, 1])
+
+    # ----------------------------
+    # 1️⃣ Silhouette Line Chart
+    # ----------------------------
+    with col1:
+        fig, ax = plt.subplots(figsize=(5, 3))
+        ax.plot(
+            list(valid_scores.keys()),
+            list(valid_scores.values()),
+            marker="o",
+            linewidth=2,
+        )
+        ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
+        ax.set_xlabel("k")
+        ax.set_ylabel("Silhouette Score")
+        ax.set_title("Silhouette Scores for k = 2–6")
+        ax.legend()
+        st.pyplot(fig)
+
+    # ----------------------------
+    # 2️⃣ Silhouette Table
+    # ----------------------------
+    with col2:
+        df_sil = (
+            pd.DataFrame({
+                "k": list(valid_scores.keys()),
+                "Silhouette Score": [round(v, 4) for v in valid_scores.values()]
+            })
+            .sort_values("k")
+            .reset_index(drop=True)
+        )
+
+        st.dataframe(df_sil, height=230)
+
+    # ----------------------------
+    # Best-k Display
+    # ----------------------------
+    st.success(f"Optimal number of clusters (based on Silhouette): **k = {best_k}**")
 
 
 
