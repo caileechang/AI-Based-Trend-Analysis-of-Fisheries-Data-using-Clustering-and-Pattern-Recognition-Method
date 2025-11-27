@@ -1020,29 +1020,7 @@ def main():
             ax=ax
         )
 
-        # highlight anomalies
-        ano = df[df["Anomaly"] == True]
-        ax.scatter(
-            ano["Vessels"],
-            ano["Landing"],
-            s=250,
-            facecolors="none",
-            edgecolors="red",
-            linewidth=2,
-            label="Outlier"
-        )
-
-        # label states
-        for _, r in ano.iterrows():
-            ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
-                    color="red", fontsize=9, fontweight="bold")
-
-        ax.set_xlabel("Total Vessels")
-        ax.set_ylabel("Total Fish Landing (Tonnes)")
-        ax.set_title(f"Outlier Detection ({sel_year})")
-        ax.grid(alpha=0.3)
-        ax.legend()
-        st.pyplot(fig)
+        
 
 
     
