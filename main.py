@@ -372,7 +372,7 @@ def hierarchical_clustering(merged_df):
     # Silhouette validation k = 2–6
     # ----------------------------
   
-    st.markdown("### Silhouette Validation (k = 2–6)")
+    st.markdown("### Silhouette Validation")
 
     cand_k = [2, 3, 4, 5, 6]
     sil_scores = {}
@@ -400,6 +400,34 @@ def hierarchical_clustering(merged_df):
 
     best_k = max(valid_scores, key=valid_scores.get)
 
+    st.markdown("### Silhouette Validation (k = 2–6)")
+
+    cand_k = [2, 3, 4, 5, 6]
+    sil_scores = {}
+
+    for k in cand_k:
+        labels = fcluster(Z, k, criterion="maxclust")
+
+        # must have 2–(n-1) clusters
+        if len(np.unique(labels)) <= 1:
+            sil_scores[k] = None
+            continue
+
+        try:
+            sil_scores[k] = silhouette_score(scaled, labels)
+        except:
+            sil_scores[k] = None
+
+    valid_scores = {k: v for k, v in sil_scores.items() if v is not None}
+
+    if not valid_scores:
+        st.warning("Not enough states to compute silhouette scores.")
+    else:
+        best_k = max(valid_scores, key=valid_scores.get)
+
+        st.write(valid_scores)
+
+
 
     # ----------------------------
     # Final cluster assignment
@@ -409,7 +437,7 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Seaborn Clustermap (Correct)
     # ----------------------------
-    st.markdown("## Hierarchical Clustermap (Correct Dendrogram + Heatmap)")
+    st.markdown("### Fisheries-Based State Grouping Using Hierarchical Clustering")
 
     df_plot = pd.DataFrame(scaled, columns=["Landing", "Vessels"])
     df_plot["Cluster"] = grouped["Cluster"].values
@@ -2396,7 +2424,7 @@ def main():
                     
     elif plot_option == "Hierarchical Clustering":
                         
-            st.subheader("Hierarchical Clustering (by Valid State – Total Fish Landing)")
+            st.subheader("Hierarchical Clustering of Malaysian States)")
             
                 # Call the hierarchical clustering function
             hierarchical_clustering(merged_df)
