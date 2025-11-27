@@ -936,6 +936,114 @@ def main():
 # Make the figure a bit wider to prevent label overlap
        # fig, ax = plt.subplots(figsize=(14, 6))
 
+    elif plot_option == "2D KMeans Scatter":
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
+    
+        # --- Step 1: Prepare data ---
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        scaled = StandardScaler().fit_transform(features)
+    
+        # --- Step 2: Compute inertia (Elbow) and silhouette for k = 2–10 ---
+        ks = range(2, 11)
+        inertia = []
+        silhouette = []
+    
+        for k in ks:
+            kmeans = KMeans(n_clusters=k, random_state=42)
+            labels = kmeans.fit_predict(scaled)
+            inertia.append(kmeans.inertia_)
+            sil = silhouette_score(scaled, labels)
+            silhouette.append(sil)
+    
+        # --- Step 3: Determine the best k (highest silhouette) ---
+        best_k = ks[np.argmax(silhouette)]
+    
+        # --- Step 4: Plot both metrics side by side ---
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    
+        # Elbow plot
+        ax1.plot(ks, inertia, marker='o')
+        ax1.set_title("Elbow Method")
+        ax1.set_xlabel("k")
+        ax1.set_ylabel("Inertia")
+        ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax1.legend()
+    
+        # Silhouette plot
+        ax2.plot(ks, silhouette, marker='o', color='orange')
+        ax2.set_title("Silhouette Score")
+        ax2.set_xlabel("k")
+        ax2.set_ylabel("Score")
+        ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax2.legend()
+    
+        st.pyplot(fig)
+    
+        # --- Step 5: Fit the final model using best_k ---
+        final_model = KMeans(n_clusters=best_k, random_state=42)
+        merged_df['Cluster'] = final_model.fit_predict(scaled)
+    
+        # --- Step 6: Display summary ---
+        st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
+        st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
+    
+        # --- Step 7: Show 2D scatter ---
+        fig2, ax = plt.subplots(figsize=(10, 6))
+        sns.scatterplot(
+            data=merged_df,
+            x='Total number of fishing vessels',
+            y='Total Fish Landing (Tonnes)',
+            hue='Cluster',
+            palette='viridis',
+            s=70,
+            ax=ax
+        )
+        ax.set_title(f"Automatic 2D K-Means Clustering (k={best_k})")
+        st.pyplot(fig2)
+    
+# --------------------------------------------
+        # 7. Scatter Plot Visualization
+        # --------------------------------------------
+        st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
+        fig, ax = plt.subplots(figsize=(9, 5))
+
+        sns.scatterplot(
+            data=df,
+            x="Vessels",
+            y="Landing",
+            hue="Outlier_Norm",
+            palette="viridis",
+            s=100,
+            ax=ax
+        )
+
+        # highlight anomalies
+        ano = df[df["Anomaly"] == True]
+        ax.scatter(
+            ano["Vessels"],
+            ano["Landing"],
+            s=250,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Outlier"
+        )
+
+        # label states
+        for _, r in ano.iterrows():
+            ax.text(r["Vessels"] + 0.2, r["Landing"] + 0.2, r["State"],
+                    color="red", fontsize=9, fontweight="bold")
+
+        ax.set_xlabel("Total Vessels")
+        ax.set_ylabel("Total Fish Landing (Tonnes)")
+        ax.set_title(f"Outlier Detection ({sel_year})")
+        ax.grid(alpha=0.3)
+        ax.legend()
+        st.pyplot(fig)
+
+
     
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
    
