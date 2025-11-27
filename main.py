@@ -306,6 +306,8 @@ def hierarchical_clustering(merged_df):
     import matplotlib.pyplot as plt
     import numpy as np
 
+   
+
     st.subheader("Hierarchical Clustering (Silhouette-Optimized)")
 
     # ----------------------------
