@@ -374,6 +374,7 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Silhouette validation k = 2–6
     # ----------------------------
+  
     st.markdown("### Silhouette Validation (k = 2–6)")
 
     cand_k = [2, 3, 4, 5, 6]
@@ -381,36 +382,27 @@ def hierarchical_clustering(merged_df):
 
     for k in cand_k:
         labels = fcluster(Z, k, criterion="maxclust")
-        if len(set(labels)) > 1:
+        unique_labels = np.unique(labels)
+
+        # ---- FIX: filter invalid conditions ----
+        if len(unique_labels) < 2 or len(unique_labels) >= len(labels):
+            sil_scores[k] = None
+            continue
+
+        try:
             sil_scores[k] = silhouette_score(scaled, labels)
-        else:
-            sil_scores[k] = -1
+        except Exception:
+            sil_scores[k] = None
 
-    best_k = max(sil_scores, key=sil_scores.get)
+    # --- choose best k safely ---
+    valid_scores = {k: v for k, v in sil_scores.items() if v is not None}
 
-    col1, col2 = st.columns([1, 1])
+    if len(valid_scores) == 0:
+        st.error("Silhouette cannot be computed for this dataset.")
+        return
 
-    # Silhouette plot
-    with col1:
-        fig, ax = plt.subplots(figsize=(5, 3))
-        ax.plot(cand_k, [sil_scores[k] for k in cand_k], marker="o")
-        ax.axvline(best_k, color="red", linestyle="--", label=f"Best k = {best_k}")
-        ax.set_xlabel("k")
-        ax.set_ylabel("Silhouette Score")
-        ax.legend()
-        st.pyplot(fig)
+    best_k = max(valid_scores, key=valid_scores.get)
 
-    # Table
-    with col2:
-        st.dataframe(
-            pd.DataFrame({
-                "k": cand_k,
-                "Silhouette Score": [sil_scores[k] for k in cand_k]
-            }),
-            height=230
-        )
-
-    st.success(f"Optimal clusters: **k = {best_k}**")
 
     # ----------------------------
     # Final cluster assignment
