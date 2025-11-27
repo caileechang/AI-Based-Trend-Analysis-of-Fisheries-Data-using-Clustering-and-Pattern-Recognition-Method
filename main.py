@@ -371,7 +371,7 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Silhouette Validation (k = 2–6)
     # ----------------------------
-    st.markdown("### Silhouette Validation (k = 2–6)")
+    st.markdown("### Silhouette Score Validation")
 
     cand_k = [2, 3, 4, 5, 6]
     sil_scores = {}
