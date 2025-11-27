@@ -1805,3 +1805,71 @@ def hierarchical_clustering(merged_df):
                     return f"<span style='color:lightgreen; font-size:20px;'>↑ {ratio:.2f}x</span>"
                 else:
                     return f"<span style='color:#ff4d4d; font-size:20px;'>↓ {ratio:.2f}x</span>"
+                
+
+
+
+                elif plot_option == "Optimal K for Monthly & Yearly":
+        st.subheader("Automatic Determination of Optimal K (Freshwater + Marine Composition)")
+    
+        # --- Monthly Composition ---
+        st.markdown("###  Monthly Fish Landing Composition (Freshwater + Marine)")
+    
+        # Prepare monthly totals by summing over states for each month
+        monthly_comp = (
+            df_land.groupby(['Year', 'Month', 'Type of Fish'])['Fish Landing (Tonnes)']
+            .sum()
+            .reset_index()
+            .pivot_table(index=['Year', 'Month'], columns='Type of Fish', values='Fish Landing (Tonnes)', aggfunc='sum')
+            .fillna(0)
+            .reset_index()
+        )
+    
+        # Rename columns for clarity
+        monthly_comp.columns.name = None
+        monthly_comp.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
+    
+        # Scale based on Freshwater & Marine values
+        scaled_monthly = StandardScaler().fit_transform(
+            monthly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+        )
+    
+        best_k_monthly, best_sil_monthly, best_inertia_monthly = evaluate_kmeans_k(
+            scaled_monthly, "Monthly Fish Landing (Freshwater + Marine Composition)", use_streamlit=True
+        )
+    
+        # --- Yearly Composition ---
+        st.markdown("###  Yearly Fish Landing Composition (Freshwater + Marine)")
+    
+        yearly_comp = (
+            df_land.groupby(['Year', 'Type of Fish'])['Fish Landing (Tonnes)']
+            .sum()
+            .reset_index()
+            .pivot_table(index='Year', columns='Type of Fish', values='Fish Landing (Tonnes)', aggfunc='sum')
+            .fillna(0)
+            .reset_index()
+        )
+    
+        yearly_comp.columns.name = None
+        yearly_comp.rename(columns={'Freshwater': 'Freshwater (Tonnes)', 'Marine': 'Marine (Tonnes)'}, inplace=True)
+    
+        scaled_yearly = StandardScaler().fit_transform(
+            yearly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+        )
+    
+        best_k_yearly, best_sil_yearly, best_inertia_yearly = evaluate_kmeans_k(
+            scaled_yearly, "Yearly Fish Landing (Freshwater + Marine Composition)", use_streamlit=True
+        )
+    
+        # --- 🧾 Summary ---
+        st.markdown("### 🧾 Summary of Optimal K Results (Composition-Based)")
+        summary = pd.DataFrame({
+            "Dataset": ["Monthly (Freshwater + Marine)", "Yearly (Freshwater + Marine)"],
+            "Best K": [best_k_monthly, best_k_yearly],
+            "Silhouette Score": [f"{best_sil_monthly:.3f}", f"{best_sil_yearly:.3f}"]
+        })
+        st.table(summary)
+    
+        # Store for reuse
+        st.session_state['best_k_monthly'] = best_k_monthly
+        st.session_state['best_k_yearly'] = best_k_yearly
