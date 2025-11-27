@@ -80,7 +80,7 @@ def prepare_yearly(df_land, df_vess):
 
     # Fuzzy matching for df_land
     def match_state_land(name):
-        matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.90)
+        matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.75)
         return matches[0] if matches else np.nan
 
     land['State'] = land['State'].apply(match_state_land)
@@ -159,6 +159,9 @@ def prepare_yearly(df_land, df_vess):
         on=['State', 'Year'],
         how='left'   # IMPORTANT: do NOT use outer join
     ).fillna(0)
+    
+    print("LAND:", land.shape, " VESS:", df_vess.shape)
+    print("MERGED:", merged.shape)
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
@@ -571,14 +574,13 @@ def main():
         st.session_state.base_land, st.session_state.base_vess = load_data()
         st.session_state.data_updated = False  # no uploaded data yet
     
-    # If a new dataset has been uploaded previously, use that merged version
     if "data_updated" in st.session_state and st.session_state.data_updated:
-        df_land = st.session_state.base_land.copy()
-        df_vess = st.session_state.base_vess.copy()
+        df_land = st.session_state.base_land
+        df_vess = st.session_state.base_vess
     else:
-        # otherwise, use the original base data
-        df_land = st.session_state.base_land.copy()
-        df_vess = st.session_state.base_vess.copy()
+        df_land = st.session_state.base_land
+        df_vess = st.session_state.base_vess
+
 
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
