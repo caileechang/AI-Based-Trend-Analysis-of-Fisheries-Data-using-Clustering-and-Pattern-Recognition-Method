@@ -490,29 +490,30 @@ def hierarchical_clustering(merged_df):
             box-shadow: 0 6px 22px rgba(0,0,0,0.35);
             min-height: 260px;
         ">
+        <h2 style="text-align:center; margin-top:0; font-size:28px; font-weight:700;">
+            Cluster {cid}
+        </h2>
 
-            <h2 style="text-align:center; margin-top:0; font-size:28px; font-weight:700;">
-                Cluster {cid}
-            </h2>
+        <p style="font-size:18px; line-height:1.5;">
+            <b>Avg landing:</b> {avg_landing:,.2f} tonnes
+        </p>
 
-            <p style="font-size:18px; line-height:1.5;">
-                <b>Avg landing:</b> {avg_landing:,.2f} tonnes
-            </p>
+        <p style="font-size:18px; line-height:1.5;">
+            <b>Avg vessels:</b> {avg_vessels:,.0f}
+        </p>
 
-            <p style="font-size:18px; line-height:1.5;">
-                <b>Avg vessels:</b> {avg_vessels:,.0f}
-            </p>
+        <p style="font-size:18px; line-height:1.5; margin-bottom:4px;">
+            <b>States:</b>
+        </p>
 
-            <p style="font-size:18px; line-height:1.5; margin-bottom:4px;">
-                <b>States:</b>
-            </p>
-
-            <p style="font-size:17px; opacity:0.95;">
-                {", ".join(subset["State"].tolist())}
-            </p>
+        <p style="font-size:17px; opacity:0.95;">
+            {", ".join(subset["State"].tolist())}
+        </p>
 
         </div>
         """
+
+
 
         cols[idx].markdown(card_html, unsafe_allow_html=True)
 
