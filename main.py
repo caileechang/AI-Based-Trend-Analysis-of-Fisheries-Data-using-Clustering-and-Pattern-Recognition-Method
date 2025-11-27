@@ -449,12 +449,8 @@ def hierarchical_clustering(merged_df):
     st.markdown("<br>", unsafe_allow_html=True)
     st.divider()
 
-    # ----------------------------
     # INTERPRETATION CARDS
-    # ----------------------------
-    # ----------------------------
-# INTERPRETATION CARDS — FULL COLOR UI
-# ----------------------------
+
     st.markdown("## Interpretation of TRUE Clusters")
 
     # Define full-color card backgrounds
@@ -512,10 +508,72 @@ def hierarchical_clustering(merged_df):
 
         </div>
         """
-
-
-
         cols[idx].markdown(card_html, unsafe_allow_html=True)
+
+        # ----------------------------
+        # INTERPRETATION CARDS (Glassmorphism)
+        # ----------------------------
+        st.markdown("## Interpretation of TRUE Clusters")
+
+        glass_colors = {
+            1: {"accent": "#00C2FF", "shadow": "rgba(0,194,255,0.45)"},
+            2: {"accent": "#2DFF88", "shadow": "rgba(45,255,136,0.45)"},
+            3: {"accent": "#FF5F5F", "shadow": "rgba(255,95,95,0.45)"},
+            4: {"accent": "#FFB628", "shadow": "rgba(255,182,40,0.45)"},
+            5: {"accent": "#C266FF", "shadow": "rgba(194,102,255,0.45)"},
+            6: {"accent": "#5EC2FF", "shadow": "rgba(94,194,255,0.45)"},
+        }
+
+        real_clusters = sorted(grouped["Cluster"].unique())
+        cols = st.columns(len(real_clusters))
+
+        for idx, cid in enumerate(real_clusters):
+            subset = grouped[grouped["Cluster"] == cid]
+            avg_landing = subset["Total Fish Landing (Tonnes)"].mean()
+            avg_vessels = subset["Total number of fishing vessels"].mean()
+            states = ", ".join(subset["State"].tolist())
+
+            accent = glass_colors[cid]["accent"]
+            glow = glass_colors[cid]["shadow"]
+
+            card_html = f"""
+            <div style="
+                background: rgba(255,255,255,0.08);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                padding: 30px 28px;
+                border-radius: 22px;
+                border: 1px solid rgba(255,255,255,0.22);
+                box-shadow: 0 8px 24px {glow};
+                color: white;
+                min-height: 260px;
+                text-align: left;
+            ">
+                <h2 style="text-align:center; margin:0; margin-bottom:14px;
+                    color:{accent}; font-size:30px; font-weight:700;">
+                    Cluster {cid}
+                </h2>
+
+                <p style="font-size:18px; line-height:1.6;">
+                    <b style="color:{accent};">Avg landing:</b>
+                    {avg_landing:,.2f} tonnes
+                </p>
+
+                <p style="font-size:18px; line-height:1.6;">
+                    <b style="color:{accent};">Avg vessels:</b>
+                    {avg_vessels:,.0f}
+                </p>
+
+                <p style="font-size:18px; margin-top:10px;">
+                    <b style="color:{accent};">States:</b>
+                </p>
+                <p style="font-size:17px; opacity:0.95; line-height:1.5;">
+                    {states}
+                </p>
+            </div>
+            """
+
+            cols[idx].markdown(card_html, unsafe_allow_html=True)
 
 
     # ----------------------------
