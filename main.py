@@ -1004,21 +1004,8 @@ def main():
         ax.set_title(f"Automatic 2D K-Means Clustering (k={best_k})")
         st.pyplot(fig2)
     
-# --------------------------------------------
-        # 7. Scatter Plot Visualization
-        # --------------------------------------------
-        st.markdown("### 📈 Landing vs Vessels (Highlighted Outliers)")
-        fig, ax = plt.subplots(figsize=(9, 5))
 
-        sns.scatterplot(
-            data=df,
-            x="Vessels",
-            y="Landing",
-            hue="Outlier_Norm",
-            palette="viridis",
-            s=100,
-            ax=ax
-        )
+        
 
         
 
