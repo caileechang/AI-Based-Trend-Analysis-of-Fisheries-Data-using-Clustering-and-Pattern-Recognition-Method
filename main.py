@@ -1313,6 +1313,7 @@ def main():
     
       
     elif plot_option == "Optimal K for Monthly & Yearly":
+        import pandas as pd
         st.subheader("Automatic Determination of Optimal K (Freshwater + Marine Composition)")
 
         # ---------------------------
