@@ -1181,10 +1181,10 @@ def main():
         # ======================================
         st.markdown("""
             <h3 style='color:white;'>
-                🎛 Display Controls 
+                 Display Controls 
             </h3>
             <p style='color:#bbb; margin-top:-8px; font-size:15px;'>
-                "Please select the period and trend to display the fish landing analysis."
+                Please select the period and trend to display the fish landing analysis.
             </p>
         """, unsafe_allow_html=True)
 
