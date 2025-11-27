@@ -1102,7 +1102,7 @@ def main():
                 )
                 best_k_monthly, best_sil_monthly, _ = evaluate_kmeans_k(
                     scaled_monthly,
-                    "Monthly Fish Landing (Freshwater + Marine Composition)",
+                    "Monthly Fish Landing ",
                     use_streamlit=True
                 )
             else:
@@ -1141,7 +1141,7 @@ def main():
                 )
                 best_k_yearly, best_sil_yearly, _ = evaluate_kmeans_k(
                     scaled_yearly,
-                    "Yearly Fish Landing (Freshwater + Marine Composition)",
+                    "Yearly Fish Landing ",
                     use_streamlit=True
                 )
             else:
