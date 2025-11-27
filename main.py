@@ -1296,7 +1296,7 @@ def main():
 
         import pandas as pd
 
-        st.subheader("Automatic Determination of Optimal K (Freshwater + Marine Composition)")
+        st.subheader("Determination of Optimal K")
 
         # ------------------------------------------------------------
         # Initialize safe defaults
@@ -1364,7 +1364,7 @@ def main():
                     _inertia_m
                 ) = evaluate_kmeans_k(
                     scaled_monthly,
-                    "Monthly Fish Landing (Freshwater + Marine Composition)",
+                    "Monthly Fish Landing ",
                     use_streamlit=True
                 )
 
@@ -1411,7 +1411,7 @@ def main():
                     _inertia_y
                 ) = evaluate_kmeans_k(
                     scaled_yearly,
-                    "Yearly Fish Landing (Freshwater + Marine Composition)",
+                    "Yearly Fish Landing ",
                     use_streamlit=True
                 )
 
