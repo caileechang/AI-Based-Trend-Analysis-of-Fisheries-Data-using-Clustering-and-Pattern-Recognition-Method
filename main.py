@@ -1064,7 +1064,7 @@ def main():
         # ======================================
         # 1️⃣ AUTO OPTIMAL K (MONTHLY & YEARLY)
         # ======================================
-        st.markdown("### 🔧 Automatic Determination of Optimal K (Freshwater + Marine Composition)")
+        st.markdown("###  Determination of Optimal K ")
 
         best_k_monthly = None
         best_sil_monthly = None
