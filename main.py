@@ -451,7 +451,7 @@ def hierarchical_clustering(merged_df):
 
     # INTERPRETATION CARDS
 
-    st.markdown("## Interpretation of TRUE Clusters")
+    st.markdown("## Interpretation of Clusters")
 
     # Define full-color card backgrounds
     cluster_colors = {
