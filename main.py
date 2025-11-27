@@ -1315,9 +1315,17 @@ def main():
     elif plot_option == "Optimal K for Monthly & Yearly":
         st.subheader("Automatic Determination of Optimal K (Freshwater + Marine Composition)")
 
-        # -------------------------------------------
-        # UTIL: Enforce column consistency
-        # -------------------------------------------
+        # ---------------------------
+        # Initialize safe defaults
+        # ---------------------------
+        best_k_monthly = None
+        best_sil_monthly = None
+        best_k_yearly = None
+        best_sil_yearly = None
+
+        # ---------------------------
+        # Helper to normalize columns
+        # ---------------------------
         def normalize_columns(df):
             df.columns = (
                 df.columns
@@ -1329,9 +1337,9 @@ def main():
             return df
 
         # =========================================================
-        # 1️⃣ MONTHLY COMPOSITION — FRESHWATER + MARINE
+        # 1️⃣ MONTHLY COMPOSITION
         # =========================================================
-        st.markdown("### 📘 Monthly Fish Landing Composition (Freshwater + Marine)")
+        st.markdown("### 📘 Monthly Fish Landing Composition")
 
         try:
             monthly_comp = (
@@ -1348,7 +1356,7 @@ def main():
                 .reset_index()
             )
 
-            # Normalize all column names (critical fix)
+            # Fix column names
             monthly_comp = normalize_columns(monthly_comp)
 
             # Safe rename
@@ -1357,29 +1365,28 @@ def main():
                 'marine': 'Marine (Tonnes)'
             }, inplace=True)
 
-            # Check required columns
-            if not {'Freshwater (Tonnes)', 'Marine (Tonnes)'}.issubset(monthly_comp.columns):
-                st.error("❌ Monthly data does not contain both Freshwater and Marine categories.")
-                st.stop()
-
-            scaled_monthly = StandardScaler().fit_transform(
-                monthly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
-            )
-
-            best_k_monthly, best_sil_monthly, best_inertia_monthly = evaluate_kmeans_k(
-                scaled_monthly,
-                "Monthly Fish Landing (Freshwater + Marine Composition)",
-                use_streamlit=True
-            )
+            # Validate existence
+            if 'Freshwater (Tonnes)' not in monthly_comp.columns or 'Marine (Tonnes)' not in monthly_comp.columns:
+                st.error("❌ Monthly dataset is missing Freshwater or Marine category.")
+            else:
+                scaled_monthly = StandardScaler().fit_transform(
+                    monthly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+                )
+                (best_k_monthly,
+                best_sil_monthly,
+                _inertia_m) = evaluate_kmeans_k(
+                    scaled_monthly,
+                    "Monthly Fish Landing (Freshwater + Marine Composition)",
+                    use_streamlit=True
+                )
 
         except Exception as e:
-            st.error(f"❌ Error processing monthly composition: {e}")
-            st.stop()
+            st.error(f"❌ Error in monthly computation: {e}")
 
         # =========================================================
-        # 2️⃣ YEARLY COMPOSITION — FRESHWATER + MARINE
+        # 2️⃣ YEARLY COMPOSITION
         # =========================================================
-        st.markdown("### 📗 Yearly Fish Landing Composition (Freshwater + Marine)")
+        st.markdown("### 📗 Yearly Fish Landing Composition")
 
         try:
             yearly_comp = (
@@ -1403,40 +1410,58 @@ def main():
                 'marine': 'Marine (Tonnes)'
             }, inplace=True)
 
-            if not {'Freshwater (Tonnes)', 'Marine (Tonnes)'}.issubset(yearly_comp.columns):
-                st.error("❌ Yearly data does not contain both Freshwater and Marine categories.")
-                st.stop()
-
-            scaled_yearly = StandardScaler().fit_transform(
-                yearly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
-            )
-
-            best_k_yearly, best_sil_yearly, best_inertia_yearly = evaluate_kmeans_k(
-                scaled_yearly,
-                "Yearly Fish Landing (Freshwater + Marine Composition)",
-                use_streamlit=True
-            )
+            if 'Freshwater (Tonnes)' not in yearly_comp.columns or 'Marine (Tonnes)' not in yearly_comp.columns:
+                st.error("❌ Yearly dataset is missing Freshwater or Marine category.")
+            else:
+                scaled_yearly = StandardScaler().fit_transform(
+                    yearly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+                )
+                (best_k_yearly,
+                best_sil_yearly,
+                _inertia_y) = evaluate_kmeans_k(
+                    scaled_yearly,
+                    "Yearly Fish Landing (Freshwater + Marine Composition)",
+                    use_streamlit=True
+                )
 
         except Exception as e:
-            st.error(f"❌ Error processing yearly composition: {e}")
-            st.stop()
+            st.error(f"❌ Error in yearly computation: {e}")
 
         # =========================================================
-        # 3️⃣ SUMMARY CARD
+        # 3️⃣ SUMMARY CARD (NO MORE CRASH)
         # =========================================================
-        st.markdown("### 🧾 Summary of Optimal K Results (Composition-Based)")
+        st.markdown("### 🧾 Summary of Optimal K Results")
 
-        summary = pd.DataFrame({
-            "Dataset": ["Monthly (Freshwater + Marine)", "Yearly (Freshwater + Marine)"],
-            "Best K": [best_k_monthly, best_k_yearly],
-            "Silhouette Score": [f"{best_sil_monthly:.3f}", f"{best_sil_yearly:.3f}"],
-        })
+        summary = []
 
-        st.table(summary)
+        if best_k_monthly is not None:
+            summary.append([
+                "Monthly (Freshwater + Marine)",
+                best_k_monthly,
+                f"{best_sil_monthly:.3f}" if best_sil_monthly else "N/A"
+            ])
 
-        # Store for later reuse (KMeans trends)
-        st.session_state['best_k_monthly'] = best_k_monthly
-        st.session_state['best_k_yearly'] = best_k_yearly
+        if best_k_yearly is not None:
+            summary.append([
+                "Yearly (Freshwater + Marine)",
+                best_k_yearly,
+                f"{best_sil_yearly:.3f}" if best_sil_yearly else "N/A"
+            ])
+
+        if len(summary) == 0:
+            st.warning("⚠ No valid results available.")
+        else:
+            st.table(pd.DataFrame(summary, columns=[
+                "Dataset", "Best K", "Silhouette Score"
+            ]))
+
+        # Save state only if valid
+        if best_k_monthly is not None:
+            st.session_state['best_k_monthly'] = best_k_monthly
+
+        if best_k_yearly is not None:
+            st.session_state['best_k_yearly'] = best_k_yearly
+
 
         
     
