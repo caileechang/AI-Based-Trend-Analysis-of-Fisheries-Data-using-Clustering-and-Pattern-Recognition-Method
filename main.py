@@ -369,38 +369,6 @@ def hierarchical_clustering(merged_df):
     Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # Silhouette validation k = 2–6
-    # ----------------------------
-  
-    st.markdown("### Silhouette Validation")
-
-    cand_k = [2, 3, 4, 5, 6]
-    sil_scores = {}
-
-    for k in cand_k:
-        labels = fcluster(Z, k, criterion="maxclust")
-        unique_labels = np.unique(labels)
-
-        # ---- FIX: filter invalid conditions ----
-        if len(unique_labels) < 2 or len(unique_labels) >= len(labels):
-            sil_scores[k] = None
-            continue
-
-        try:
-            sil_scores[k] = silhouette_score(scaled, labels)
-        except Exception:
-            sil_scores[k] = None
-
-    # --- choose best k safely ---
-    valid_scores = {k: v for k, v in sil_scores.items() if v is not None}
-
-    if len(valid_scores) == 0:
-        st.error("Silhouette cannot be computed for this dataset.")
-        return
-
-    best_k = max(valid_scores, key=valid_scores.get)
-
-    # ----------------------------
     # Silhouette Validation (k = 2–6)
     # ----------------------------
     st.markdown("### Silhouette Validation (k = 2–6)")
