@@ -1179,12 +1179,15 @@ def main():
         # ======================================
         # 2️⃣ CONTROL BAR (PERIOD + TREND)
         # ======================================
-        st.markdown(
-            "<p style='color:#ccc; margin-top:-12px; font-size:20px;'>"
-            "Please select the period and trend to display the fish landing analysis."
-            "</p>",
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+            <h3 style='color:white;'>
+                🎛 Display Controls 
+            </h3>
+            <p style='color:#bbb; margin-top:-8px; font-size:15px;'>
+                "Please select the period and trend to display the fish landing analysis."
+            </p>
+        """, unsafe_allow_html=True)
+
 
         opt_col1, opt_col2 = st.columns([1, 2])
 
