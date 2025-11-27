@@ -666,7 +666,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
         "Yearly Fish Landing Summary",
-        "Yearly Cluster Trends for Marine and Freshwater Fish","Optimal K for Monthly & Yearly",                  
+        "Yearly Cluster Trends for Marine and Freshwater Fish",                
         "2D KMeans Scatter",
         "3D KMeans Clustering",
         "Automatic DBSCAN","Unified HDBSCAN Outlier Detection","HDBSCAN","HDBSCAN Outlier Detection",
