@@ -540,40 +540,40 @@ def hierarchical_clustering(merged_df):
 
             # IMPORTANT: HTML outside of triple quotes must start at column 0
             card_html = f"""
-        <div style="
-            background: rgba(255,255,255,0.08);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            padding: 30px 28px;
-            border-radius: 22px;
-            border: 1px solid rgba(255,255,255,0.22);
-            box-shadow: 0 8px 24px {glow};
-            color: white;
-            min-height: 260px;
-        ">
-            <h2 style="text-align:center; margin:0; margin-bottom:14px;
-                color:{accent}; font-size:30px; font-weight:700;">
-                Cluster {cid}
-            </h2>
+            <div style="
+                background: rgba(255,255,255,0.08);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                padding: 30px 28px;
+                border-radius: 22px;
+                border: 1px solid rgba(255,255,255,0.22);
+                box-shadow: 0 8px 24px {glow};
+                color: white;
+                min-height: 260px;
+            ">
+                <h2 style="text-align:center; margin:0; margin-bottom:14px;
+                    color:{accent}; font-size:30px; font-weight:700;">
+                    Cluster {cid}
+                </h2>
 
-            <p style="font-size:18px; line-height:1.6;">
-                <b style="color:{accent};">Avg landing:</b>
-                {avg_landing:,.2f} tonnes
-            </p>
+                <p style="font-size:18px; line-height:1.6;">
+                    <b style="color:{accent};">Avg landing:</b>
+                    {avg_landing:,.2f} tonnes
+                </p>
 
-            <p style="font-size:18px; line-height:1.6;">
-                <b style="color:{accent};">Avg vessels:</b>
-                {avg_vessels:,.0f}
-            </p>
+                <p style="font-size:18px; line-height:1.6;">
+                    <b style="color:{accent};">Avg vessels:</b>
+                    {avg_vessels:,.0f}
+                </p>
 
-            <p style="font-size:18px; margin-top:10px;">
-                <b style="color:{accent};">States:</b>
-            </p>
-            <p style="font-size:17px; opacity:0.95; line-height:1.5;">
-                {states}
-            </p>
-        </div>
-        """
+                <p style="font-size:18px; margin-top:10px;">
+                    <b style="color:{accent};">States:</b>
+                </p>
+                <p style="font-size:17px; opacity:0.95; line-height:1.5;">
+                    {states}
+                </p>
+            </div>
+            """
 
             cols[idx].markdown(card_html, unsafe_allow_html=True)
 
