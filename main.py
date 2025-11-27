@@ -159,7 +159,7 @@ def prepare_yearly(df_land, df_vess):
         on=['State', 'Year'],
         how='left'   # IMPORTANT: do NOT use outer join
     ).fillna(0)
-    
+
     print("LAND:", land.shape, " VESS:", df_vess.shape)
     print("MERGED:", merged.shape)
 
@@ -662,6 +662,8 @@ def main():
                 st.error(f"Error reading uploaded file: {e}")
 
     merged_df = prepare_yearly(df_land, df_vess)
+    st.write("Available years after merging:", sorted(merged_df["Year"].unique()))
+
     merged_monthly = prepare_monthly(df_land, df_vess)
 
     st.sidebar.header("Select Visualization")
