@@ -720,6 +720,7 @@ def main():
 
         import seaborn as sns
         import matplotlib.pyplot as plt
+        import numpy as np
 
         st.markdown("##  Yearly Fish Landing")
 
