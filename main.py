@@ -301,7 +301,8 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
     return best_k, best_sil, best_inertia
 
 
-def optimal_k_section(monthly_df, yearly_df):
+def optimal_k_section(df_land, df_vess):
+
     import streamlit as st
     import matplotlib.pyplot as plt
     from sklearn.preprocessing import StandardScaler
@@ -1599,7 +1600,7 @@ def main():
         # ============================================================
         # 3️⃣  SUMMARY TABLE
         # ============================================================
-        st.markdown("### 🧾 Summary of Optimal K Results")
+        st.markdown("### 🧾 Summary of Optimal K Results") 
 
         summary = []
 
@@ -2591,7 +2592,8 @@ def main():
     
 
     elif plot_option == "Optimal K(cluster) for Monthly & Yearly":
-            optimal_k_section(merged_monthly, merged_df)
+            optimal_k_section(df_land, df_vess)
+
    
 
                     
