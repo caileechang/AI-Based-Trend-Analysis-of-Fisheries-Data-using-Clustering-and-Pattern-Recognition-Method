@@ -1520,7 +1520,7 @@ def main():
             ✔ These same cluster labels are reused in:<br>
             &nbsp;&nbsp;&nbsp;&nbsp;📈 <b>Yearly Cluster Trends for Marine & Freshwater Fish</b><br>
             ✔ This makes your trend charts easier to interpret because each cluster now has a real meaning.<br>
-            ✔ You now know what each cluster represents (High FW, Low Marine, etc.) so trends make sense.<br>
+            ✔ You now know what each cluster represents (High Freshwater, Low Marine, etc.) so trends make sense.<br>
 
        
         </div>
