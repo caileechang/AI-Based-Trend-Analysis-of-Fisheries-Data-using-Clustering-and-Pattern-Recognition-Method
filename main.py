@@ -845,7 +845,7 @@ def main():
                     }}
 
                     div[data-testid="stButton"][key="card_{i}"] > button:hover {{
-                        border: 1.5px solid {color};
+                        border: 3px solid {color};
                         transform: scale(1.03);
                         transition: 0.15s ease-in-out;
                     }}
