@@ -810,62 +810,45 @@ def main():
             color = colors[i % len(colors)]
 
             with cols[i % 3]:
-
-                 # Invisible click button
-                click_key = f"card_btn_{i}"
-                if st.button(" ", key=click_key):
+                   # Clickable button styled as transparent over the card
+                if st.button(
+                    label=f"{icon} {name}", 
+                    key=f"card_{i}", 
+                    help=f"Open {name}", 
+                    use_container_width=True
+                ):
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # ----------- HTML CARD (SAFE VERSION) -----------
-                card_html = f"""
-                <div style="
-                    margin-top: -120px;
-                    height: 150px;
-                    border-radius: 18px;
-                    padding: 22px;
-
-                    background: linear-gradient(135deg, {color}33, #0f1117);
-                    border: 1.5px solid {color}55;
-                    box-shadow: 0 0 14px {color}44;
-
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                ">
-                    <h3 style="color:white; font-size:22px; margin:0; font-weight:700;">
-                        {icon} {name}
-                    </h3>
-
-                    <p style="color:#cbd2ff; font-size:15px; margin-top:14px;">
-                        View full visualisation →
-                    </p>
-                </div>
-                """
-
-                st.markdown(card_html, unsafe_allow_html=True)
-
-                # ----------- CSS OVERLAY (SAFE VERSION) -----------
-                css_overlay = f"""
-                <style>
-                    div[data-testid="stButton"][key="{click_key}"] > button {{
-                        position: relative;
-                        top: -170px;
-                        width: 100%;
-                        height: 150px;
-                        margin-bottom: -150px;
-
-                        background: none !important;
-                        border: none !important;
-                        opacity: 0 !important;
-
-                        cursor: pointer;
-                        z-index: 10;
+                # Inject CSS to style the button as a card
+                st.markdown(
+                    f"""
+                    <style>
+                    div[data-testid="stButton"][key="card_{i}"] > button {{
+                        height: 140px;
+                        text-align: left;
+                        padding: 20px;
+                        border-radius: 14px;
+                        font-size: 18px;
+                        color: white;
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
                     }}
-                </style>
-                """
+                    div[data-testid="stButton"][key="card_{i}"] > button:hover {{
+                        border: 1px solid {color};
+                        transform: scale(1.01);
+                        transition: 0.1s ease-in-out;
+                    }}
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-                st.markdown(css_overlay, unsafe_allow_html=True)
+
+                
+
+
               
 
     elif plot_option == "Monthly Trends by Cluster":
