@@ -811,35 +811,28 @@ def main():
 
             with cols[i % 3]:
 
-                # Invisible button for click detection
-                clicked = st.button(" ", key=f"card_click_{i}")
-
-                if clicked:
+              # Invisible button (click handler)
+                if st.button(" ", key=f"card_click_{i}"):
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # Big card UI
+                # Visible card (UI only)
                 st.markdown(
                     f"""
                     <div style="
                         margin-top: -70px;
-                        height: 150px;
-                        border-radius: 20px;
-                        padding: 20px;
-
                         background: linear-gradient(135deg, {color}33, #111);
-                        border: 2px solid {color}55;
-                        box-shadow: 0 0 15px {color}55;
-
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
+                        border-radius: 14px;
+                        padding: 20px;
+                        margin-bottom: 8px;
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
+                        height: 140px;
                     ">
-                        <h3 style="color:white; font-size:22px; margin:0;">
+                        <h3 style="color:white; margin:0; font-size:20px; font-weight:600;">
                             {icon} {name}
                         </h3>
-
-                        <p style="color:#ccc; font-size:14px; margin-top:12px;">
+                        <p style="color:#bbb; font-size:14px; margin-top:10px;">
                             View full visualisation →
                         </p>
                     </div>
@@ -847,23 +840,23 @@ def main():
                     unsafe_allow_html=True
                 )
 
-                # Make the invisible button cover the entire card
+                # CSS to overlay invisible button exactly on top of card
                 st.markdown(
                     f"""
                     <style>
                         div[data-testid="stButton"][key="card_click_{i}"] > button {{
                             position: relative;
-                            top: -150px;        /* overlap card */
+                            top: -210px;        /* moves button above card */
                             width: 100%;
-                            height: 150px;      /* match card height */
+                            height: 140px;      /* same height as card */
                             opacity: 0;         /* invisible */
-                            z-index: 10;
                             cursor: pointer;
+                            z-index: 999;       /* click always works */
                         }}
                     </style>
                     """,
                     unsafe_allow_html=True
-                )
+                )  
 
 
 
