@@ -1497,24 +1497,31 @@ def main():
         # Enhanced Explanation Box
         # ------------------------------------------------------------
         st.markdown("""
-        <div style='background-color:#eef6ff; padding:16px; border-radius:8px; 
-                    border-left:6px solid #4a90e2; margin-bottom:22px; font-size:15px;'>
-        <b>Why you are seeing this page:</b><br>
+        <div style="
+            background-color:#eef6ff; 
+            padding:16px; 
+            border-radius:8px; 
+            border-left:6px solid #4a90e2; 
+            margin-bottom:22px;
+            color:#000000;
+            font-size:15px;
+        ">
+        <b style="color:#000000;">Why you are seeing this page:</b><br>
         The number of clusters (<b>K</b>) affects how states or months are grouped into 
         meaningful categories such as <b>High</b>, <b>Medium</b>, and <b>Low</b> fish landing performance.
         A correctly chosen K ensures that all cluster-based visualisations remain 
         <b>accurate, consistent, and scientifically valid</b>.<br><br>
 
-        <b>Where the selected K will be used:</b>
-        <ul style='margin-top:0px;'>
-            <li>📊 <b>Yearly Cluster Trends</b> (Freshwater & Marine)</li>
-            <li>🟦 <b>2D K-Means Scatter</b></li>
-            <li>🟧 <b>3D K-Means Clustering</b></li>
-            <li>🗺 <b>Geospatial Map (Cluster-Based)</b></li>
+        <b style="color:#000000;">Where the selected K will be used:</b>
+        <ul style="margin-top:0px; color:#000000;">
+            <li>📊 <b style="color:#000000;">Yearly Cluster Trends (Freshwater & Marine)</b></li>
+            <li>🟦 <b style="color:#000000;">2D K-Means Scatter</b></li>
+            <li>🟧 <b style="color:#000000;">3D K-Means Clustering</b></li>
+            <li>🗺 <b style="color:#000000;">Geospatial Map (Cluster-Based)</b></li>
         </ul>
 
-        All these visualisations will use the <b>same K value</b> determined here, ensuring 
-        a smooth and consistent analytical experience.
+        All these visualisations will use the <b style="color:#000000;">same K value</b> 
+        determined here, ensuring a smooth and consistent analytical experience.
         </div>
         """, unsafe_allow_html=True)
 
