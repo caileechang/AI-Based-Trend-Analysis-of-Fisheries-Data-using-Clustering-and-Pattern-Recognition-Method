@@ -1515,9 +1515,7 @@ def main():
         <b style="color:#000000;">Where the selected K will be used:</b>
         <ul style="margin-top:0px; color:#000000;">
             <li>📊 <b style="color:#000000;">Yearly Cluster Trends (Freshwater & Marine)</b></li>
-            <li>🟦 <b style="color:#000000;">2D K-Means Scatter</b></li>
-            <li>🟧 <b style="color:#000000;">3D K-Means Clustering</b></li>
-            <li>🗺 <b style="color:#000000;">Geospatial Map (Cluster-Based)</b></li>
+          
         </ul>
 
         All these visualisations will use the <b style="color:#000000;">same K value</b> 
