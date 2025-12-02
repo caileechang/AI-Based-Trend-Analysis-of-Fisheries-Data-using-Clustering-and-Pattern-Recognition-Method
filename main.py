@@ -739,7 +739,7 @@ def main():
 
 
     sidebar_options = [
-        "🏠 Dashboard Overview",
+        
         "Yearly Fish Landing Summary",
         "Optimal K for Monthly & Yearly",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
@@ -757,9 +757,7 @@ def main():
         "Geospatial Map (Upgraded)2"
     ]
 
-    # Ensure default page exists
-    if "plot_option" not in st.session_state:
-        st.session_state.plot_option = "🏠 Dashboard Overview"
+   
 
     # Show sidebar radio with correct selected index
     selected = st.sidebar.radio(
@@ -777,90 +775,10 @@ def main():
     plot_option = st.session_state.plot_option
 
 
-    # ============================================================
-    # 2) DASHBOARD OVERVIEW PAGE (AUTO-GENERATED CARDS)
-    # ============================================================
-
-    if plot_option == "🏠 Dashboard Overview":
-
-        st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
-        st.markdown(
-            "<p style='color:#bbb'>Click any card below to open the full visualisation.</p>",
-            unsafe_allow_html=True
-        )
-
-        # All visualisations EXCEPT the first "Home"
-        visualisation_pages = sidebar_options[1:]
-
-        # Icons + Colors
-        icons = ["📘","📊","🌊","🟦","🧊","🌐","⚡","🌳",
-                "🗺️","🖥️","🔥","✨","📍","📡","🔍"]
-
-        colors = [
-            "#00E5FF","#7DFFAF","#FFA07A","#81C7F5","#DDA0DD",
-            "#FFD700","#FF7F7F","#8FBC8F","#00CED1","#4B7BE5",
-            "#F7A440","#C15AFF","#57E39A","#E33F5F","#A4E5FF"
-        ]
-
-        cols = st.columns(3)
-
-        for i, name in enumerate(visualisation_pages):
-
-            icon = icons[i % len(icons)]
-            color = colors[i % len(colors)]
-
-            with cols[i % 3]:
-                   # Clickable button styled as transparent over the card
-                if st.button(
-                    label=f"{icon} {name}", 
-                    key=f"card_{i}", 
-                    help=f"Open {name}", 
-                    use_container_width=True
-                ):
-                    st.session_state.plot_option = name
-                    st.rerun()
-
-                # Inject CSS to style the button as a card
-                st.markdown(
-                    f"""
-                    <style>
-                    div[data-testid="stButton"][key="card_{i}"] > button {{
-                        width: 100%;                 /* Full width of column */
-                        max-width: 340px;            /* Make card wider */
-                        height: 200px;               /* Make card taller */
-
-                        text-align: left;
-                        padding: 70px;               /* Bigger inner spacing */
-                        border-radius: 16px;         /* Larger curvature */
-                        font-size: 20px;             /* Bigger text */
-
-                        color: white;
-                        background: linear-gradient(135deg, {color}33, #111);
-                        border: 1.5px solid {color}55;
-                        box-shadow: 0 0 16px {color}44;
-
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                    }}
-
-                    div[data-testid="stButton"][key="card_{i}"] > button:hover {{
-                        border: 3px solid {color};
-                        transform: scale(1.03);
-                        transition: 0.15s ease-in-out;
-                    }}
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-
-                
-
-
+    
               
 
-    elif plot_option == "Monthly Trends by Cluster":
+    if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
        
         # --- Use merged dataset (always latest) ---
