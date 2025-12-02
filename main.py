@@ -1377,63 +1377,65 @@ def main():
 
             st.pyplot(fig)
 
+            #  EXPANDABLE CLUSTER INTERPRETATION SECTION
+            
+            if "yearly_profiles" not in locals():
+                # Meaning: the yearly cluster profiles did NOT get created
+                # (e.g., monthly view is selected)
+                pass
+            else:
+                with st.expander("📘 Understanding the Clusters (Click to Expand)", expanded=False):
 
-            # ===================================================
-            # 🧠 EXPANDABLE CLUSTER INTERPRETATION SECTION
-            # ===================================================
-
-            with st.expander("📘 Understanding the Clusters (Click to Expand)", expanded=False):
-
-                st.markdown("""
-                    <p style="color:#ccc; font-size:15px;">
-                    Each cluster groups years with similar freshwater & marine landing characteristics.
-                    The interpretation below helps you understand their economic & production significance.
-                    </p>
-                """, unsafe_allow_html=True)
-
-                for _, row in yearly_profiles.iterrows():
-                    cl = int(row["Cluster"])
-                    fw = row["Freshwater (Tonnes)"]
-                    ma = row["Marine (Tonnes)"]
-                    meaning = row["Meaning"]
-                    title = row["Friendly"]
-
-                    # Dynamic color (same order as seaborn lineplot)
-                    cluster_color = [
-                        "#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b2"
-                    ][cl % 5]
-
-                    st.markdown(f"""
-                    <div style="
-                        background-color:#111111;
-                        border-left:6px solid {cluster_color};
-                        padding:16px;
-                        border-radius:10px;
-                        margin-bottom:14px;
-                        color:white;
-                    ">
-
-                        <div style="font-size:20px; font-weight:700; color:{cluster_color}">
-                            Cluster {cl}: {title}
-                        </div>
-
-                        <div style="margin-top:6px; font-size:15px;">
-                            <b>Meaning:</b> {meaning}<br><br>
-
-                            <span style="color:#ccc;">Average Freshwater Landing:</span>
-                            <b>{fw:,.0f}</b> tonnes<br>
-
-                            <span style="color:#ccc;">Average Marine Landing:</span>
-                            <b>{ma:,.0f}</b> tonnes<br>
-                        </div>
-
-                        <div style="margin-top:10px; font-size:14px; color:#aaa;">
-                            🛈 This cluster appears in the trend chart above with the same color + line style.<br>
-                            Interpreting clusters helps identify economic patterns and production strengths.
-                        </div>
-
-                    </div>
+                    st.markdown("""
+                        <p style="color:#ccc; font-size:15px;">
+                        Each cluster groups years with similar freshwater & marine landing characteristics.
+                        The interpretation below helps you understand their economic significance.
+                        </p>
                     """, unsafe_allow_html=True)
+
+                    for _, row in yearly_profiles.iterrows():
+                        cl = int(row["Cluster"])
+                        fw = row["Freshwater (Tonnes)"]
+                        ma = row["Marine (Tonnes)"]
+                        meaning = row["Meaning"]
+                        title = row["Friendly"]
+
+                        cluster_color = [
+                            "#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b2"
+                        ][cl % 5]
+
+                        st.markdown(f"""
+                        <div style="
+                            background-color:#111111;
+                            border-left:6px solid {cluster_color};
+                            padding:16px;
+                            border-radius:10px;
+                            margin-bottom:14px;
+                            color:white;
+                        ">
+
+                            <div style="font-size:20px; font-weight:700; color:{cluster_color}">
+                                Cluster {cl}: {title}
+                            </div>
+
+                            <div style="margin-top:6px; font-size:15px;">
+                                <b>Meaning:</b> {meaning}<br><br>
+
+                                <span style="color:#ccc;">Average Freshwater Landing:</span>
+                                <b>{fw:,.0f}</b> tonnes<br>
+
+                                <span style="color:#ccc;">Average Marine Landing:</span>
+                                <b>{ma:,.0f}</b> tonnes<br>
+                            </div>
+
+                            <div style="margin-top:10px; font-size:14px; color:#aaa;">
+                                🛈 This cluster appears above with the same color + line style.<br>
+                                Understanding cluster patterns helps identify strong & weak production periods.
+                            </div>
+
+                        </div>
+                        """, unsafe_allow_html=True)
+
 
 
    
