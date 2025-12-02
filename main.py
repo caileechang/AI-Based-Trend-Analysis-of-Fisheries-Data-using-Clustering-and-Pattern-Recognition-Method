@@ -766,10 +766,7 @@ def main():
         index=sidebar_options.index(st.session_state.plot_option)
     )
 
-    # Only update session state IF user clicked sidebar
-    if selected != st.session_state.plot_option:
-        st.session_state.plot_option = selected
-        st.rerun()
+  
 
     # 🔥 THIS line creates your local variable
     plot_option = st.session_state.plot_option
