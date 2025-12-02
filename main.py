@@ -733,7 +733,8 @@ def main():
     merged_monthly = prepare_monthly(df_land, df_vess)
 
     st.sidebar.header("Select Visualization")
-    plot_option = st.sidebar.radio("Choose a visualization:", [
+    plot_option = st.sidebar.radio("Choose a visualization:", ["🏠 Dashboard Overview",
+
         
         "Yearly Fish Landing Summary","Optimal K for Monthly & Yearly", 
         "Yearly Cluster Trends for Marine and Freshwater Fish",               
@@ -745,7 +746,49 @@ def main():
         "Interactive Geospatial Map","Geospatial Map(Heatmap)","Geospatial Map (Upgraded)","Geospatial Map (Upgraded)2"
     ])
 
-    if plot_option == "Monthly Trends by Cluster":
+
+    if plot_option == "🏠 Dashboard Overview":
+
+        st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
+        st.markdown("<p style='color:#bbb'>Click any card below to open the full visualisation.</p>", unsafe_allow_html=True)
+
+        cards = [
+            ("Yearly Fish Landing Summary", "📅", "#00E5FF"),
+            ("Optimal K for Monthly & Yearly", "🎯", "#7DFFAF"),
+            ("Yearly Cluster Trends for Marine and Freshwater Fish", "🌊", "#FFA07A"),
+            ("2D KMeans Scatter", "🟦", "#81C7F5"),
+            ("3D KMeans Clustering", "🧊", "#DDA0DD"),
+            ("Automatic DBSCAN", "🌐", "#FFD700"),
+            ("Unified HDBSCAN Outlier Detection", "⚡", "#FF7F7F"),
+            ("Hierarchical Clustering", "🌳", "#8FBC8F"),
+            ("Geospatial Map", "🗺️", "#00CED1"),
+        ]
+
+        # 3 columns per row
+        cols = st.columns(3)
+
+        for i, (name, icon, color) in enumerate(cards):
+            with cols[i % 3]:
+                card_html = f"""
+                <div style="
+                    background: linear-gradient(135deg, {color}33, #111);
+                    border-radius: 14px;
+                    padding: 20px;
+                    margin-bottom: 20px;
+                    border: 1px solid {color}55;
+                    box-shadow: 0 0 12px {color}33;
+                    cursor: pointer;
+                    transition: 0.2s;
+                " 
+                onclick="window.location.href='?plot_option={name.replace(' ', '%20')}'">
+                    <h3 style="color:white; margin:0;">{icon} {name}</h3>
+                    <p style="color:#bbb; font-size:13px;">View full visualisation →</p>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
+
+    elif plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
        
         # --- Use merged dataset (always latest) ---
@@ -2417,7 +2460,7 @@ def main():
                 if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
                     return "🐟 Low catch per vessel – possible overfishing"
                 if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
-                    return "🛶 Low activity – seasonal or small fleet"
+                    return "🛶 Low activity – Possible  seasonal or small fleet"
                 return "Atypical pattern vs national average"
 
             outliers["Why Flagged"] = outliers.apply(explain, axis=1)
