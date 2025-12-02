@@ -811,28 +811,41 @@ def main():
 
             with cols[i % 3]:
 
-                # Card UI
-                st.markdown(
-                    f"""
-                    <div style="
-                        background: linear-gradient(135deg, {color}33, #111);
-                        border-radius: 14px;
-                        padding: 20px;
-                        margin-bottom: 8px;
-                        border: 1px solid {color}55;
-                        box-shadow: 0 0 12px {color}33;
-                    ">
-                        <h3 style="color:white; margin:0; font-size:18px;">{icon} {name}</h3>
-                        <p style="color:#bbb; font-size:13px;">View full visualisation →</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                # Click button → open specific visualisation
-                if st.button(f"Open → {name}", key=f"open_{i}"):
+                # Clickable button styled as transparent over the card
+                if st.button(
+                    label=f"{icon} {name}", 
+                    key=f"card_{i}", 
+                    help=f"Open {name}", 
+                    use_container_width=True
+                ):
                     st.session_state.plot_option = name
                     st.rerun()
+
+                # Inject CSS to style the button as a card
+                st.markdown(
+                    f"""
+                    <style>
+                    div[data-testid="stButton"][key="card_{i}"] > button {{
+                        height: 140px;
+                        text-align: left;
+                        padding: 20px;
+                        border-radius: 14px;
+                        font-size: 18px;
+                        color: white;
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
+                    }}
+                    div[data-testid="stButton"][key="card_{i}"] > button:hover {{
+                        border: 1px solid {color};
+                        transform: scale(1.01);
+                        transition: 0.1s ease-in-out;
+                    }}
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
 
 
     elif plot_option == "Monthly Trends by Cluster":
