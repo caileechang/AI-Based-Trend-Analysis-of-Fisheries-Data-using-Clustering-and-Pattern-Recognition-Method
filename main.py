@@ -1356,7 +1356,6 @@ def main():
             )
             return df
 
-
         # ============================================================
         # 1️⃣  MONTHLY COMPOSITION
         # ============================================================
@@ -1493,6 +1492,7 @@ def main():
 
         if best_k_yearly is not None:
             st.session_state['best_k_yearly'] = best_k_yearly
+
 
         # ------------------------------------------------------------
         # Enhanced Explanation Box
