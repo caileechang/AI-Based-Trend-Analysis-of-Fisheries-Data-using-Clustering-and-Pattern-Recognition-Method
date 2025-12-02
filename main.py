@@ -19,7 +19,11 @@ import plotly.graph_objects as go
 import hdbscan
 
 
-
+# -----------------------
+# INITIALISE default page
+# -----------------------
+if "plot_option" not in st.session_state:
+    st.session_state.plot_option = "🏠 Dashboard Overview"
 
 
 # Import your clustering modules
@@ -733,11 +737,7 @@ def main():
 
     merged_monthly = prepare_monthly(df_land, df_vess)
 
-    # -----------------------
-    # INITIALISE default page
-    # -----------------------
-    if "plot_option" not in st.session_state:
-        st.session_state.plot_option = "🏠 Dashboard Overview"
+    
 
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", ["🏠 Dashboard Overview",
