@@ -738,7 +738,7 @@ def main():
     merged_monthly = prepare_monthly(df_land, df_vess)
 
 
-    sidebar_options = [
+    plot_option = [
         
         "Yearly Fish Landing Summary",
         "Optimal K for Monthly & Yearly",
@@ -758,22 +758,13 @@ def main():
     ]
 
    
-
-    # Show sidebar radio with correct selected index
     selected = st.sidebar.radio(
         "Choose a visualization:",
-        sidebar_options,
-        index=sidebar_options.index(st.session_state.plot_option)
+        plot_option,
+        index=plot_option.index(st.session_state.plot_option)
     )
 
-  
-
-    # 🔥 THIS line creates your local variable
-    plot_option = st.session_state.plot_option
-
-
-    
-              
+    st.session_state.plot_option = selected
 
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
