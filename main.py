@@ -740,60 +740,50 @@ def main():
     
 
 
-    st.sidebar.header("Select Visualization")
-    plot_option = st.sidebar.radio("Choose a visualization:", ["🏠 Dashboard Overview",
-
-        
-        "Yearly Fish Landing Summary","Optimal K for Monthly & Yearly", 
-        "Yearly Cluster Trends for Marine and Freshwater Fish",               
+    sidebar_options = [
+        "🏠 Dashboard Overview",
+        "Yearly Fish Landing Summary",
+        "Optimal K for Monthly & Yearly",
+        "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "Automatic DBSCAN","Unified HDBSCAN Outlier Detection","HDBSCAN","HDBSCAN Outlier Detection",
+        "Automatic DBSCAN",
+        "Unified HDBSCAN Outlier Detection",
+        "HDBSCAN",
+        "HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Map",
-        "Interactive Geospatial Map","Geospatial Map(Heatmap)","Geospatial Map (Upgraded)","Geospatial Map (Upgraded)2"
-    ])
+        "Interactive Geospatial Map",
+        "Geospatial Map(Heatmap)",
+        "Geospatial Map (Upgraded)",
+        "Geospatial Map (Upgraded)2"
 
-    # Sidebar always reflects the current page
-    plot_option = st.sidebar.radio(
-        "Choose a visualization:",
-        plot_option,
-        index=plot_option.index(st.session_state.plot_option)
-    )
+        ]
 
-    # Sync sidebar → session_state
+    plot_option = st.sidebar.radio("Choose a visualization:", sidebar_options)
     st.session_state.plot_option = plot_option
 
-   
-    #  🏠 DASHBOARD OVERVIEW 
-    
     if st.session_state.plot_option == "🏠 Dashboard Overview":
 
         st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
-        st.markdown(
-            "<p style='color:#bbb'>Click any card below to open the full visualisation.</p>",
-            unsafe_allow_html=True
-        )
+        st.markdown("<p style='color:#bbb'>Click any card below to open the full visualisation.</p>", unsafe_allow_html=True)
 
-        # List of visualisation pages + icon + theme color
-        cards = [
-            ("Yearly Fish Landing Summary", "📅", "#00E5FF"),
-            ("Optimal K for Monthly & Yearly", "🎯", "#7DFFAF"),
-            ("Yearly Cluster Trends for Marine and Freshwater Fish", "🌊", "#FFA07A"),
-            ("2D KMeans Scatter", "🟦", "#81C7F5"),
-            ("3D KMeans Clustering", "🧊", "#DDA0DD"),
-            ("Automatic DBSCAN", "🌐", "#FFD700"),
-            ("Unified HDBSCAN Outlier Detection", "⚡", "#FF7F7F"),
-            ("Hierarchical Clustering", "🌳", "#8FBC8F"),
-            ("Geospatial Map", "🗺️", "#00CED1"),
-        ]
+        # All visualisations EXCEPT the first "Home"
+        visualisation_pages = sidebar_options[1:]
+
+        # Auto-assign icons + colors (repeat if needed)
+        icons = ["📘","📊","🌊","🟦","🧊","🌐","⚡","🌳","🗺️","🖥️","🔥","✨","📍","📡","🔍"]
+        colors = ["#00E5FF","#7DFFAF","#FFA07A","#81C7F5","#DDA0DD","#FFD700","#FF7F7F",
+                "#8FBC8F","#00CED1","#4B7BE5","#F7A440","#C15AFF","#57E39A","#E33F5F","#A4E5FF"]
 
         cols = st.columns(3)
 
-        for i, (name, icon, color) in enumerate(cards):
+        for i, name in enumerate(visualisation_pages):
+            icon = icons[i % len(icons)]
+            color = colors[i % len(colors)]
+
             with cols[i % 3]:
 
-                # Visual card (non-clickable but pretty)
                 st.markdown(
                     f"""
                     <div style="
@@ -811,10 +801,11 @@ def main():
                     unsafe_allow_html=True
                 )
 
-                # Clickable button (this triggers routing)
                 if st.button(f"Open → {name}", key=f"open_{i}"):
                     st.session_state.plot_option = name
                     st.rerun()
+
+
 
 
 

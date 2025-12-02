@@ -2637,3 +2637,84 @@ elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
         </div>
         """
         cols[idx].markdown(card_html, unsafe_allow_html=True)
+
+
+
+
+
+        st.sidebar.header("Select Visualization")
+    plot_option = st.sidebar.radio("Choose a visualization:", ["🏠 Dashboard Overview",
+
+        
+        "Yearly Fish Landing Summary","Optimal K for Monthly & Yearly", 
+        "Yearly Cluster Trends for Marine and Freshwater Fish",               
+        "2D KMeans Scatter",
+        "3D KMeans Clustering",
+        "Automatic DBSCAN","Unified HDBSCAN Outlier Detection","HDBSCAN","HDBSCAN Outlier Detection",
+        "Hierarchical Clustering",
+        "Geospatial Map",
+        "Interactive Geospatial Map","Geospatial Map(Heatmap)","Geospatial Map (Upgraded)","Geospatial Map (Upgraded)2"
+    ])
+
+    # Sidebar always reflects the current page
+    plot_option = st.sidebar.radio(
+        "Choose a visualization:",
+        plot_option,
+        index=plot_option.index(st.session_state.plot_option)
+    )
+
+    # Sync sidebar → session_state
+    st.session_state.plot_option = plot_option
+
+   
+    #  🏠 DASHBOARD OVERVIEW 
+    
+    if st.session_state.plot_option == "🏠 Dashboard Overview":
+
+        st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
+        st.markdown(
+            "<p style='color:#bbb'>Click any card below to open the full visualisation.</p>",
+            unsafe_allow_html=True
+        )
+
+        # List of visualisation pages + icon + theme color
+        cards = [
+            ("Yearly Fish Landing Summary", "📅", "#00E5FF"),
+            ("Optimal K for Monthly & Yearly", "🎯", "#7DFFAF"),
+            ("Yearly Cluster Trends for Marine and Freshwater Fish", "🌊", "#FFA07A"),
+            ("2D KMeans Scatter", "🟦", "#81C7F5"),
+            ("3D KMeans Clustering", "🧊", "#DDA0DD"),
+            ("Automatic DBSCAN", "🌐", "#FFD700"),
+            ("Unified HDBSCAN Outlier Detection", "⚡", "#FF7F7F"),
+            ("Hierarchical Clustering", "🌳", "#8FBC8F"),
+            ("Geospatial Map", "🗺️", "#00CED1"),
+        ]
+
+        cols = st.columns(3)
+
+        for i, (name, icon, color) in enumerate(cards):
+            with cols[i % 3]:
+
+                # Visual card (non-clickable but pretty)
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border-radius: 14px;
+                        padding: 20px;
+                        margin-bottom: 8px;
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
+                    ">
+                        <h3 style="color:white; margin:0; font-size:18px;">{icon} {name}</h3>
+                        <p style="color:#bbb; font-size:13px;">View full visualisation →</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                # Clickable button (this triggers routing)
+                if st.button(f"Open → {name}", key=f"open_{i}"):
+                    st.session_state.plot_option = name
+                    st.rerun()
+
