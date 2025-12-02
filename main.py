@@ -745,7 +745,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
         "Yearly Fish Landing Summary",
-        "Optimal K for Monthly & Yearly","Optimal K(cluster) for Monthly & Yearly",
+        "Optimal K for Monthly & Yearly",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
@@ -1039,6 +1039,30 @@ def main():
                     "Trend:", ["Freshwater", "Marine", "Both"], horizontal=True
                 )
 
+
+        # ============================================
+        # HELPER FUNCTIONS FOR CLUSTER MEANINGS
+        # ============================================
+
+        def interpret_label(fw, ma, avg_fw, avg_ma):
+            """Return High/Low FW & Marine meaning."""
+            fw_label = "High Freshwater" if fw >= avg_fw else "Low Freshwater"
+            ma_label = "High Marine" if ma >= avg_ma else "Low Marine"
+            return f"{fw_label} & {ma_label}"
+
+        def friendly_name(meaning):
+            """Convert meaning into user-friendly names."""
+            if "High Freshwater" in meaning and "Low Marine" in meaning:
+                return "🐟 Freshwater Dominant"
+            if "Low Freshwater" in meaning and "High Marine" in meaning:
+                return "🌊 Marine Dominant"
+            if "High Freshwater" in meaning and "High Marine" in meaning:
+                return "🔥 High Production Region"
+            if "Low Freshwater" in meaning and "Low Marine" in meaning:
+                return "⚠️ Low Production Group"
+            return "Mixed Cluster"
+
+
         # ======================================
         # YEARLY VIEW
         # ======================================
@@ -1156,6 +1180,32 @@ def main():
             best_k = st.session_state.get("best_k_yearly", 3)
 
             yearly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
+
+            # ============================================
+            # COMPUTE CLUSTER CENTROIDS (ORIGINAL SCALE)
+            # ============================================
+            km = KMeans(n_clusters=best_k, random_state=42).fit(scaled)
+            scaler = StandardScaler().fit(yearly[["Freshwater (Tonnes)", "Marine (Tonnes)"]])
+            centroids_original = scaler.inverse_transform(km.cluster_centers_)
+
+            # Build dataframe
+            yearly_profiles = pd.DataFrame(
+                centroids_original,
+                columns=["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            )
+            yearly_profiles["Cluster"] = range(best_k)
+
+            # Compute meanings
+            avg_fw = yearly["Freshwater (Tonnes)"].mean()
+            avg_ma = yearly["Marine (Tonnes)"].mean()
+
+            yearly_profiles["Meaning"] = yearly_profiles.apply(
+                lambda r: interpret_label(r["Freshwater (Tonnes)"], r["Marine (Tonnes)"], avg_fw, avg_ma),
+                axis=1
+            )
+
+            yearly_profiles["Friendly"] = yearly_profiles["Meaning"].apply(friendly_name)
+
 
             st.markdown(f"**Optimal clusters used:** {best_k}")
 
@@ -1326,6 +1376,65 @@ def main():
             ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=4)
 
             st.pyplot(fig)
+
+
+            # ===================================================
+            # 🧠 EXPANDABLE CLUSTER INTERPRETATION SECTION
+            # ===================================================
+
+            with st.expander("📘 Understanding the Clusters (Click to Expand)", expanded=False):
+
+                st.markdown("""
+                    <p style="color:#ccc; font-size:15px;">
+                    Each cluster groups years with similar freshwater & marine landing characteristics.
+                    The interpretation below helps you understand their economic & production significance.
+                    </p>
+                """, unsafe_allow_html=True)
+
+                for _, row in yearly_profiles.iterrows():
+                    cl = int(row["Cluster"])
+                    fw = row["Freshwater (Tonnes)"]
+                    ma = row["Marine (Tonnes)"]
+                    meaning = row["Meaning"]
+                    title = row["Friendly"]
+
+                    # Dynamic color (same order as seaborn lineplot)
+                    cluster_color = [
+                        "#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b2"
+                    ][cl % 5]
+
+                    st.markdown(f"""
+                    <div style="
+                        background-color:#111111;
+                        border-left:6px solid {cluster_color};
+                        padding:16px;
+                        border-radius:10px;
+                        margin-bottom:14px;
+                        color:white;
+                    ">
+
+                        <div style="font-size:20px; font-weight:700; color:{cluster_color}">
+                            Cluster {cl}: {title}
+                        </div>
+
+                        <div style="margin-top:6px; font-size:15px;">
+                            <b>Meaning:</b> {meaning}<br><br>
+
+                            <span style="color:#ccc;">Average Freshwater Landing:</span>
+                            <b>{fw:,.0f}</b> tonnes<br>
+
+                            <span style="color:#ccc;">Average Marine Landing:</span>
+                            <b>{ma:,.0f}</b> tonnes<br>
+                        </div>
+
+                        <div style="margin-top:10px; font-size:14px; color:#aaa;">
+                            🛈 This cluster appears in the trend chart above with the same color + line style.<br>
+                            Interpreting clusters helps identify economic patterns and production strengths.
+                        </div>
+
+                    </div>
+                    """, unsafe_allow_html=True)
+
 
    
 
