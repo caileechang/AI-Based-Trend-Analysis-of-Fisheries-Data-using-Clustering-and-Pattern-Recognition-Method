@@ -745,7 +745,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
         "Yearly Fish Landing Summary",
-        "Optimal K for Monthly & Yearly",
+        "Optimal K for Monthly & Yearly","Optimal K(cluster) for Monthly & Yearly",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
@@ -1521,6 +1521,367 @@ def main():
        
         </div>
         """, unsafe_allow_html=True)
+
+
+    elif plot_option == "Optimal K(cluster) for Monthly & Yearly":
+
+        import pandas as pd
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.cluster import KMeans
+        from sklearn.metrics import silhouette_score
+
+        st.markdown("## 🧩 Optimal K & Cluster Story (Monthly & Yearly)")
+
+        st.markdown("""
+        <p style="color:#cccccc; font-size:15px; margin-top:-8px;">
+        This page helps you <b>find the best number of clusters (K)</b> and also <b>see how that K changes the story</b>
+        of freshwater &amp; marine fish landings over time.
+        </p>
+        """, unsafe_allow_html=True)
+
+        # ------------------------------------------------------------
+        # Helper: Normalize column names
+        # ------------------------------------------------------------
+        def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+            df = df.copy()
+            df.columns = (
+                df.columns
+                .str.strip()
+                .str.lower()
+                .str.replace(" ", "")
+                .str.replace("(tonnes)", "", regex=False)
+            )
+            return df
+
+        # ------------------------------------------------------------
+        # Containers to reuse later for preview visuals
+        # ------------------------------------------------------------
+        monthly_comp = None
+        yearly_comp = None
+        best_k_monthly = None
+        best_sil_monthly = None
+        best_k_yearly = None
+        best_sil_yearly = None
+
+        # ============================================================
+        # 1️⃣  MONTHLY COMPOSITION  (Tabs Left: Evaluation + Preview)
+        # ============================================================
+        st.markdown("### 📘 Monthly Fish Landing Composition")
+
+        try:
+            monthly_comp = (
+                df_land.groupby(['Year', 'Month', 'Type of Fish'])['Fish Landing (Tonnes)']
+                .sum()
+                .reset_index()
+                .pivot_table(
+                    index=['Year', 'Month'],
+                    columns='Type of Fish',
+                    values='Fish Landing (Tonnes)',
+                    aggfunc='sum'
+                )
+                .fillna(0)
+                .reset_index()
+            )
+
+            monthly_comp = normalize_columns(monthly_comp)
+            # After normalisation, original "Freshwater" & "Marine" become "freshwater", "marine"
+            monthly_comp.rename(columns={
+                'freshwater': 'Freshwater (Tonnes)',
+                'marine': 'Marine (Tonnes)'
+            }, inplace=True)
+
+            if 'Freshwater (Tonnes)' not in monthly_comp.columns or 'Marine (Tonnes)' not in monthly_comp.columns:
+                st.error("❌ Monthly dataset is missing <b>Freshwater</b> or <b>Marine</b> category.", icon="⚠️")
+            else:
+                # Scale
+                scaled_monthly = StandardScaler().fit_transform(
+                    monthly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+                )
+
+                # Evaluate K using shared helper
+                (
+                    best_k_monthly,
+                    best_sil_monthly,
+                    _inertia_m
+                ) = evaluate_kmeans_k(
+                    scaled_monthly,
+                    "Monthly Fish Landing",
+                    use_streamlit=True
+                )
+
+        except Exception as e:
+            st.error(f"❌ Error in monthly computation: {e}")
+
+        # Small spacer
+        st.markdown("<hr style='border:0.3px solid #444;'>", unsafe_allow_html=True)
+
+        # ============================================================
+        # 2️⃣  YEARLY COMPOSITION
+        # ============================================================
+        st.markdown("### 📗 Yearly Fish Landing Composition")
+
+        try:
+            yearly_comp = (
+                df_land.groupby(['Year', 'Type of Fish'])['Fish Landing (Tonnes)']
+                .sum()
+                .reset_index()
+                .pivot_table(
+                    index='Year',
+                    columns='Type of Fish',
+                    values='Fish Landing (Tonnes)',
+                    aggfunc='sum'
+                )
+                .fillna(0)
+                .reset_index()
+            )
+
+            yearly_comp = normalize_columns(yearly_comp)
+            yearly_comp.rename(columns={
+                'freshwater': 'Freshwater (Tonnes)',
+                'marine': 'Marine (Tonnes)'
+            }, inplace=True)
+
+            if 'Freshwater (Tonnes)' not in yearly_comp.columns or 'Marine (Tonnes)' not in yearly_comp.columns:
+                st.error("❌ Yearly dataset is missing <b>Freshwater</b> or <b>Marine</b> category.", icon="⚠️")
+            else:
+                scaled_yearly = StandardScaler().fit_transform(
+                    yearly_comp[['Freshwater (Tonnes)', 'Marine (Tonnes)']]
+                )
+
+                (
+                    best_k_yearly,
+                    best_sil_yearly,
+                    _inertia_y
+                ) = evaluate_kmeans_k(
+                    scaled_yearly,
+                    "Yearly Fish Landing",
+                    use_streamlit=True
+                )
+
+        except Exception as e:
+            st.error(f"❌ Error in yearly computation: {e}")
+
+        # ============================================================
+        # 3️⃣  SIDE-BY-SIDE SUMMARY TABLE
+        # ============================================================
+        st.markdown("### 🧾 Summary of Optimal K Results")
+
+        summary_rows = []
+
+        if best_k_monthly is not None:
+            summary_rows.append([
+                "Monthly (Freshwater + Marine)",
+                best_k_monthly,
+                f"{best_sil_monthly:.3f}" if best_sil_monthly is not None else "N/A",
+            ])
+
+        if best_k_yearly is not None:
+            summary_rows.append([
+                "Yearly (Freshwater + Marine)",
+                best_k_yearly,
+                f"{best_sil_yearly:.3f}" if best_sil_yearly is not None else "N/A",
+            ])
+
+        if len(summary_rows) == 0:
+            st.warning("⚠ No valid K results available.")
+        else:
+            summary_df = pd.DataFrame(
+                summary_rows,
+                columns=["Dataset", "Optimal K", "Best Silhouette Score"]
+            )
+            st.table(summary_df)
+
+        # ============================================================
+        # 4️⃣  SAVE K TO SESSION (USED BY OTHER PAGES)
+        # ============================================================
+        if best_k_monthly is not None:
+            st.session_state['best_k_monthly'] = int(best_k_monthly)
+
+        if best_k_yearly is not None:
+            st.session_state['best_k_yearly'] = int(best_k_yearly)
+
+        # ============================================================
+        # 5️⃣  INTERPRETATION BOX – WHAT DOES THIS MEAN?
+        # ============================================================
+        st.markdown("""
+        <div style="
+            background-color:#eef6ff;
+            padding:16px;
+            border-radius:8px;
+            border-left:6px solid #4a90e2;
+            margin-bottom:22px;
+            color:#000000;
+            font-size:15px;
+        ">
+          <b style="color:#000000;">How to read this page:</b><br>
+          • The line charts above compare <b>Silhouette Score</b> and <b>Elbow (Inertia)</b> for different K values.<br>
+          • The <b>highest Silhouette Score</b> indicates the most natural separation of clusters.<br>
+          • The selected K is then reused in other pages, especially:
+          <ul style="margin-top:4px; color:#000000;">
+            <li>📊 <b>Yearly Cluster Trends for Marine and Freshwater Fish</b> (same K for consistency)</li>
+          </ul>
+          Choosing a stable, meaningful K makes the trend lines and cluster labels more
+          <b>interpretable and comparable over time</b>.
+        </div>
+        """, unsafe_allow_html=True)
+
+        # ============================================================
+        # 6️⃣  YEARLY CLUSTER PREVIEW – HOW DOES K SHAPE TRENDS?
+        # ============================================================
+        if (yearly_comp is not None) and (best_k_yearly is not None):
+            st.markdown("### 🔍 Yearly Cluster Preview (Using Optimal K)")
+
+            # Refit KMeans with best_k_yearly to show how years group
+            features_y = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaler_y = StandardScaler()
+            scaled_y = scaler_y.fit_transform(yearly_comp[features_y])
+
+            km_y = KMeans(n_clusters=int(best_k_yearly), random_state=42)
+            yearly_comp["Cluster"] = km_y.fit_predict(scaled_y)
+
+            # --- A) Cluster centroid summary (meaning cards) ---
+            centroids = pd.DataFrame(km_y.cluster_centers_, columns=features_y)
+            # Reverse scale back to original units (approximate)
+            centroids_orig = pd.DataFrame(
+                scaler_y.inverse_transform(km_y.cluster_centers_),
+                columns=features_y
+            )
+            centroids_orig["Cluster"] = range(0, int(best_k_yearly))
+
+            st.markdown("#### a) Cluster Profiles (Freshwater vs Marine)")
+
+            c_cols = st.columns(int(best_k_yearly))
+            overall_fw = yearly_comp["Freshwater (Tonnes)"].mean()
+            overall_ma = yearly_comp["Marine (Tonnes)"].mean()
+
+            def label_cluster(fw, ma, fw_mean, ma_mean):
+                tag = []
+                tag.append("High FW" if fw >= fw_mean else "Low FW")
+                tag.append("High Marine" if ma >= ma_mean else "Low Marine")
+                return " & ".join(tag)
+
+            for idx, (_, row_c) in enumerate(centroids_orig.iterrows()):
+                fw_c = row_c["Freshwater (Tonnes)"]
+                ma_c = row_c["Marine (Tonnes)"]
+                label = label_cluster(fw_c, ma_c, overall_fw, overall_ma)
+
+                with c_cols[idx]:
+                    st.markdown(f"""
+                    <div style="
+                        background: linear-gradient(135deg,#06373d 0%,#001f24 100%);
+                        border-radius: 18px;
+                        padding: 18px 20px;
+                        border: 1px solid rgba(0,255,200,0.25);
+                        box-shadow: 0 0 16px rgba(0,255,200,0.18);
+                        min-height: 150px;
+                    ">
+                      <h4 style="color:white; margin-top:0; margin-bottom:6px;">
+                        Cluster {idx} – {label}
+                      </h4>
+                      <p style="color:#e0f7ff; font-size:14px; margin-bottom:6px;">
+                        <b>Avg Freshwater:</b> {fw_c:,.0f} tonnes<br>
+                        <b>Avg Marine:</b> {ma_c:,.0f} tonnes
+                      </p>
+                      <p style="color:#99d9ff; font-size:13px; margin-bottom:0;">
+                        Years in this cluster: 
+                        {", ".join(str(int(y)) for y in sorted(yearly_comp[yearly_comp["Cluster"]==idx]["Year"].tolist()))}
+                      </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            # --- B) Year vs Cluster scatter (how years move across clusters) ---
+            st.markdown("#### b) Year–Cluster Timeline (Using Optimal K)")
+
+            fig_sc, ax_sc = plt.subplots(figsize=(9, 4))
+            sns.scatterplot(
+                data=yearly_comp,
+                x="Year",
+                y="Cluster",
+                hue="Cluster",
+                palette="viridis",
+                s=80,
+                ax=ax_sc,
+                legend=False
+            )
+            for _, r in yearly_comp.iterrows():
+                ax_sc.text(r["Year"] + 0.05, r["Cluster"] + 0.05,
+                           str(int(r["Year"])),
+                           fontsize=8,
+                           color="white")
+
+            ax_sc.set_title(f"Year–Cluster Positioning (K = {int(best_k_yearly)})")
+            ax_sc.set_ylabel("Cluster ID")
+            ax_sc.grid(alpha=0.3)
+            st.pyplot(fig_sc)
+
+            # --- C) Heatmap of total landing by Year x Cluster (story of contribution) ---
+            st.markdown("#### c) Heatmap – Total Landing by Year & Cluster")
+
+            yearly_comp["Total Landing (Tonnes)"] = (
+                yearly_comp["Freshwater (Tonnes)"] + yearly_comp["Marine (Tonnes)"]
+            )
+
+            heat_df = (
+                yearly_comp
+                .groupby(["Year", "Cluster"])["Total Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot(index="Year", columns="Cluster", values="Total Landing (Tonnes)")
+                .fillna(0)
+            )
+
+            fig_hm, ax_hm = plt.subplots(figsize=(8, 4))
+            sns.heatmap(
+                heat_df,
+                cmap="viridis",
+                annot=True,
+                fmt=".0f",
+                cbar_kws={"label": "Total Landing (Tonnes)"},
+                ax=ax_hm
+            )
+            ax_hm.set_title("Year vs Cluster – Total Fish Landing (Tonnes)")
+            st.pyplot(fig_hm)
+
+        # ============================================================
+        # 7️⃣  MONTHLY CLUSTER PREVIEW (Optional quick glance)
+        # ============================================================
+        if (monthly_comp is not None) and (best_k_monthly is not None):
+            st.markdown("### 👀 Quick Monthly Cluster Preview")
+
+            features_m = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaler_m = StandardScaler()
+            scaled_m = scaler_m.fit_transform(monthly_comp[features_m])
+
+            km_m = KMeans(n_clusters=int(best_k_monthly), random_state=42)
+            monthly_comp["Cluster"] = km_m.fit_predict(scaled_m)
+
+            monthly_comp["MonthYear"] = pd.to_datetime(
+                monthly_comp["Year"].astype(int).astype(str)
+                + "-" +
+                monthly_comp["Month"].astype(int).astype(str)
+                + "-01"
+            )
+
+            fig_m, ax_m = plt.subplots(figsize=(10, 4))
+            sns.scatterplot(
+                data=monthly_comp,
+                x="MonthYear",
+                y="Cluster",
+                hue="Cluster",
+                palette="viridis",
+                s=30,
+                ax=ax_m,
+                legend=False
+            )
+            ax_m.set_title(f"Monthly Cluster Timeline (K = {int(best_k_monthly)})")
+            ax_m.set_ylabel("Cluster ID")
+            plt.xticks(rotation=45)
+            ax_m.grid(alpha=0.3)
+            st.pyplot(fig_m)
+
 
 
 
