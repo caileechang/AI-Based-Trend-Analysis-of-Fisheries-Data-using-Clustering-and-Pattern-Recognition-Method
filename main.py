@@ -740,28 +740,20 @@ def main():
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
-        
-
-    
-        
         "Yearly Fish Landing Summary",
         "Optimal K for Monthly & Yearly",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "Automatic DBSCAN",
-        "Unified HDBSCAN Outlier Detection",
-        "HDBSCAN",
+       
+       
         "HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
-        "Geospatial Map",
-        "Interactive Geospatial Map",
-        "Geospatial Map(Heatmap)",
-        "Geospatial Map (Upgraded)",
+     
+      
         "Geospatial Map (Upgraded)2"
     ])
 
-   
     
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
