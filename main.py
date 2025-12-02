@@ -737,7 +737,12 @@ def main():
 
     merged_monthly = prepare_monthly(df_land, df_vess)
 
-    
+        # Sidebar always follows session_state
+    try:
+        default_index = plot_option.index(st.session_state.plot_option)
+    except ValueError:
+        default_index = 0  # fallback to Dashboard Overview
+
 
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", ["🏠 Dashboard Overview",
