@@ -737,8 +737,12 @@ def main():
 
     merged_monthly = prepare_monthly(df_land, df_vess)
 
+    st.sidebar.header("Select Visualization")
+    plot_option = st.sidebar.radio("Choose a visualization:", [
+        
+        
 
-    plot_option = [
+    
         
         "Yearly Fish Landing Summary",
         "Optimal K for Monthly & Yearly",
@@ -755,17 +759,10 @@ def main():
         "Geospatial Map(Heatmap)",
         "Geospatial Map (Upgraded)",
         "Geospatial Map (Upgraded)2"
-    ]
+    ])
 
    
-    selected = st.sidebar.radio(
-        "Choose a visualization:",
-        plot_option,
-        index=plot_option.index(st.session_state.plot_option)
-    )
-
-    st.session_state.plot_option = selected
-
+    
     if plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
        
