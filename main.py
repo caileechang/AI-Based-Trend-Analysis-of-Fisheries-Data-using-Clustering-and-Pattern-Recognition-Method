@@ -19,6 +19,11 @@ import plotly.graph_objects as go
 import hdbscan
 
 
+# -----------------------
+# INITIALISE default page
+# -----------------------
+if "plot_option" not in st.session_state:
+    st.session_state.plot_option = "🏠 Dashboard Overview"
 
 
 # Import your clustering modules
@@ -746,8 +751,20 @@ def main():
         "Interactive Geospatial Map","Geospatial Map(Heatmap)","Geospatial Map (Upgraded)","Geospatial Map (Upgraded)2"
     ])
 
+    # Sidebar always reflects the current page
+    plot_option = st.sidebar.radio(
+        "Choose a visualization:",
+        sidebar_options,
+        index=sidebar_options.index(st.session_state.plot_option)
+    )
 
-    if plot_option == "🏠 Dashboard Overview":
+    # Sync sidebar → session_state
+    st.session_state.plot_option = plot_option
+
+   
+    #  🏠 DASHBOARD OVERVIEW 
+    
+    if st.session_state.plot_option == "🏠 Dashboard Overview":
 
         st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
         st.markdown(
@@ -755,7 +772,7 @@ def main():
             unsafe_allow_html=True
         )
 
-        # List of visualisation pages + icon + color
+        # List of visualisation pages + icon + theme color
         cards = [
             ("Yearly Fish Landing Summary", "📅", "#00E5FF"),
             ("Optimal K for Monthly & Yearly", "🎯", "#7DFFAF"),
@@ -768,13 +785,12 @@ def main():
             ("Geospatial Map", "🗺️", "#00CED1"),
         ]
 
-        # Create a 3-column grid
         cols = st.columns(3)
 
         for i, (name, icon, color) in enumerate(cards):
             with cols[i % 3]:
 
-                # Card design (always visible)
+                # Visual card (non-clickable but pretty)
                 st.markdown(
                     f"""
                     <div style="
@@ -784,21 +800,19 @@ def main():
                         margin-bottom: 8px;
                         border: 1px solid {color}55;
                         box-shadow: 0 0 12px {color}33;
-                        transition: 0.2s;
                     ">
                         <h3 style="color:white; margin:0; font-size:18px;">{icon} {name}</h3>
-                        <p style="color:#bbb; font-size:13px; margin-top:4px;">
-                            View full visualisation →
-                        </p>
+                        <p style="color:#bbb; font-size:13px;">View full visualisation →</p>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
 
-                # Button underneath (triggers navigation)
+                # Clickable button (this triggers routing)
                 if st.button(f"Open → {name}", key=f"open_{i}"):
                     st.session_state.plot_option = name
                     st.rerun()
+
 
 
 
