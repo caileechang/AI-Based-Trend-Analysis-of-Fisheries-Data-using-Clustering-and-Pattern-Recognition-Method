@@ -1523,6 +1523,18 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
+        st.markdown("""
+        <div style="background:#eef6ff;padding:15px;border-radius:8px;border-left:6px solid #4a90e2;">
+        <b>💡 How This Helps Your Analysis</b><br><br>
+        ✔ The optimal K ensures your clusters are not too many (noise) or too few (overgeneralised).<br>
+        ✔ The cluster meanings show which years/states are strong or weak in freshwater vs marine production.<br>
+        ✔ These same cluster labels are reused in:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;📈 <b>Yearly Cluster Trends for Marine & Freshwater Fish</b><br>
+        ✔ This makes your trend charts easier to interpret because each cluster now has a real meaning.<br>
+        ✔ You now know what each cluster represents (High FW, Low Marine, etc.) so trends make sense.<br>
+        </div>
+        """, unsafe_allow_html=True)
+
 
     
 
