@@ -1727,6 +1727,8 @@ def main():
           <b>interpretable and comparable over time</b>.
         </div>
         """, unsafe_allow_html=True)
+        
+        st.write("yearly_comp columns:", yearly_comp.columns.tolist())
 
         # ============================================================
         # 6️⃣  YEARLY CLUSTER PREVIEW – HOW DOES K SHAPE TRENDS?
