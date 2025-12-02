@@ -830,7 +830,7 @@ def main():
                         height: 200px;               /* Make card taller */
 
                         text-align: left;
-                        padding: 28px;               /* Bigger inner spacing */
+                        padding: 0px;               /* Bigger inner spacing */
                         border-radius: 16px;         /* Larger curvature */
                         font-size: 20px;             /* Bigger text */
 
