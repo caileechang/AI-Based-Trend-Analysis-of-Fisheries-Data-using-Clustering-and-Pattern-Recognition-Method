@@ -811,63 +811,39 @@ def main():
 
             with cols[i % 3]:
 
-                # Invisible click button overlay (handles navigation)
-                if st.button(" ", key=f"card_btn_{i}"):
+                    # Clickable button styled as transparent over the card
+                if st.button(
+                    label=f"{icon} {name}", 
+                    key=f"card_{i}", 
+                    help=f"Open {name}", 
+                    use_container_width=True
+                ):
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # Actual visual card (styled HTML block)
-                st.markdown(
-                    f"""
-                    <div style="
-                        margin-top: -70px;
-                        height: 170px;
-                        border-radius: 22px;
-
-                        background: linear-gradient(135deg, {color}22, #0d1117);
-                        border: 2px solid {color}88;
-
-                        box-shadow:
-                            0 0 15px {color}55,
-                            inset 0 0 15px {color}22;
-
-                        padding: 26px 26px;
-                        position: relative;
-                        z-index: 1;
-                    ">
-                        <h2 style="color:white; margin:0; font-size:24px; font-weight:700;
-                            display:flex; align-items:center;">
-                            <span style="font-size:30px; margin-right:12px;">{icon}</span>
-                            {name}
-                        </h2>
-
-                        <p style="color:#d0d8ff; margin-top:18px; font-size:17px;">
-                            View full visualisation →
-                        </p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                # Make the invisible button cover the card perfectly
+                # Inject CSS to style the button as a card
                 st.markdown(
                     f"""
                     <style>
-                    div[data-testid="stButton"][key="card_btn_{i}"] > button {{
-                        position: relative;
-                        z-index: 2;
-                        margin-bottom: -170px;
-                        width: 100%;
-                        height: 170px;
-                        opacity: 0;
-                        cursor: pointer;
+                    div[data-testid="stButton"][key="card_{i}"] > button {{
+                        height: 140px;
+                        text-align: left;
+                        padding: 20px;
+                        border-radius: 14px;
+                        font-size: 18px;
+                        color: white;
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
                     }}
-                    div[data-testid="stButton"][key="card_btn_{i}"] > button:hover {{
-                        opacity: 0.05; /* slight highlight when hovering */
+                    div[data-testid="stButton"][key="card_{i}"] > button:hover {{
+                        border: 1px solid {color};
+                        transform: scale(1.01);
+                        transition: 0.1s ease-in-out;
                     }}
                     </style>
                     """,
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
 
 
