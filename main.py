@@ -1349,24 +1349,27 @@ def main():
         def normalize_columns(df):
             df = df.copy()
 
-            # Save the original columns before cleaning
-            preserved = {col.lower(): col for col in df.columns}
+            # Clean whitespace
+            df.columns = df.columns.str.strip()
 
-            df.columns = (
-                df.columns
-                .str.strip()
-                .str.replace("(Tonnes)", "", regex=False)
-                .str.replace(" ", "")
-                .str.lower()
-            )
+            # Fix known variations safely
+            rename_map = {
+                "freshwater": "Freshwater (Tonnes)",
+                "Freshwater": "Freshwater (Tonnes)",
+                "freshwater(tonnes)": "Freshwater (Tonnes)",
+                "marine": "Marine (Tonnes)",
+                "Marine": "Marine (Tonnes)",
+                "marine(tonnes)": "Marine (Tonnes)",
+                "year": "Year",
+                "month": "Month",
+            }
 
-            # Restore Year & Month capitalization
-            rename_map = {}
-            for col in ["year", "month"]:
-                if col in df.columns:
-                    rename_map[col] = col.capitalize()
-
-            df.rename(columns=rename_map, inplace=True)
+            for col in list(df.columns):
+                key = col.replace(" ", "").replace("(Tonnes)", "").lower()
+                if key in ["freshwater", "marine"]:
+                    df.rename(columns={col: rename_map[key]}, inplace=True)
+                if key in ["year", "month"]:
+                    df.rename(columns={col: key.capitalize()}, inplace=True)
 
             return df
 
