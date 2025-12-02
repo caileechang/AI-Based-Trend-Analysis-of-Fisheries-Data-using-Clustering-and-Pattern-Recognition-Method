@@ -824,38 +824,22 @@ def main():
                 # Inject CSS to style the button as a card
                 st.markdown(
                     f"""
-                    <style>
-                    div[data-testid="stButton"][key="card_{i}"] > button {{
-                        width: 100% !important;
-                        height: 1000px;                    /* ← height of small square */
-                        padding: 400px;                    /* balanced spacing */
-                        border-radius: 20px;
-                        font-size: 18px;
-                        font-weight:600;
-                        text-align: left;
-                        color: white;
-
-                        background: linear-gradient(135deg, {color}44, #0d1117);
-                        border: 2px solid {color}88;
-                        box-shadow: 0 0 15px {color}44;
-
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: flex-start;
-
-                        overflow: hidden;                /* Prevent text overflow */
-                    }}
-                    div[data-testid="stButton"][key="card_{i}"] > button:hover {{
-                        transform: scale(1.03);
-                        border-color: {color};
-                        box-shadow: 0 0 20px {color}AA;
-                        transition: 0.15s ease-in-out;
-                    }}
-                    </style>
+                    <div style="
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border-radius: 14px;
+                        padding: 20px;
+                        margin-bottom: 8px;
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
+                    ">
+                        <h3 style="color:white; margin:0; font-size:18px;">{icon} {name}</h3>
+                        <p style="color:#bbb; font-size:13px;">View full visualisation →</p>
+                    </div>
                     """,
                     unsafe_allow_html=True
                 )
+
+            
 
 
 
