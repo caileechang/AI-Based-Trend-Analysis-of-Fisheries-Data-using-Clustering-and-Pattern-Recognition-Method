@@ -301,149 +301,7 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
     return best_k, best_sil, best_inertia
 
 
-def optimal_k_section(df_land, df_vess):
 
-    import streamlit as st
-    import matplotlib.pyplot as plt
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.cluster import KMeans
-    from sklearn.metrics import silhouette_score
-    import numpy as np
-
-    st.title("🔍 Determination of Optimal K")
-    st.caption("Optimal K will be automatically applied to all clustering visualisations.")
-
-    st.markdown("""
-    <div style='padding:12px; border-radius:8px; background:#F2F7FF; border-left:6px solid #3A83F7;'>
-    <b>Why this matters:</b>  
-    The number of clusters (<b>K</b>) determines how states or months are grouped into 
-    <b>High / Medium / Low fish landing profiles</b>.  
-    Selecting a wrong K gives misleading cluster visuals.  
-    </div>
-    """, unsafe_allow_html=True)
-
-    # ============================================================
-    # Helper function to compute silhouette & elbow
-    # ============================================================
-    def compute_optimal_k(data):
-        scaler = StandardScaler()
-        scaled = scaler.fit_transform(data)
-
-        ks = range(2, 11)
-        inertia = []
-        silhouettes = []
-
-        best_k = None
-        best_sil = -999
-
-        for k in ks:
-            kmeans = KMeans(n_clusters=k, random_state=42)
-            labels = kmeans.fit_predict(scaled)
-
-            inertia.append(kmeans.inertia_)
-
-            try:
-                sil = silhouette_score(saled, labels)
-            except:
-                sil = np.nan
-
-            silhouettes.append(sil)
-
-            if sil is not np.nan and sil > best_sil:
-                best_sil = sil
-                best_k = k
-
-        return best_k, ks, inertia, silhouettes, best_sil, scaled
-
-    # ============================================================
-    # SECTION A — MONTHLY FISH LANDING
-    # ============================================================
-    st.subheader("📅 Monthly Fish Landing Composition")
-
-    monthly_features = monthly_df[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
-    m_best_k, ks, inertia, silhouettes, best_sil, m_scaled = compute_optimal_k(monthly_features)
-
-    # Save globally for other visualisations
-    st.session_state.optimal_k_monthly = m_best_k
-
-    # PLOTS — Monthly
-    c1, c2 = st.columns(2)
-    with c1:
-        fig, ax = plt.subplots(figsize=(5,4))
-        ax.plot(ks, silhouettes, marker="o")
-        ax.axvline(m_best_k, color='red', linestyle='--')
-        ax.set_title("Silhouette Score vs K (Monthly)")
-        ax.set_xlabel("K")
-        ax.set_ylabel("Silhouette Score")
-        st.pyplot(fig)
-
-    with c2:
-        fig, ax = plt.subplots(figsize=(5,4))
-        ax.plot(ks, inertia, marker="o", color="orange")
-        ax.axvline(m_best_k, color='red', linestyle='--')
-        ax.set_title("Elbow Curve (Monthly)")
-        ax.set_xlabel("K")
-        ax.set_ylabel("Inertia (WSS)")
-        st.pyplot(fig)
-
-    st.success(f"📌 Monthly Optimal K Selected: **K = {m_best_k}**  (Silhouette = {best_sil:.3f})")
-
-    # ============================================================
-    # SECTION B — YEARLY FISH LANDING
-    # ============================================================
-    st.subheader("📆 Yearly Fish Landing Composition")
-
-    yearly_features = yearly_df[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
-    y_best_k, ks, inertia, silhouettes, best_sil, y_scaled = compute_optimal_k(yearly_features)
-
-    # Save globally for other visualisations
-    st.session_state.optimal_k_yearly = y_best_k
-
-    # PLOTS — Yearly
-    c1, c2 = st.columns(2)
-    with c1:
-        fig, ax = plt.subplots(figsize=(5,4))
-        ax.plot(ks, silhouettes, marker="o")
-        ax.axvline(y_best_k, color='red', linestyle='--')
-        ax.set_title("Silhouette Score vs K (Yearly)")
-        ax.set_xlabel("K")
-        ax.set_ylabel("Silhouette Score")
-        st.pyplot(fig)
-
-    with c2:
-        fig, ax = plt.subplots(figsize=(5,4))
-        ax.plot(ks, inertia, marker="o", color="orange")
-        ax.axvline(y_best_k, color='red', linestyle='--')
-        ax.set_title("Elbow Curve (Yearly)")
-        ax.set_xlabel("K")
-        ax.set_ylabel("Inertia (WSS)")
-        st.pyplot(fig)
-
-    st.success(f"📌 Yearly Optimal K Selected: **K = {y_best_k}**  (Silhouette = {best_sil:.3f})")
-
-    # ============================================================
-    # SECTION C — How This Connects to Other Visualisations
-    # ============================================================
-    st.markdown("""
-    <div style='padding:14px; margin-top:20px; border-radius:8px; background:#E8FFE7; border-left:6px solid #0F9D58;'>
-    <h4>✔ How Optimal K Is Used</h4>
-    <ul>
-        <li>The selected <b>Monthly K</b> and <b>Yearly K</b> will be automatically applied to:</li>
-        <ul>
-            <li>📊 Yearly Cluster Trends (Marine & Freshwater)</li>
-            <li>📉 2D K-Means Scatter</li>
-            <li>📈 3D K-Means Clustering</li>
-            <li>🗺 Geospatial Maps</li>
-        </ul>
-        <li>This ensures <b>consistent clustering</b> across all charts.</li>
-    </ul>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Navigation button
-    if st.button("➡ Proceed to Yearly Cluster Trends"):
-        st.session_state.plot_option = "Yearly Cluster Trends for Marine and Freshwater Fish"
-        st.experimental_rerun()
 
 
 def hierarchical_clustering(merged_df):
@@ -887,7 +745,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
         "Yearly Fish Landing Summary",
-        "Optimal K for Monthly & Yearly","Optimal K(cluster) for Monthly & Yearly",
+        "Optimal K for Monthly & Yearly",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
@@ -1634,6 +1492,32 @@ def main():
 
         if best_k_yearly is not None:
             st.session_state['best_k_yearly'] = best_k_yearly
+
+        # ------------------------------------------------------------
+        # Enhanced Explanation Box
+        # ------------------------------------------------------------
+        st.markdown("""
+        <div style='background-color:#eef6ff; padding:16px; border-radius:8px; 
+                    border-left:6px solid #4a90e2; margin-bottom:22px; font-size:15px;'>
+        <b>Why you are seeing this page:</b><br>
+        The number of clusters (<b>K</b>) affects how states or months are grouped into 
+        meaningful categories such as <b>High</b>, <b>Medium</b>, and <b>Low</b> fish landing performance.
+        A correctly chosen K ensures that all cluster-based visualisations remain 
+        <b>accurate, consistent, and scientifically valid</b>.<br><br>
+
+        <b>Where the selected K will be used:</b>
+        <ul style='margin-top:0px;'>
+            <li>📊 <b>Yearly Cluster Trends</b> (Freshwater & Marine)</li>
+            <li>🟦 <b>2D K-Means Scatter</b></li>
+            <li>🟧 <b>3D K-Means Clustering</b></li>
+            <li>🗺 <b>Geospatial Map (Cluster-Based)</b></li>
+        </ul>
+
+        All these visualisations will use the <b>same K value</b> determined here, ensuring 
+        a smooth and consistent analytical experience.
+        </div>
+        """, unsafe_allow_html=True)
+
 
 
     elif plot_option == "2D KMeans Scatter":
@@ -2590,9 +2474,6 @@ def main():
 
 
     
-
-    elif plot_option == "Optimal K(cluster) for Monthly & Yearly":
-            optimal_k_section(df_land, df_vess)
 
    
 
