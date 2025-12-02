@@ -811,53 +811,39 @@ def main():
 
             with cols[i % 3]:
 
-                # Transparent button overlaying the card
-                if st.button(" ", key=f"cardbtn_{i}"):
+                # Clickable button styled as transparent over the card
+                if st.button(
+                    label=f"{icon} {name}", 
+                    key=f"card_{i}", 
+                    help=f"Open {name}", 
+                    use_container_width=True
+                ):
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # Actual card HTML (design only — NOT a button)
-                st.markdown(
-                    f"""
-                    <div style="
-                        margin-top: -60px;
-                        background: linear-gradient(135deg, {color}33, #0d0f17);
-                        padding: 20px;
-                        height: 120px;
-                        border-radius: 18px;
-                        border: 1px solid {color}55;
-                        box-shadow: 0 0 15px {color}22;
-                        position: relative;
-                        z-index: 1;
-                    ">
-                        <h3 style="color:white; margin:0; font-size:20px; display:flex; align-items:center;">
-                            <span style='font-size:26px; margin-right:10px;'>{icon}</span>
-                            {name}
-                        </h3>
-                        <p style="color:#b5c8ff; margin-top:8px; font-size:14px;">
-                            View full visualisation →
-                        </p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                # CSS to position the invisible button ON TOP of the card
+                # Inject CSS to style the button as a card
                 st.markdown(
                     f"""
                     <style>
-                        div[data-testid="stButton"][key="cardbtn_{i}"] > button {{
-                            position: relative;
-                            z-index: 2;
-                            width: 100%;
-                            height: 120px;
-                            opacity: 0;
-                            cursor: pointer;
-                            margin-bottom: -120px;
-                        }}
+                    div[data-testid="stButton"][key="card_{i}"] > button {{
+                        height: 200px;
+                        text-align: left;
+                        padding: 20px;
+                        border-radius: 14px;
+                        font-size: 18px;
+                        color: white;
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
+                    }}
+                    div[data-testid="stButton"][key="card_{i}"] > button:hover {{
+                        border: 1px solid {color};
+                        transform: scale(1.01);
+                        transition: 0.1s ease-in-out;
+                    }}
                     </style>
                     """,
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
 
 
