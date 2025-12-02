@@ -1534,7 +1534,7 @@ def main():
         from sklearn.cluster import KMeans
         from sklearn.metrics import silhouette_score
 
-        st.markdown("## 🧩 Optimal K & Cluster Story (Monthly & Yearly)")
+        st.markdown("## 🧩 Optimal K & Cluster (Monthly & Yearly)")
 
         st.markdown("""
         <p style="color:#cccccc; font-size:15px; margin-top:-8px;">
