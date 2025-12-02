@@ -1245,18 +1245,30 @@ def main():
             # ============================================
             # COMPUTE CLUSTER CENTROIDS (ORIGINAL SCALE)
             # ============================================
+            # ======================================
+            # YEARLY KMEANS CLUSTERING
+            # ======================================
+            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaled = StandardScaler().fit_transform(yearly[features])
+            best_k = st.session_state.get("best_k_yearly", 3)
+
+            yearly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
+
+            st.markdown(f"**Optimal clusters used:** {best_k}")
+
+            # ============================================================
+            # 1️⃣ COMPUTE CLUSTER CENTROIDS (ORIGINAL VALUES)
+            # ============================================================
             km = KMeans(n_clusters=best_k, random_state=42).fit(scaled)
-            scaler = StandardScaler().fit(yearly[["Freshwater (Tonnes)", "Marine (Tonnes)"]])
+            scaler = StandardScaler().fit(yearly[features])
             centroids_original = scaler.inverse_transform(km.cluster_centers_)
 
-            # Build dataframe
             yearly_profiles = pd.DataFrame(
                 centroids_original,
                 columns=["Freshwater (Tonnes)", "Marine (Tonnes)"]
             )
             yearly_profiles["Cluster"] = range(best_k)
 
-            # Compute meanings
             avg_fw = yearly["Freshwater (Tonnes)"].mean()
             avg_ma = yearly["Marine (Tonnes)"].mean()
 
@@ -1264,12 +1276,11 @@ def main():
                 lambda r: interpret_label(r["Freshwater (Tonnes)"], r["Marine (Tonnes)"], avg_fw, avg_ma),
                 axis=1
             )
-
             yearly_profiles["Friendly"] = yearly_profiles["Meaning"].apply(friendly_name)
 
-
-            st.markdown(f"**Optimal clusters used:** {best_k}")
-
+            # ============================================================
+            # 2️⃣ PREPARE MELTED DATA (must be BEFORE plotting)
+            # ============================================================
             melted = yearly.melt(
                 id_vars=["Year", "Cluster"],
                 value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
@@ -1277,6 +1288,9 @@ def main():
                 value_name="Landing",
             )
 
+            # ============================================================
+            # 3️⃣ CREATE THE PLOT (dual-axis or single-axis)
+            # ============================================================
             fig, ax = plt.subplots(figsize=(14, 6))
 
             for fish_type in ["Freshwater (Tonnes)", "Marine (Tonnes)"]:
@@ -1309,133 +1323,49 @@ def main():
 
             st.pyplot(fig)
 
-        # ======================================
-        # MONTHLY VIEW
-        # ======================================
-        else:
+            # ============================================================
+            # 4️⃣ CLUSTER INTERPRETATION (AFTER melted CREATED)
+            # ============================================================
+            with st.expander("📘 Understanding the Clusters (Click to Expand)", expanded=False):
 
-            monthly = (
-                df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
-                .sum()
-                .reset_index()
-                .pivot(index=["Year", "Month"], columns="Type of Fish",
-                    values="Fish Landing (Tonnes)")
-                .fillna(0)
-                .reset_index()
-            )
+                st.markdown("""
+                    <p style="color:#ccc; font-size:15px;">
+                    Each cluster groups years with similar freshwater & marine landing characteristics.
+                    The interpretation below helps you understand their economic significance.
+                    </p>
+                """, unsafe_allow_html=True)
 
-            monthly.rename(columns={
-                "Freshwater": "Freshwater (Tonnes)",
-                "Marine": "Marine (Tonnes)"
-            }, inplace=True)
+                for _, row in yearly_profiles.iterrows():
+                    cl = int(row["Cluster"])
+                    fw = row["Freshwater (Tonnes)"]
+                    ma = row["Marine (Tonnes)"]
+                    meaning = row["Meaning"]
+                    title = row["Friendly"]
 
-            monthly["MonthYear"] = pd.to_datetime(
-                monthly["Year"].astype(str) + "-" +
-                monthly["Month"].astype(str) + "-01"
-            )
+                    cluster_color = [
+                        "#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b2"
+                    ][cl % 5]
 
-            latest_date = monthly["MonthYear"].max()
-            prev_date = latest_date - pd.DateOffset(months=1)
-
-            def safe_month_value(df, date, col):
-                v = df.loc[df["MonthYear"] == date, col]
-                return v.values[0] if len(v) else 0
-
-            def calc_growth_month_html(curr, prev):
-                if prev == 0:
-                    return "<span style='color:gray'>–</span>"
-                ratio = curr / prev
-                if ratio >= 1:
-                    return f"<span style='color:lightgreen'>↑ {ratio:.2f}x</span>"
-                else:
-                    return f"<span style='color:#ff4d4d'>↓ {ratio:.2f}x</span>"
-
-            fw = safe_month_value(monthly, latest_date, "Freshwater (Tonnes)")
-            fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
-            ma = safe_month_value(monthly, latest_date, "Marine (Tonnes)")
-            ma_prev = safe_month_value(monthly, prev_date, "Marine (Tonnes)")
-
-            st.markdown(f"## Landing Summary in {latest_date.strftime('%B %Y')}")
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.markdown(
-                    f"""
-                    <div style="{card_style}">
-                        <h3 style="color:white;">Freshwater Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{fw:,.0f}</b> tonnes</h1>
-                        {calc_growth_month_html(fw, fw_prev)}
+                    st.markdown(f"""
+                    <div style="
+                        background-color:#111111;
+                        border-left:6px solid {cluster_color};
+                        padding:16px;
+                        border-radius:10px;
+                        margin-bottom:14px;
+                        color:white;">
+                        <div style="font-size:20px; font-weight:700; color:{cluster_color}">
+                            Cluster {cl}: {title}
+                        </div>
+                        <div style="margin-top:6px; font-size:15px;">
+                            <b>Meaning:</b> {meaning}<br><br>
+                            <span style="color:#ccc;">Average Freshwater Landing:</span>
+                            <b>{fw:,.0f}</b> tonnes<br>
+                            <span style="color:#ccc;">Average Marine Landing:</span>
+                            <b>{ma:,.0f}</b> tonnes<br>
+                        </div>
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            with col2:
-                st.markdown(
-                    f"""
-                    <div style="{card_style}">
-                        <h3 style="color:white;">Marine Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{ma:,.0f}</b> tonnes</h1>
-                        {calc_growth_month_html(ma, ma_prev)}
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-            st.markdown("---")
-
-            # ======================================
-            # MONTHLY CLUSTER PLOT
-            # ======================================
-            fig, ax1 = plt.subplots(figsize=(14,6))
-
-            ax2 = ax1.twinx()   # second axis for marine
-
-            for cl in sorted(melted["Cluster"].unique()):
-                # Freshwater
-                subset_fw = melted[
-                    (melted["Type"] == "Freshwater (Tonnes)") &
-                    (melted["Cluster"] == cl)
-                ]
-                ax1.plot(
-                    subset_fw["MonthYear"],
-                    subset_fw["Landing"],
-                    linestyle=linestyles[cl % len(linestyles)],
-                    marker="o",
-                    color="tab:blue",
-                    label=f"Freshwater – Cluster {cl}"
-                )
-
-                # Marine
-                subset_ma = melted[
-                    (melted["Type"] == "Marine (Tonnes)") &
-                    (melted["Cluster"] == cl)
-                ]
-                ax2.plot(
-                    subset_ma["MonthYear"],
-                    subset_ma["Landing"],
-                    linestyle=linestyles[cl % len(linestyles)],
-                    marker="^",
-                    color="tab:red",
-                    label=f"Marine – Cluster {cl}"
-                )
-
-            ax1.set_ylabel("Freshwater Landing (Tonnes)")
-            ax2.set_ylabel("Marine Landing (Tonnes)")
-
-            ax1.set_title(f"Monthly Fish Landing Trends (k={best_k})")
-            ax1.grid(True, alpha=0.3)
-
-            # Combined legend
-            handles1, labels1 = ax1.get_legend_handles_labels()
-            handles2, labels2 = ax2.get_legend_handles_labels()
-            plt.legend(handles1 + handles2, labels1 + labels2, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2)
-
-            plt.xticks(rotation=45)
-            st.pyplot(fig)
-
-            
+                    """, unsafe_allow_html=True)
 
 
    
