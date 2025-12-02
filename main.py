@@ -826,24 +826,35 @@ def main():
                     f"""
                     <style>
                     div[data-testid="stButton"][key="card_{i}"] > button {{
-                        height: 140px;
-                        text-align: left;
-                        padding: 20px;
-                        border-radius: 14px;
+                        width: 100% !important;
+                        height: 160px;                    /* ← height of small square */
+                        padding: 18px;                    /* balanced spacing */
+                        border-radius: 20px;
                         font-size: 18px;
+                        font-weight:600;
+                        text-align: left;
                         color: white;
-                        background: linear-gradient(135deg, {color}33, #111);
-                        border: 1px solid {color}55;
-                        box-shadow: 0 0 12px {color}33;
+
+                        background: linear-gradient(135deg, {color}44, #0d1117);
+                        border: 2px solid {color}88;
+                        box-shadow: 0 0 15px {color}44;
+
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: flex-start;
+
+                        overflow: hidden;                /* Prevent text overflow */
                     }}
                     div[data-testid="stButton"][key="card_{i}"] > button:hover {{
-                        border: 1px solid {color};
-                        transform: scale(1.01);
-                        transition: 0.1s ease-in-out;
+                        transform: scale(1.03);
+                        border-color: {color};
+                        box-shadow: 0 0 20px {color}AA;
+                        transition: 0.15s ease-in-out;
                     }}
                     </style>
                     """,
-                    unsafe_allow_html=True,
+                    unsafe_allow_html=True
                 )
 
 

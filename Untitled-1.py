@@ -2718,3 +2718,110 @@ elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
                     st.session_state.plot_option = name
                     st.rerun()
 
+sidebar_options = [
+        "🏠 Dashboard Overview",
+        "Yearly Fish Landing Summary",
+        "Optimal K for Monthly & Yearly",
+        "Yearly Cluster Trends for Marine and Freshwater Fish",
+        "2D KMeans Scatter",
+        "3D KMeans Clustering",
+        "Automatic DBSCAN",
+        "Unified HDBSCAN Outlier Detection",
+        "HDBSCAN",
+        "HDBSCAN Outlier Detection",
+        "Hierarchical Clustering",
+        "Geospatial Map",
+        "Interactive Geospatial Map",
+        "Geospatial Map(Heatmap)",
+        "Geospatial Map (Upgraded)",
+        "Geospatial Map (Upgraded)2"
+    ]
+
+    # Ensure default page exists
+    if "plot_option" not in st.session_state:
+        st.session_state.plot_option = "🏠 Dashboard Overview"
+
+    # Show sidebar radio with correct selected index
+    selected = st.sidebar.radio(
+        "Choose a visualization:",
+        sidebar_options,
+        index=sidebar_options.index(st.session_state.plot_option)
+    )
+
+    # Only update session state IF user clicked sidebar
+    if selected != st.session_state.plot_option:
+        st.session_state.plot_option = selected
+        st.rerun()
+
+    # 🔥 THIS line creates your local variable
+    plot_option = st.session_state.plot_option
+
+
+    # ============================================================
+    # 2) DASHBOARD OVERVIEW PAGE (AUTO-GENERATED CARDS)
+    # ============================================================
+
+    if plot_option == "🏠 Dashboard Overview":
+
+        st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
+        st.markdown(
+            "<p style='color:#bbb'>Click any card below to open the full visualisation.</p>",
+            unsafe_allow_html=True
+        )
+
+        # All visualisations EXCEPT the first "Home"
+        visualisation_pages = sidebar_options[1:]
+
+        # Icons + Colors
+        icons = ["📘","📊","🌊","🟦","🧊","🌐","⚡","🌳",
+                "🗺️","🖥️","🔥","✨","📍","📡","🔍"]
+
+        colors = [
+            "#00E5FF","#7DFFAF","#FFA07A","#81C7F5","#DDA0DD",
+            "#FFD700","#FF7F7F","#8FBC8F","#00CED1","#4B7BE5",
+            "#F7A440","#C15AFF","#57E39A","#E33F5F","#A4E5FF"
+        ]
+
+        cols = st.columns(3)
+
+        for i, name in enumerate(visualisation_pages):
+
+            icon = icons[i % len(icons)]
+            color = colors[i % len(colors)]
+
+            with cols[i % 3]:
+
+                    # Clickable button styled as transparent over the card
+                if st.button(
+                    label=f"{icon} {name}", 
+                    key=f"card_{i}", 
+                    help=f"Open {name}", 
+                    use_container_width=True
+                ):
+                    st.session_state.plot_option = name
+                    st.rerun()
+
+                # Inject CSS to style the button as a card
+                st.markdown(
+                    f"""
+                    <style>
+                    div[data-testid="stButton"][key="card_{i}"] > button {{
+                        height: 140px;
+                        text-align: left;
+                        padding: 20px;
+                        border-radius: 14px;
+                        font-size: 18px;
+                        color: white;
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
+                    }}
+                    div[data-testid="stButton"][key="card_{i}"] > button:hover {{
+                        border: 1px solid {color};
+                        transform: scale(1.01);
+                        transition: 0.1s ease-in-out;
+                    }}
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
