@@ -811,65 +811,54 @@ def main():
 
             with cols[i % 3]:
 
-
-                click_key = f"card_btn_{i}"
-                clicked = st.button(" ", key=click_key)
-
-                if clicked:
+                if st.button(" ", key=f"card_btn_{i}"):
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # 2) Visible card UI
-                st.markdown(
-                    f"""
-                    <div style="
-                        margin-top: -120px;
+                # Large visible card
+                card_html = f"""
+                <div style="
+                    margin-top: -120px;
+                    height: 150px;
+                    border-radius: 18px;
+                    padding: 22px;
+
+                    background: linear-gradient(135deg, {color}33, #0f1117);
+                    border: 1.5px solid {color}55;
+                    box-shadow: 0 0 14px {color}44;
+
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                ">
+                    <h3 style="color:white; font-size:22px; margin:0; font-weight:700;">
+                        {icon} {name}
+                    </h3>
+
+                    <p style="color:#cbd2ff; font-size:15px; margin-top:14px;">
+                        View full visualisation →
+                    </p>
+                </div>
+                """
+
+                st.markdown(card_html, unsafe_allow_html=True)
+
+                # CSS overlay (correctly formatted)
+                css = f"""
+                <style>
+                    div[data-testid="stButton"][key="card_btn_{i}"] > button {{
+                        position: relative;
+                        top: -170px;
+                        width: 100%;
                         height: 150px;
-                        border-radius: 18px;
-                        padding: 22px;
+                        opacity: 0 !important;
+                        cursor: pointer;
+                        border: none;
+                    }}
+                </style>
+                """
 
-                        background: linear-gradient(135deg, {color}33, #0f1117);
-                        border: 1.5px solid {color}55;
-                        box-shadow: 0 0 14px {color}44;
-
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                    ">
-                        <h3 style="color:white; font-size:22px; margin:0; font-weight:700;">
-                            {icon} {name}
-                        </h3>
-
-                        <p style="color:#cbd2ff; font-size:15px; margin-top:14px;">
-                            View full visualisation →
-                        </p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                # 3) CSS: Make button cover entire card (FULLY INVISIBLE)
-                st.markdown(
-                    f"""
-                    <style>
-                        div[data-testid="stButton"][key="{click_key}"] > button {{
-                            position: relative;
-                            z-index: 5;
-
-                            width: 100%;
-                            height: 150px;       /* match card height */
-                            margin-bottom: -150px;
-
-                            background: none !important;
-                            opacity: 0 !important;
-                            border: none !important;
-
-                            cursor: pointer;
-                        }}
-                    </style>
-                    """,
-                    unsafe_allow_html=True
-                )
+                st.markdown(css, unsafe_allow_html=True)
               
 
     elif plot_option == "Monthly Trends by Cluster":
