@@ -1197,10 +1197,33 @@ def main():
                 st.pyplot(fig)
 
         else:
-            # ======================================================
-            # MONTHLY CLUSTER PLOT (Dynamic Axes)
-            # ======================================================
+             # ======================================
+            # MONTHLY VIEW
+            # ======================================
 
+            monthly = (
+                df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot(index=["Year", "Month"], columns="Type of Fish",
+                    values="Fish Landing (Tonnes)")
+                .fillna(0)
+                .reset_index()
+            )
+
+            monthly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
+
+            # Create proper datetime column for plotting
+            monthly["MonthYear"] = pd.to_datetime(
+                monthly["Year"].astype(str) + "-" + monthly["Month"].astype(str) + "-01"
+            )
+
+            # ============================================================
+            # K-MEANS CLUSTERING
+            # ============================================================
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(monthly[features])
             best_k = st.session_state.get("best_k_monthly", 3)
@@ -1209,6 +1232,7 @@ def main():
 
             st.markdown(f"**Optimal clusters used:** {best_k}")
 
+            # Melt for plotting (long format)
             melted = monthly.melt(
                 id_vars=["MonthYear", "Cluster"],
                 value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
@@ -1216,15 +1240,18 @@ def main():
                 value_name="Landing",
             )
 
+            # Shared linestyles
+            linestyles = ["solid", "dashed", "dotted", "dashdot"]
+
             # ======================================================
-            # CASE 1 — BOTH → Dual Axis
+            # CASE 1 — BOTH (Dual Y-Axis)
             # ======================================================
             if trend_option == "Both":
 
                 fig, ax1 = plt.subplots(figsize=(14, 6))
                 ax2 = ax1.twinx()
 
-                # ---- Freshwater (Blue, Left Axis) ----
+                # ---- Freshwater (blue, left) ----
                 for cl in sorted(melted["Cluster"].unique()):
                     fw_subset = melted[
                         (melted["Type"] == "Freshwater (Tonnes)") &
@@ -1239,10 +1266,10 @@ def main():
                             marker="o",
                             color="tab:blue",
                             markersize=5,
-                            label=f"Freshwater – Cluster {cl}"
+                            label=f"Freshwater – Cluster {cl}",
                         )
 
-                # ---- Marine (Red, Right Axis) ----
+                # ---- Marine (red, right) ----
                 for cl in sorted(melted["Cluster"].unique()):
                     ma_subset = melted[
                         (melted["Type"] == "Marine (Tonnes)") &
@@ -1257,9 +1284,10 @@ def main():
                             marker="^",
                             color="tab:red",
                             markersize=5,
-                            label=f"Marine – Cluster {cl}"
+                            label=f"Marine – Cluster {cl}",
                         )
 
+                # Axis labels
                 ax1.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
                 ax2.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
 
@@ -1269,7 +1297,7 @@ def main():
                 ax1.set_title(f"Monthly Fish Landing Trends (k={best_k})")
                 ax1.grid(True, alpha=0.3)
 
-                # Merge legends
+                # Combine legends
                 h1, l1 = ax1.get_legend_handles_labels()
                 h2, l2 = ax2.get_legend_handles_labels()
 
@@ -1277,78 +1305,79 @@ def main():
                     h1 + h2,
                     l1 + l2,
                     loc="upper center",
-                    bbox_to_anchor=(0.5, -0.15),
+                    bbox_to_anchor=(0.5, -0.18),
                     ncol=4
                 )
 
                 plt.xticks(rotation=45)
+
                 st.pyplot(fig)
 
             # ======================================================
-            # CASE 2 — Freshwater only
+            # CASE 2 — FRESHWATER ONLY
             # ======================================================
             elif trend_option == "Freshwater":
 
                 fig, ax = plt.subplots(figsize=(14, 6))
 
                 for cl in sorted(melted["Cluster"].unique()):
-                    subset = melted[
+                    sub = melted[
                         (melted["Type"] == "Freshwater (Tonnes)") &
                         (melted["Cluster"] == cl)
                     ]
 
-                    if len(subset):
+                    if len(sub):
                         ax.plot(
-                            subset["MonthYear"],
-                            subset["Landing"],
+                            sub["MonthYear"],
+                            sub["Landing"],
                             linestyle=linestyles[cl % len(linestyles)],
                             marker="o",
                             color="tab:blue",
                             markersize=5,
-                            label=f"Freshwater – Cluster {cl}"
+                            label=f"Freshwater – Cluster {cl}",
                         )
 
                 ax.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
                 ax.set_title(f"Monthly Fish Landing Trends (Freshwater Only, k={best_k})")
                 ax.grid(True, alpha=0.3)
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=4)
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=4)
 
                 plt.xticks(rotation=45)
+
                 st.pyplot(fig)
 
             # ======================================================
-            # CASE 3 — Marine only
+            # CASE 3 — MARINE ONLY
             # ======================================================
             else:  # trend_option == "Marine"
 
                 fig, ax = plt.subplots(figsize=(14, 6))
 
                 for cl in sorted(melted["Cluster"].unique()):
-                    subset = melted[
+                    sub = melted[
                         (melted["Type"] == "Marine (Tonnes)") &
                         (melted["Cluster"] == cl)
                     ]
 
-                    if len(subset):
+                    if len(sub):
                         ax.plot(
-                            subset["MonthYear"],
-                            subset["Landing"],
+                            sub["MonthYear"],
+                            sub["Landing"],
                             linestyle=linestyles[cl % len(linestyles)],
                             marker="^",
                             color="tab:red",
                             markersize=5,
-                            label=f"Marine – Cluster {cl}"
+                            label=f"Marine – Cluster {cl}",
                         )
 
                 ax.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
                 ax.set_title(f"Monthly Fish Landing Trends (Marine Only, k={best_k})")
                 ax.grid(True, alpha=0.3)
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=4)
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=4)
 
                 plt.xticks(rotation=45)
+
                 st.pyplot(fig)
-
-
 
                     
 
