@@ -1524,7 +1524,7 @@ def main():
         """, unsafe_allow_html=True)
 
         st.markdown("""
-        <div style="background:#eef6ff;padding:15px;border-radius:8px;border-left:6px solid #4a90e2;">
+        <div style="background:#eef6ff;padding:15px;border-radius:8px;border-left:6px solid #000000;">
         <b>💡 How This Helps Your Analysis</b><br><br>
         ✔ The optimal K ensures your clusters are not too many (noise) or too few (overgeneralised).<br>
         ✔ The cluster meanings show which years/states are strong or weak in freshwater vs marine production.<br>
