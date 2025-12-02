@@ -1514,7 +1514,7 @@ def main():
         <b>accurate, consistent, and scientifically valid</b>.<br><br>
 
     
-            <b>💡 How This Helps Your Analysis</b><br><br>
+        <b>💡 How This Helps Your Analysis</b><br><br>
             ✔ The optimal K ensures your clusters are not too many (noise) or too few (overgeneralised).<br>
             ✔ The cluster meanings show which years/states are strong or weak in freshwater vs marine production.<br>
             ✔ These same cluster labels are reused in:<br>
