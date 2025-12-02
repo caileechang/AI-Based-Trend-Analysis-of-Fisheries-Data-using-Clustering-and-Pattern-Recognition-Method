@@ -756,8 +756,8 @@ def main():
     # Sidebar always reflects the current page
     plot_option = st.sidebar.radio(
         "Choose a visualization:",
-        sidebar_options,
-        index=sidebar_options.index(st.session_state.plot_option)
+        plot_option,
+        index=plot_option.index(st.session_state.plot_option)
     )
 
     # Sync sidebar → session_state
