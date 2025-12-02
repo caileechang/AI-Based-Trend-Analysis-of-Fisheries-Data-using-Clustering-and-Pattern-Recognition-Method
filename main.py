@@ -1518,8 +1518,7 @@ def main():
           
         </ul>
 
-        All these visualisations will use the <b style="color:#000000;">same K value</b> 
-        determined here, ensuring a smooth and consistent analytical experience.
+       
         </div>
         """, unsafe_allow_html=True)
 
