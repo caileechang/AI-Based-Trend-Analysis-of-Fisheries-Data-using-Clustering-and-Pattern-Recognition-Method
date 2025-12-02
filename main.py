@@ -750,8 +750,12 @@ def main():
     if plot_option == "🏠 Dashboard Overview":
 
         st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
-        st.markdown("<p style='color:#bbb'>Click any card below to open the full visualisation.</p>", unsafe_allow_html=True)
+        st.markdown(
+            "<p style='color:#bbb'>Click any card below to open the full visualisation.</p>",
+            unsafe_allow_html=True
+        )
 
+        # List of visualisation pages + icon + color
         cards = [
             ("Yearly Fish Landing Summary", "📅", "#00E5FF"),
             ("Optimal K for Monthly & Yearly", "🎯", "#7DFFAF"),
@@ -764,28 +768,38 @@ def main():
             ("Geospatial Map", "🗺️", "#00CED1"),
         ]
 
-        # 3 columns per row
+        # Create a 3-column grid
         cols = st.columns(3)
 
         for i, (name, icon, color) in enumerate(cards):
             with cols[i % 3]:
-                card_html = f"""
-                <div style="
-                    background: linear-gradient(135deg, {color}33, #111);
-                    border-radius: 14px;
-                    padding: 20px;
-                    margin-bottom: 20px;
-                    border: 1px solid {color}55;
-                    box-shadow: 0 0 12px {color}33;
-                    cursor: pointer;
-                    transition: 0.2s;
-                " 
-                onclick="window.location.href='?plot_option={name.replace(' ', '%20')}'">
-                    <h3 style="color:white; margin:0;">{icon} {name}</h3>
-                    <p style="color:#bbb; font-size:13px;">View full visualisation →</p>
-                </div>
-                """
-                st.markdown(card_html, unsafe_allow_html=True)
+
+                # Card design (always visible)
+                st.markdown(
+                    f"""
+                    <div style="
+                        background: linear-gradient(135deg, {color}33, #111);
+                        border-radius: 14px;
+                        padding: 20px;
+                        margin-bottom: 8px;
+                        border: 1px solid {color}55;
+                        box-shadow: 0 0 12px {color}33;
+                        transition: 0.2s;
+                    ">
+                        <h3 style="color:white; margin:0; font-size:18px;">{icon} {name}</h3>
+                        <p style="color:#bbb; font-size:13px; margin-top:4px;">
+                            View full visualisation →
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                # Button underneath (triggers navigation)
+                if st.button(f"Open → {name}", key=f"open_{i}"):
+                    st.session_state.plot_option = name
+                    st.rerun()
+
 
 
     elif plot_option == "Monthly Trends by Cluster":
