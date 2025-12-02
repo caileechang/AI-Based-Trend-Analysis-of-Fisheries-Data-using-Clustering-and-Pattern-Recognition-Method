@@ -1066,6 +1066,112 @@ def main():
         # ======================================
         # YEARLY VIEW
         # ======================================
+        
+        if period_choice == "Yearly":
+
+            yearly = (
+                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot(index="Year", columns="Type of Fish",
+                    values="Fish Landing (Tonnes)")
+                .fillna(0)
+                .reset_index()
+            )
+
+            yearly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
+
+            latest_year = yearly["Year"].max()
+            prev_year = latest_year - 1
+
+            def safe_get(df, year, col):
+                row = df.loc[df["Year"] == year, col]
+                return row.values[0] if len(row) else 0
+
+            def growth_html(curr, prev):
+                try:
+                    prev = float(prev)
+                    curr = float(curr)
+                except:
+                    return "<span style='color:gray;'>–</span>"
+
+                if prev == 0:
+                    return "<span style='color:gray;'>–</span>"
+
+                ratio = curr / prev
+                diff = curr - prev
+
+                if ratio >= 1:
+                    color = "lightgreen"
+                    arrow = "↑"
+                    word = "increased"
+                else:
+                    color = "#ff4d4d"
+                    arrow = "↓"
+                    word = "decreased"
+
+                return (
+                    f"<span style='color:{color}; font-size:18px;'>"
+                    f"{arrow} {ratio:.2f}x • {word} by <b>{abs(diff):,.0f}</b> tonnes"
+                    "</span>"
+                )
+
+            fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
+            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
+            ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
+            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
+
+            # Premium gradient card
+            card_style = """
+                background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
+                padding: 30px 35px;
+                border-radius: 20px;
+                border: 1.2px solid rgba(0, 255, 200, 0.25);
+                box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
+                transition: all 0.25s ease;
+            """
+
+            st.markdown("""
+                <style>
+                .card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 0 25px rgba(0,255,200,0.25);
+                }
+                </style>
+            """, unsafe_allow_html=True)
+
+            st.markdown(f"## Landing Summary in {latest_year}")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.markdown(
+                    f"""
+                    <div style="{card_style}">
+                        <h3 style="color:white;">Freshwater Landing</h3>
+                        <h1 style="color:white; font-size:42px;"><b>{fw_latest:,.0f}</b> tonnes</h1>
+                        {growth_html(fw_latest, fw_prev)}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with col2:
+                st.markdown(
+                    f"""
+                    <div style="{card_style}">
+                        <h3 style="color:white;">Marine Landing</h3>
+                        <h1 style="color:white; font-size:42px;"><b>{ma_latest:,.0f}</b> tonnes</h1>
+                        {growth_html(ma_latest, ma_prev)}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            st.markdown("---")
       
 
         if period_choice == "Yearly":
