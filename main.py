@@ -1222,6 +1222,92 @@ def main():
 
             st.pyplot(fig)
 
+            # ======================================================
+            # YEARLY VIEW — DUAL-AXIS PLOT (Freshwater vs Marine)
+            # ======================================================
+
+            st.markdown(f"**Optimal clusters used:** {best_k}")
+
+            melted = yearly.melt(
+                id_vars=["Year", "Cluster"],
+                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+                var_name="Type",
+                value_name="Landing",
+            )
+
+            # Create dual axes
+            fig, ax1 = plt.subplots(figsize=(14, 6))
+            ax2 = ax1.twinx()   # right axis (marine)
+
+            # -------------------------------
+            # Plot Freshwater (Left Axis)
+            # -------------------------------
+            for cl in sorted(melted["Cluster"].unique()):
+                fw_subset = melted[
+                    (melted["Type"] == "Freshwater (Tonnes)") &
+                    (melted["Cluster"] == cl)
+                ]
+
+                if len(fw_subset):
+                    ax1.plot(
+                        fw_subset["Year"],
+                        fw_subset["Landing"],
+                        linestyle=linestyles[cl % len(linestyles)],
+                        marker="o",
+                        color="tab:blue",
+                        markersize=6,
+                        label=f"Freshwater – Cluster {cl}"
+                    )
+
+            # -------------------------------
+            # Plot Marine (Right Axis)
+            # -------------------------------
+            for cl in sorted(melted["Cluster"].unique()):
+                ma_subset = melted[
+                    (melted["Type"] == "Marine (Tonnes)") &
+                    (melted["Cluster"] == cl)
+                ]
+
+                if len(ma_subset):
+                    ax2.plot(
+                        ma_subset["Year"],
+                        ma_subset["Landing"],
+                        linestyle=linestyles[cl % len(linestyles)],
+                        marker="^",
+                        color="tab:red",
+                        markersize=6,
+                        label=f"Marine – Cluster {cl}"
+                    )
+
+            # --------------------------------
+            # Styling & Labels
+            # --------------------------------
+            ax1.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
+            ax2.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
+
+            ax1.tick_params(axis='y', labelcolor="tab:blue")
+            ax2.tick_params(axis='y', labelcolor="tab:red")
+
+            ax1.set_title(f"Yearly Fish Landing Trends (k={best_k})")
+            ax1.grid(True, alpha=0.3)
+
+            # --------------------------------
+            # Merge Legends
+            # --------------------------------
+            h1, l1 = ax1.get_legend_handles_labels()
+            h2, l2 = ax2.get_legend_handles_labels()
+
+            ax1.legend(
+                h1 + h2,
+                l1 + l2,
+                loc="upper center",
+                bbox_to_anchor=(0.5, -0.15),
+                ncol=4
+            )
+
+            st.pyplot(fig)
+
+
            
 
         # ======================================
