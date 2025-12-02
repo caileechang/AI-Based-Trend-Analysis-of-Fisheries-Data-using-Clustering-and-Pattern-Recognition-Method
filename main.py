@@ -827,8 +827,8 @@ def main():
                     <style>
                     div[data-testid="stButton"][key="card_{i}"] > button {{
                         width: 100% !important;
-                        height: 500px;                    /* ← height of small square */
-                        padding: 18px;                    /* balanced spacing */
+                        height: 1000px;                    /* ← height of small square */
+                        padding: 400px;                    /* balanced spacing */
                         border-radius: 20px;
                         font-size: 18px;
                         font-weight:600;
