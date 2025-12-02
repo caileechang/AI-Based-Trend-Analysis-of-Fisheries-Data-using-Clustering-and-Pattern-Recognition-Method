@@ -821,25 +821,41 @@ def main():
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # Inject CSS to style the button as a card
                 st.markdown(
                     f"""
                     <style>
                     div[data-testid="stButton"][key="card_{i}"] > button {{
-                        height: 200px;
+                        height: 160px;                          /* Increase card height */
+                        width: 100%;
+                        padding: 25px 20px;                     /* More inner spacing */
+                        border-radius: 18px;                    /* Smoother corners */
+                        font-size: 20px;                        /* Larger title text */
+                        font-weight: 600;
                         text-align: left;
-                        padding: 20px;
-                        border-radius: 14px;
-                        font-size: 18px;
                         color: white;
-                        background: linear-gradient(135deg, {color}33, #111);
+
+                        background: linear-gradient(135deg, {color}33, #0c0f14);
                         border: 1px solid {color}55;
-                        box-shadow: 0 0 12px {color}33;
+                        box-shadow: 0 0 18px {color}22;
+
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        justify-content: center;
                     }}
+
                     div[data-testid="stButton"][key="card_{i}"] > button:hover {{
-                        border: 1px solid {color};
-                        transform: scale(1.01);
-                        transition: 0.1s ease-in-out;
+                        border-color: {color};
+                        box-shadow: 0 0 22px {color}55;
+                        transform: scale(1.02);
+                        transition: 0.15s ease-in-out;
+                    }}
+
+                    /* Improve spacing for subtitle text */
+                    div[data-testid="stButton"][key="card_{i}"] > button p {{
+                        margin-top: 10px;
+                        font-size: 15px;
+                        color: #cfd8ff;
                     }}
                     </style>
                     """,
