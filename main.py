@@ -811,28 +811,36 @@ def main():
 
             with cols[i % 3]:
 
-              # Invisible button (click handler)
-                if st.button(" ", key=f"card_click_{i}"):
+
+                click_key = f"card_btn_{i}"
+                clicked = st.button(" ", key=click_key)
+
+                if clicked:
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # Visible card (UI only)
+                # 2) Visible card UI
                 st.markdown(
                     f"""
                     <div style="
-                        margin-top: -70px;
-                        background: linear-gradient(135deg, {color}33, #111);
-                        border-radius: 14px;
-                        padding: 20px;
-                        margin-bottom: 8px;
-                        border: 1px solid {color}55;
-                        box-shadow: 0 0 12px {color}33;
-                        height: 140px;
+                        margin-top: -120px;
+                        height: 150px;
+                        border-radius: 18px;
+                        padding: 22px;
+
+                        background: linear-gradient(135deg, {color}33, #0f1117);
+                        border: 1.5px solid {color}55;
+                        box-shadow: 0 0 14px {color}44;
+
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
                     ">
-                        <h3 style="color:white; margin:0; font-size:20px; font-weight:600;">
+                        <h3 style="color:white; font-size:22px; margin:0; font-weight:700;">
                             {icon} {name}
                         </h3>
-                        <p style="color:#bbb; font-size:14px; margin-top:10px;">
+
+                        <p style="color:#cbd2ff; font-size:15px; margin-top:14px;">
                             View full visualisation →
                         </p>
                     </div>
@@ -840,25 +848,29 @@ def main():
                     unsafe_allow_html=True
                 )
 
-                # CSS to overlay invisible button exactly on top of card
+                # 3) CSS: Make button cover entire card (FULLY INVISIBLE)
                 st.markdown(
                     f"""
                     <style>
-                        div[data-testid="stButton"][key="card_click_{i}"] > button {{
+                        div[data-testid="stButton"][key="{click_key}"] > button {{
                             position: relative;
-                            top: -210px;        /* moves button above card */
+                            z-index: 5;
+
                             width: 100%;
-                            height: 140px;      /* same height as card */
-                            opacity: 0;         /* invisible */
+                            height: 150px;       /* match card height */
+                            margin-bottom: -150px;
+
+                            background: none !important;
+                            opacity: 0 !important;
+                            border: none !important;
+
                             cursor: pointer;
-                            z-index: 999;       /* click always works */
                         }}
                     </style>
                     """,
                     unsafe_allow_html=True
-                )  
-
-
+                )
+              
 
     elif plot_option == "Monthly Trends by Cluster":
        # monthly = df_land.groupby(['Year', 'Month'])['Fish Landing (Tonnes)'].sum().reset_index()
