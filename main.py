@@ -737,8 +737,6 @@ def main():
 
     merged_monthly = prepare_monthly(df_land, df_vess)
 
-    
-
 
     sidebar_options = [
         "🏠 Dashboard Overview",
@@ -757,33 +755,63 @@ def main():
         "Geospatial Map(Heatmap)",
         "Geospatial Map (Upgraded)",
         "Geospatial Map (Upgraded)2"
+    ]
 
-        ]
+    # Ensure default page exists
+    if "plot_option" not in st.session_state:
+        st.session_state.plot_option = "🏠 Dashboard Overview"
 
-    plot_option = st.sidebar.radio("Choose a visualization:", sidebar_options)
-    st.session_state.plot_option = plot_option
+    # Show sidebar radio with correct selected index
+    selected = st.sidebar.radio(
+        "Choose a visualization:",
+        sidebar_options,
+        index=sidebar_options.index(st.session_state.plot_option)
+    )
 
-    if st.session_state.plot_option == "🏠 Dashboard Overview":
+    # Only update session state IF user clicked sidebar
+    if selected != st.session_state.plot_option:
+        st.session_state.plot_option = selected
+        st.rerun()
+
+    # 🔥 THIS line creates your local variable
+    plot_option = st.session_state.plot_option
+
+
+    # ============================================================
+    # 2) DASHBOARD OVERVIEW PAGE (AUTO-GENERATED CARDS)
+    # ============================================================
+
+    if plot_option == "🏠 Dashboard Overview":
 
         st.markdown("## 📊 Fisheries Analytics Dashboard Overview")
-        st.markdown("<p style='color:#bbb'>Click any card below to open the full visualisation.</p>", unsafe_allow_html=True)
+        st.markdown(
+            "<p style='color:#bbb'>Click any card below to open the full visualisation.</p>",
+            unsafe_allow_html=True
+        )
 
         # All visualisations EXCEPT the first "Home"
         visualisation_pages = sidebar_options[1:]
 
-        # Auto-assign icons + colors (repeat if needed)
-        icons = ["📘","📊","🌊","🟦","🧊","🌐","⚡","🌳","🗺️","🖥️","🔥","✨","📍","📡","🔍"]
-        colors = ["#00E5FF","#7DFFAF","#FFA07A","#81C7F5","#DDA0DD","#FFD700","#FF7F7F",
-                "#8FBC8F","#00CED1","#4B7BE5","#F7A440","#C15AFF","#57E39A","#E33F5F","#A4E5FF"]
+        # Icons + Colors
+        icons = ["📘","📊","🌊","🟦","🧊","🌐","⚡","🌳",
+                "🗺️","🖥️","🔥","✨","📍","📡","🔍"]
+
+        colors = [
+            "#00E5FF","#7DFFAF","#FFA07A","#81C7F5","#DDA0DD",
+            "#FFD700","#FF7F7F","#8FBC8F","#00CED1","#4B7BE5",
+            "#F7A440","#C15AFF","#57E39A","#E33F5F","#A4E5FF"
+        ]
 
         cols = st.columns(3)
 
         for i, name in enumerate(visualisation_pages):
+
             icon = icons[i % len(icons)]
             color = colors[i % len(colors)]
 
             with cols[i % 3]:
 
+                # Card UI
                 st.markdown(
                     f"""
                     <div style="
@@ -801,13 +829,10 @@ def main():
                     unsafe_allow_html=True
                 )
 
+                # Click button → open specific visualisation
                 if st.button(f"Open → {name}", key=f"open_{i}"):
                     st.session_state.plot_option = name
                     st.rerun()
-
-
-
-
 
 
     elif plot_option == "Monthly Trends by Cluster":
