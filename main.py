@@ -1222,65 +1222,7 @@ def main():
 
             st.pyplot(fig)
 
-             #  EXPANDABLE CLUSTER INTERPRETATION SECTION
-            
-            if "yearly_profiles" not in locals():
-                # Meaning: the yearly cluster profiles did NOT get created
-                # (e.g., monthly view is selected)
-                pass
-            else:
-                with st.expander("📘 Understanding the Clusters (Click to Expand)", expanded=False):
-
-                    st.markdown("""
-                        <p style="color:#ccc; font-size:15px;">
-                        Each cluster groups years with similar freshwater & marine landing characteristics.
-                        The interpretation below helps you understand their economic significance.
-                        </p>
-                    """, unsafe_allow_html=True)
-
-                    for _, row in yearly_profiles.iterrows():
-                        cl = int(row["Cluster"])
-                        fw = row["Freshwater (Tonnes)"]
-                        ma = row["Marine (Tonnes)"]
-                        meaning = row["Meaning"]
-                        title = row["Friendly"]
-
-                        cluster_color = [
-                            "#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b2"
-                        ][cl % 5]
-
-                        st.markdown(f"""
-                        <div style="
-                            background-color:#111111;
-                            border-left:6px solid {cluster_color};
-                            padding:16px;
-                            border-radius:10px;
-                            margin-bottom:14px;
-                            color:white;
-                        ">
-
-                            <div style="font-size:20px; font-weight:700; color:{cluster_color}">
-                                Cluster {cl}: {title}
-                            </div>
-
-                            <div style="margin-top:6px; font-size:15px;">
-                                <b>Meaning:</b> {meaning}<br><br>
-
-                                <span style="color:#ccc;">Average Freshwater Landing:</span>
-                                <b>{fw:,.0f}</b> tonnes<br>
-
-                                <span style="color:#ccc;">Average Marine Landing:</span>
-                                <b>{ma:,.0f}</b> tonnes<br>
-                            </div>
-
-                            <div style="margin-top:10px; font-size:14px; color:#aaa;">
-                                🛈 This cluster appears above with the same color + line style.<br>
-                                Understanding cluster patterns helps identify strong & weak production periods.
-                            </div>
-
-                        </div>
-                        """, unsafe_allow_html=True)
-
+           
 
         # ======================================
         # MONTHLY VIEW
@@ -1414,64 +1356,92 @@ def main():
 
             st.pyplot(fig)
 
-             #  EXPANDABLE CLUSTER INTERPRETATION SECTION
-            
-            if "yearly_profiles" not in locals():
-                # Meaning: the yearly cluster profiles did NOT get created
-                # (e.g., monthly view is selected)
-                pass
-            else:
-                with st.expander("📘 Understanding the Clusters (Click to Expand)", expanded=False):
+            # ======================================================
+            # MONTHLY VIEW — DUAL-AXIS PLOT (Freshwater vs Marine)
+            # ======================================================
 
-                    st.markdown("""
-                        <p style="color:#ccc; font-size:15px;">
-                        Each cluster groups years with similar freshwater & marine landing characteristics.
-                        The interpretation below helps you understand their economic significance.
-                        </p>
-                    """, unsafe_allow_html=True)
+            st.markdown(f"**Optimal clusters used:** {best_k}")
 
-                    for _, row in yearly_profiles.iterrows():
-                        cl = int(row["Cluster"])
-                        fw = row["Freshwater (Tonnes)"]
-                        ma = row["Marine (Tonnes)"]
-                        meaning = row["Meaning"]
-                        title = row["Friendly"]
+            melted = monthly.melt(
+                id_vars=["MonthYear", "Cluster"],
+                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+                var_name="Type",
+                value_name="Landing",
+            )
 
-                        cluster_color = [
-                            "#4c72b0", "#dd8452", "#55a868", "#c44e52", "#8172b2"
-                        ][cl % 5]
+            # Create dual-axis plot
+            fig, ax1 = plt.subplots(figsize=(14, 6))
+            ax2 = ax1.twinx()  # second y-axis (marine)
 
-                        st.markdown(f"""
-                        <div style="
-                            background-color:#111111;
-                            border-left:6px solid {cluster_color};
-                            padding:16px;
-                            border-radius:10px;
-                            margin-bottom:14px;
-                            color:white;
-                        ">
+            # -------------------------------
+            # Plot freshwater (left axis)
+            # -------------------------------
+            for cl in sorted(melted["Cluster"].unique()):
+                subset_fw = melted[
+                    (melted["Type"] == "Freshwater (Tonnes)") &
+                    (melted["Cluster"] == cl)
+                ]
 
-                            <div style="font-size:20px; font-weight:700; color:{cluster_color}">
-                                Cluster {cl}: {title}
-                            </div>
+                if len(subset_fw):
+                    ax1.plot(
+                        subset_fw["MonthYear"],
+                        subset_fw["Landing"],
+                        linestyle=linestyles[cl % len(linestyles)],
+                        marker="o",
+                        markersize=4,
+                        color="tab:blue",
+                        alpha=0.9,
+                        label=f"Freshwater – Cluster {cl}"
+                    )
 
-                            <div style="margin-top:6px; font-size:15px;">
-                                <b>Meaning:</b> {meaning}<br><br>
+            # -------------------------------
+            # Plot marine (right axis)
+            # -------------------------------
+            for cl in sorted(melted["Cluster"].unique()):
+                subset_ma = melted[
+                    (melted["Type"] == "Marine (Tonnes)") &
+                    (melted["Cluster"] == cl)
+                ]
 
-                                <span style="color:#ccc;">Average Freshwater Landing:</span>
-                                <b>{fw:,.0f}</b> tonnes<br>
+                if len(subset_ma):
+                    ax2.plot(
+                        subset_ma["MonthYear"],
+                        subset_ma["Landing"],
+                        linestyle=linestyles[cl % len(linestyles)],
+                        marker="^",
+                        markersize=4,
+                        color="tab:red",
+                        alpha=0.9,
+                        label=f"Marine – Cluster {cl}"
+                    )
 
-                                <span style="color:#ccc;">Average Marine Landing:</span>
-                                <b>{ma:,.0f}</b> tonnes<br>
-                            </div>
+            # -------------------------------
+            # Axes labels & styles
+            # -------------------------------
+            ax1.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
+            ax2.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
 
-                            <div style="margin-top:10px; font-size:14px; color:#aaa;">
-                                🛈 This cluster appears above with the same color + line style.<br>
-                                Understanding cluster patterns helps identify strong & weak production periods.
-                            </div>
+            ax1.tick_params(axis='y', labelcolor="tab:blue")
+            ax2.tick_params(axis='y', labelcolor="tab:red")
 
-                        </div>
-                        """, unsafe_allow_html=True)
+            ax1.set_title(f"Monthly Fish Landing Trends (k={best_k})")
+            ax1.grid(True, alpha=0.3)
+            plt.xticks(rotation=45)
+
+            # -------------------------------
+            # Merge legends from both axes
+            # -------------------------------
+            handles1, labels1 = ax1.get_legend_handles_labels()
+            handles2, labels2 = ax2.get_legend_handles_labels()
+            ax1.legend(
+                handles1 + handles2,
+                labels1 + labels2,
+                loc="upper center",
+                bbox_to_anchor=(0.5, -0.12),
+                ncol=4
+            )
+
+            st.pyplot(fig)
 
 
 
