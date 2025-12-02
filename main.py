@@ -825,20 +825,29 @@ def main():
                     f"""
                     <style>
                     div[data-testid="stButton"][key="card_{i}"] > button {{
-                        height: 140px;
+                        width: 100%;                 /* Full width of column */
+                        max-width: 340px;            /* Make card wider */
+                        height: 200px;               /* Make card taller */
+
                         text-align: left;
-                        padding: 20px;
-                        border-radius: 14px;
-                        font-size: 18px;
+                        padding: 28px;               /* Bigger inner spacing */
+                        border-radius: 16px;         /* Larger curvature */
+                        font-size: 20px;             /* Bigger text */
+
                         color: white;
                         background: linear-gradient(135deg, {color}33, #111);
-                        border: 1px solid {color}55;
-                        box-shadow: 0 0 12px {color}33;
+                        border: 1.5px solid {color}55;
+                        box-shadow: 0 0 16px {color}44;
+
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
                     }}
+
                     div[data-testid="stButton"][key="card_{i}"] > button:hover {{
-                        border: 1px solid {color};
-                        transform: scale(1.01);
-                        transition: 0.1s ease-in-out;
+                        border: 1.5px solid {color};
+                        transform: scale(1.03);
+                        transition: 0.15s ease-in-out;
                     }}
                     </style>
                     """,
