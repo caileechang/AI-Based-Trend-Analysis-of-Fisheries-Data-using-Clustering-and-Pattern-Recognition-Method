@@ -1513,24 +1513,7 @@ def main():
         A correctly chosen K ensures that all cluster-based visualisations remain 
         <b>accurate, consistent, and scientifically valid</b>.<br><br>
 
-        <b style="color:#000000;">Where the selected K will be used:</b>
-        <ul style="margin-top:0px; color:#000000;">
-            <li>📊 <b style="color:#000000;">Yearly Cluster Trends (Freshwater & Marine)</b></li>
-          
-        </ul>
-
-       
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <div style="
-            background:#eef6ff;
-            padding:15px;
-            border-radius:8px;
-            border-left:6px solid #000000;
-            color:#000000;
-        ">
+    
             <b>💡 How This Helps Your Analysis</b><br><br>
             ✔ The optimal K ensures your clusters are not too many (noise) or too few (overgeneralised).<br>
             ✔ The cluster meanings show which years/states are strong or weak in freshwater vs marine production.<br>
@@ -1538,8 +1521,12 @@ def main():
             &nbsp;&nbsp;&nbsp;&nbsp;📈 <b>Yearly Cluster Trends for Marine & Freshwater Fish</b><br>
             ✔ This makes your trend charts easier to interpret because each cluster now has a real meaning.<br>
             ✔ You now know what each cluster represents (High FW, Low Marine, etc.) so trends make sense.<br>
+
+       
         </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+
+        
 
 
 
