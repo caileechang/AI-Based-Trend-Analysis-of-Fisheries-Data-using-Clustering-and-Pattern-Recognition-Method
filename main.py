@@ -811,11 +811,13 @@ def main():
 
             with cols[i % 3]:
 
-                if st.button(" ", key=f"card_btn_{i}"):
+                 # Invisible click button
+                click_key = f"card_btn_{i}"
+                if st.button(" ", key=click_key):
                     st.session_state.plot_option = name
                     st.rerun()
 
-                # Large visible card
+                # ----------- HTML CARD (SAFE VERSION) -----------
                 card_html = f"""
                 <div style="
                     margin-top: -120px;
@@ -843,22 +845,27 @@ def main():
 
                 st.markdown(card_html, unsafe_allow_html=True)
 
-                # CSS overlay (correctly formatted)
-                css = f"""
+                # ----------- CSS OVERLAY (SAFE VERSION) -----------
+                css_overlay = f"""
                 <style>
-                    div[data-testid="stButton"][key="card_btn_{i}"] > button {{
+                    div[data-testid="stButton"][key="{click_key}"] > button {{
                         position: relative;
                         top: -170px;
                         width: 100%;
                         height: 150px;
+                        margin-bottom: -150px;
+
+                        background: none !important;
+                        border: none !important;
                         opacity: 0 !important;
+
                         cursor: pointer;
-                        border: none;
+                        z-index: 10;
                     }}
                 </style>
                 """
 
-                st.markdown(css, unsafe_allow_html=True)
+                st.markdown(css_overlay, unsafe_allow_html=True)
               
 
     elif plot_option == "Monthly Trends by Cluster":
