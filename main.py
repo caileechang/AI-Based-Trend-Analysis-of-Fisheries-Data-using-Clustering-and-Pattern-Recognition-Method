@@ -1347,14 +1347,29 @@ def main():
         # Helper: Normalize column names
         # ------------------------------------------------------------
         def normalize_columns(df):
+            df = df.copy()
+
+            # Save the original columns before cleaning
+            preserved = {col.lower(): col for col in df.columns}
+
             df.columns = (
                 df.columns
                 .str.strip()
-                .str.lower()
+                .str.replace("(Tonnes)", "", regex=False)
                 .str.replace(" ", "")
-                .str.replace("(tonnes)", "")
+                .str.lower()
             )
+
+            # Restore Year & Month capitalization
+            rename_map = {}
+            for col in ["year", "month"]:
+                if col in df.columns:
+                    rename_map[col] = col.capitalize()
+
+            df.rename(columns=rename_map, inplace=True)
+
             return df
+
 
         # ============================================================
         # 1️⃣  MONTHLY COMPOSITION
@@ -1727,8 +1742,8 @@ def main():
           <b>interpretable and comparable over time</b>.
         </div>
         """, unsafe_allow_html=True)
+
         
-        st.write("yearly_comp columns:", yearly_comp.columns.tolist())
 
         # ============================================================
         # 6️⃣  YEARLY CLUSTER PREVIEW – HOW DOES K SHAPE TRENDS?
