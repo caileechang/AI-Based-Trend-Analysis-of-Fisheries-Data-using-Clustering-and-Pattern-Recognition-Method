@@ -1084,12 +1084,9 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
-            # ============================
-            # Year selector
-            # ============================
-            available_years = sorted(yearly["Year"].unique())
+      
            
-            prev_year = selected_year - 1
+            
 
            # latest_year = yearly["Year"].max()
            # prev_year = latest_year - 1
