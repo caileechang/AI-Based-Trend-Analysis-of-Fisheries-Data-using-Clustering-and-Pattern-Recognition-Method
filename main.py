@@ -1087,6 +1087,11 @@ def main():
            # latest_year = yearly["Year"].max()
            # prev_year = latest_year - 1
 
+            fw_latest = safe_get(yearly, selected_year, "Freshwater (Tonnes)")
+            ma_latest = safe_get(yearly, selected_year, "Marine (Tonnes)")
+            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
+            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
+
             def safe_get(df, year, col):
                 row = df.loc[df["Year"] == year, col]
                 return row.values[0] if len(row) else 0
@@ -1121,10 +1126,7 @@ def main():
 
            
 
-            fw_latest = safe_get(yearly, selected_year, "Freshwater (Tonnes)")
-            ma_latest = safe_get(yearly, selected_year, "Marine (Tonnes)")
-            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
-            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
+           
 
 
             # Premium gradient card
