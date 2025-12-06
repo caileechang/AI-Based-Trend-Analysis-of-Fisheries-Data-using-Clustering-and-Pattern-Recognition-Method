@@ -1457,7 +1457,7 @@ def main():
             # K-MEANS CLUSTERING
             # ============================================================
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
-            scaled = StandardScaler().fit_transform(monthly_year[features])
+            scaled = StandardScaler().fit_transform(monthly[features])
             best_k = st.session_state.get("best_k_monthly", 3)
 
             monthly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
