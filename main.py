@@ -1119,9 +1119,9 @@ def main():
                     "</span>"
                 )
 
-            fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
+            fw_latest = safe_get(yearly,selected_year, "Freshwater (Tonnes)")
             fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
-            ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
+            ma_latest = safe_get(yearly, selected_year, "Marine (Tonnes)")
             ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
             # Premium gradient card
@@ -1143,7 +1143,7 @@ def main():
                 </style>
             """, unsafe_allow_html=True)
 
-            st.markdown(f"## Landing Summary in {latest_year}")
+            st.markdown(f"## Landing Summary in {selected_year}")
 
             col1, col2 = st.columns(2)
 
@@ -1175,6 +1175,37 @@ def main():
       
 
         if period_choice == "Yearly":
+
+            # ==========================
+            # YEAR SELECTOR (Yearly mode)
+            # ==========================
+
+            # Prepare yearly dataset
+            yearly = (
+                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
+                .fillna(0)
+                .reset_index()
+            )
+
+            yearly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
+
+            # Year dropdown
+            available_years = sorted(yearly["Year"].unique())
+
+            selected_year = st.selectbox(
+                "Select Year:",
+                available_years,
+                index=len(available_years) - 1  # default = latest year
+            )
+
+            prev_year = selected_year - 1
+
 
             # ============================
             # PREPARE YEARLY DATA
@@ -1217,7 +1248,12 @@ def main():
 
                 # Freshwater (left axis)
                 for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
+                    sub = melted[
+                        (melted["Type"] == "Freshwater (Tonnes)") &
+                        (melted["Cluster"] == cl) &
+                        (melted["Year"] == selected_year)
+                    ]
+
                     if len(sub):
                         ax1.plot(
                             sub["Year"], sub["Landing"],
@@ -1228,7 +1264,13 @@ def main():
 
                 # Marine (right axis)
                 for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Marine (Tonnes)") & (melted["Cluster"] == cl)]
+                
+                    sub = melted[
+                        (melted["Type"] == "Marine (Tonnes)") &
+                        (melted["Cluster"] == cl) &
+                        (melted["Year"] == selected_year)
+                    ]
+
                     if len(sub):
                         ax2.plot(
                             sub["Year"], sub["Landing"],
@@ -1261,8 +1303,13 @@ def main():
                 fig, ax = plt.subplots(figsize=(14, 6))
 
                 for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)")
-                                & (melted["Cluster"] == cl)]
+                    
+                    sub = melted[
+                        (melted["Type"] == "Freshwater (Tonnes)") &
+                        (melted["Cluster"] == cl) &
+                        (melted["Year"] == selected_year)
+                    ]
+
                     if len(sub):
                         ax.plot(
                             sub["Year"], sub["Landing"],
@@ -1285,8 +1332,11 @@ def main():
                 fig, ax = plt.subplots(figsize=(14, 6))
 
                 for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Marine (Tonnes)")
-                                & (melted["Cluster"] == cl)]
+                    sub = melted[
+                        (melted["Type"] == "Marine (Tonnes)") &
+                        (melted["Cluster"] == cl) &
+                        (melted["Year"] == selected_year)
+                    ]
                     if len(sub):
                         ax.plot(
                             sub["Year"], sub["Landing"],
