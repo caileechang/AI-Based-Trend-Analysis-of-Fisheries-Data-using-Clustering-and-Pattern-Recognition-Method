@@ -1088,11 +1088,7 @@ def main():
             # Year selector
             # ============================
             available_years = sorted(yearly["Year"].unique())
-            selected_year = st.selectbox(
-                "Select Year:",
-                available_years,
-                index=len(available_years) - 1
-            )
+           
             prev_year = selected_year - 1
 
            # latest_year = yearly["Year"].max()
