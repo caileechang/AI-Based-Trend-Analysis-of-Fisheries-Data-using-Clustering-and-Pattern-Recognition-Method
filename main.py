@@ -1067,6 +1067,7 @@ def main():
         # YEARLY VIEW
         # ======================================
         
+        
         if period_choice == "Yearly":
 
             yearly = (
@@ -1084,21 +1085,12 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
-      
-           
-            
-
-           # latest_year = yearly["Year"].max()
-           # prev_year = latest_year - 1
+            latest_year = yearly["Year"].max()
+            prev_year = latest_year - 1
 
             def safe_get(df, year, col):
                 row = df.loc[df["Year"] == year, col]
                 return row.values[0] if len(row) else 0
-            
-            fw_latest = safe_get(yearly, selected_year, "Freshwater (Tonnes)")
-            ma_latest = safe_get(yearly, selected_year, "Marine (Tonnes)")
-            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
-            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
             def growth_html(curr, prev):
                 try:
@@ -1128,10 +1120,10 @@ def main():
                     "</span>"
                 )
 
-           
-
-           
-
+            fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
+            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
+            ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
+            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
             # Premium gradient card
             card_style = """
@@ -1152,7 +1144,7 @@ def main():
                 </style>
             """, unsafe_allow_html=True)
 
-            st.markdown(f"## Landing Summary in {selected_year}")
+            st.markdown(f"## Landing Summary in {latest_year}")
 
             col1, col2 = st.columns(2)
 
@@ -1181,6 +1173,9 @@ def main():
                 )
 
             st.markdown("---")
+      
+
+        if period_choice == "Yearly":
 
             # ============================
             # PREPARE YEARLY DATA
@@ -1224,9 +1219,6 @@ def main():
                 # Freshwater (left axis)
                 for cl in sorted(melted["Cluster"].unique()):
                     sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
-
-                   
-
                     if len(sub):
                         ax1.plot(
                             sub["Year"], sub["Landing"],
@@ -1237,10 +1229,7 @@ def main():
 
                 # Marine (right axis)
                 for cl in sorted(melted["Cluster"].unique()):
-                
                     sub = melted[(melted["Type"] == "Marine (Tonnes)") & (melted["Cluster"] == cl)]
-
-
                     if len(sub):
                         ax2.plot(
                             sub["Year"], sub["Landing"],
@@ -1273,10 +1262,8 @@ def main():
                 fig, ax = plt.subplots(figsize=(14, 6))
 
                 for cl in sorted(melted["Cluster"].unique()):
-                    
-                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
-
-
+                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)")
+                                & (melted["Cluster"] == cl)]
                     if len(sub):
                         ax.plot(
                             sub["Year"], sub["Landing"],
@@ -1299,8 +1286,8 @@ def main():
                 fig, ax = plt.subplots(figsize=(14, 6))
 
                 for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Marine (Tonnes)") & (melted["Cluster"] == cl)]
-
+                    sub = melted[(melted["Type"] == "Marine (Tonnes)")
+                                & (melted["Cluster"] == cl)]
                     if len(sub):
                         ax.plot(
                             sub["Year"], sub["Landing"],
