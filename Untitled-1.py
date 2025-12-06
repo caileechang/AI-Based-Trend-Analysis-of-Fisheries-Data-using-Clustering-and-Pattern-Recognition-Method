@@ -577,3 +577,14 @@ elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
 
                         </div>
                         """, unsafe_allow_html=True)
+
+
+
+ def calc_growth_month_html(curr, prev):
+                if prev == 0:
+                    return "<span style='color:gray'>–</span>"
+                ratio = curr / prev
+                if ratio >= 1:
+                    return f"<span style='color:lightgreen'>↑ {ratio:.2f}x</span>"
+                else:
+                    return f"<span style='color:#ff4d4d'>↓ {ratio:.2f}x</span>"

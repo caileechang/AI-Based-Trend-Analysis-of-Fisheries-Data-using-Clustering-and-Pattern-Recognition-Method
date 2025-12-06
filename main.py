@@ -1043,7 +1043,7 @@ def main():
         # ============================================
         # HELPER FUNCTIONS FOR CLUSTER MEANINGS
         # ============================================
-
+ 
         def interpret_label(fw, ma, avg_fw, avg_ma):
             """Return High/Low FW & Marine meaning."""
             fw_label = "High Freshwater" if fw >= avg_fw else "Low Freshwater"
@@ -1335,13 +1335,33 @@ def main():
                 return v.values[0] if len(v) else 0
 
             def calc_growth_month_html(curr, prev):
+                try:
+                    prev = float(prev)
+                    curr = float(curr)
+                except:
+                    return "<span style='color:gray;'>–</span>"
+
                 if prev == 0:
-                    return "<span style='color:gray'>–</span>"
+                    return "<span style='color:gray;'>–</span>"
+
                 ratio = curr / prev
+                diff = curr - prev
+
                 if ratio >= 1:
-                    return f"<span style='color:lightgreen'>↑ {ratio:.2f}x</span>"
+                    color = "lightgreen"
+                    arrow = "↑"
+                    word = "increased"
                 else:
-                    return f"<span style='color:#ff4d4d'>↓ {ratio:.2f}x</span>"
+                    color = "#ff4d4d"
+                    arrow = "↓"
+                    word = "decreased"
+
+                return (
+                    f"<span style='color:{color}; font-size:18px;'>"
+                    f"{arrow} {ratio:.2f}x • {word} by <b>{abs(diff):,.0f}</b> tonnes"
+                    "</span>"
+                )
+
 
             fw = safe_month_value(monthly, latest_date, "Freshwater (Tonnes)")
             fw_prev = safe_month_value(monthly, prev_date, "Freshwater (Tonnes)")
