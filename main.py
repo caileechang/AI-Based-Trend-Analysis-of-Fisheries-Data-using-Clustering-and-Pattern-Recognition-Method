@@ -1230,11 +1230,9 @@ def main():
 
                 # Freshwater (left axis)
                 for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[
-                        (melted["Type"] == "Freshwater (Tonnes)") &
-                        (melted["Cluster"] == cl) &
-                        (melted["Year"] == selected_year)
-                    ]
+                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
+
+                   
 
                     if len(sub):
                         ax1.plot(
@@ -1247,11 +1245,8 @@ def main():
                 # Marine (right axis)
                 for cl in sorted(melted["Cluster"].unique()):
                 
-                    sub = melted[
-                        (melted["Type"] == "Marine (Tonnes)") &
-                        (melted["Cluster"] == cl) &
-                        (melted["Year"] == selected_year)
-                    ]
+                    sub = melted[(melted["Type"] == "Marine (Tonnes)") & (melted["Cluster"] == cl)]
+
 
                     if len(sub):
                         ax2.plot(
@@ -1286,11 +1281,8 @@ def main():
 
                 for cl in sorted(melted["Cluster"].unique()):
                     
-                    sub = melted[
-                        (melted["Type"] == "Freshwater (Tonnes)") &
-                        (melted["Cluster"] == cl) &
-                        (melted["Year"] == selected_year)
-                    ]
+                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
+
 
                     if len(sub):
                         ax.plot(
@@ -1314,11 +1306,8 @@ def main():
                 fig, ax = plt.subplots(figsize=(14, 6))
 
                 for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[
-                        (melted["Type"] == "Marine (Tonnes)") &
-                        (melted["Cluster"] == cl) &
-                        (melted["Year"] == selected_year)
-                    ]
+                    sub = melted[(melted["Type"] == "Marine (Tonnes)") & (melted["Cluster"] == cl)]
+
                     if len(sub):
                         ax.plot(
                             sub["Year"], sub["Landing"],
