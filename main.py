@@ -1174,22 +1174,65 @@ def main():
 
             st.markdown("---")
       
+       
+#                     YEARLY VIEW (COMPLETE)
+
         if period_choice == "Yearly":
-            import plotly.express as px
+
             import plotly.graph_objects as go
+            import plotly.express as px
 
-            # ========= PREPARE DATA =========
+            # --------------------------------------------------------
+            # 1️⃣ PREPARE YEARLY DATA
+            # --------------------------------------------------------
+            yearly = (
+                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+                .sum()
+                .reset_index()
+                .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
+                .fillna(0)
+                .reset_index()
+            )
+
+            yearly.rename(columns={
+                "Freshwater": "Freshwater (Tonnes)",
+                "Marine": "Marine (Tonnes)"
+            }, inplace=True)
+
+            # Latest year info (for highlight)
+            latest_year = yearly["Year"].max()
+
+            fw_latest = yearly.loc[yearly["Year"] == latest_year, "Freshwater (Tonnes)"].values[0]
+            ma_latest = yearly.loc[yearly["Year"] == latest_year, "Marine (Tonnes)"].values[0]
+
+            # --------------------------------------------------------
+            # 2️⃣ KMEANS CLUSTERING (REQUIRED FOR PLOTLY)
+            # --------------------------------------------------------
+            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaled = StandardScaler().fit_transform(yearly[features])
+
+            best_k = st.session_state.get("best_k_yearly", 3)
+
+            yearly["Cluster"] = KMeans(
+                n_clusters=best_k,
+                random_state=42
+            ).fit_predict(scaled)
+
+            st.markdown(f"**Optimal clusters used:** {best_k}")
+
+            # --------------------------------------------------------
+            # 3️⃣ PREPARE DATAFRAME FOR PLOTTING
+            # --------------------------------------------------------
             df_plot = yearly.copy()
-
             df_plot["Freshwater (Tonnes)"] = df_plot["Freshwater (Tonnes)"].astype(float)
             df_plot["Marine (Tonnes)"] = df_plot["Marine (Tonnes)"].astype(float)
 
-            # ========= CREATE INTERACTIVE FIGURE =========
+            # --------------------------------------------------------
+            # 4️⃣ BUILD INTERACTIVE PLOTLY FIGURE (dual axis)
+            # --------------------------------------------------------
             fig = go.Figure()
 
-            colors = ["blue", "red", "green", "orange", "purple"]
-
-            # ---- Plot Freshwater ----
+            # ---- Freshwater Lines ----
             for cl in sorted(df_plot["Cluster"].unique()):
                 sub = df_plot[df_plot["Cluster"] == cl]
                 fig.add_trace(go.Scatter(
@@ -1197,12 +1240,12 @@ def main():
                     y=sub["Freshwater (Tonnes)"],
                     mode="lines+markers",
                     name=f"Freshwater – Cluster {cl}",
-                    line=dict(color="blue"),
-                    marker=dict(size=8),
-                    hovertemplate="<b>Year:</b> %{x}<br><b>Landing:</b> %{y:,.0f} tonnes<extra></extra>"
+                    line=dict(width=2),
+                    marker=dict(size=7),
+                    hovertemplate="<b>Year:</b> %{x}<br><b>Freshwater:</b> %{y:,.0f} tonnes<extra></extra>",
                 ))
 
-            # ---- Plot Marine ----
+            # ---- Marine Lines (right axis) ----
             for cl in sorted(df_plot["Cluster"].unique()):
                 sub = df_plot[df_plot["Cluster"] == cl]
                 fig.add_trace(go.Scatter(
@@ -1210,13 +1253,15 @@ def main():
                     y=sub["Marine (Tonnes)"],
                     mode="lines+markers",
                     name=f"Marine – Cluster {cl}",
-                    line=dict(color="red"),
-                    marker=dict(size=8),
-                    hovertemplate="<b>Year:</b> %{x}<br><b>Landing:</b> %{y:,.0f} tonnes<extra></extra>",
+                    line=dict(width=2, dash="dash"),
+                    marker=dict(size=7),
+                    hovertemplate="<b>Year:</b> %{x}<br><b>Marine:</b> %{y:,.0f} tonnes<extra></extra>",
                     yaxis="y2"
                 ))
 
-            # ---- ADD HIGHLIGHT ON LATEST YEAR ----
+            # --------------------------------------------------------
+            # 5️⃣ HIGHLIGHT MOST RECENT YEAR
+            # --------------------------------------------------------
             fig.add_trace(go.Scatter(
                 x=[latest_year],
                 y=[fw_latest],
@@ -1234,18 +1279,31 @@ def main():
                 yaxis="y2"
             ))
 
-            # ---- Dual Axis Layout ----
+            # --------------------------------------------------------
+            # 6️⃣ LAYOUT SETTINGS
+            # --------------------------------------------------------
             fig.update_layout(
                 title=f"Yearly Fish Landing Trends (k={best_k})",
-                xaxis=dict(title="Year"),
+                xaxis=dict(title="Year", tickmode="linear"),
                 yaxis=dict(title="Freshwater Landing (Tonnes)", color="blue"),
-                yaxis2=dict(title="Marine Landing (Tonnes)", overlaying="y", side="right", color="red"),
-                hovermode="x",
+                yaxis2=dict(
+                    title="Marine Landing (Tonnes)",
+                    overlaying="y",
+                    side="right",
+                    color="red"
+                ),
+                hovermode="x unified",
                 template="plotly_white",
-                legend=dict(orientation="h", y=-0.2)
+                legend=dict(orientation="h", y=-0.25)
             )
 
+            # --------------------------------------------------------
+            # 7️⃣ SHOW CHART IN STREAMLIT
+            # --------------------------------------------------------
             st.plotly_chart(fig, use_container_width=True)
+
+
+            
 
 
         else:
