@@ -1084,8 +1084,8 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
-            latest_year = yearly["Year"].max()
-            prev_year = latest_year - 1
+           # latest_year = yearly["Year"].max()
+           # prev_year = latest_year - 1
 
             def safe_get(df, year, col):
                 row = df.loc[df["Year"] == year, col]
@@ -1119,10 +1119,13 @@ def main():
                     "</span>"
                 )
 
-            fw_latest = safe_get(yearly,selected_year, "Freshwater (Tonnes)")
-            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
+           
+
+            fw_latest = safe_get(yearly, selected_year, "Freshwater (Tonnes)")
             ma_latest = safe_get(yearly, selected_year, "Marine (Tonnes)")
+            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
             ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
+
 
             # Premium gradient card
             card_style = """
