@@ -1084,17 +1084,28 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
+            # ============================
+            # Year selector
+            # ============================
+            available_years = sorted(yearly["Year"].unique())
+            selected_year = st.selectbox(
+                "Select Year:",
+                available_years,
+                index=len(available_years) - 1
+            )
+            prev_year = selected_year - 1
+
            # latest_year = yearly["Year"].max()
            # prev_year = latest_year - 1
-
-            fw_latest = safe_get(yearly, selected_year, "Freshwater (Tonnes)")
-            ma_latest = safe_get(yearly, selected_year, "Marine (Tonnes)")
-            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
-            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
             def safe_get(df, year, col):
                 row = df.loc[df["Year"] == year, col]
                 return row.values[0] if len(row) else 0
+            
+            fw_latest = safe_get(yearly, selected_year, "Freshwater (Tonnes)")
+            ma_latest = safe_get(yearly, selected_year, "Marine (Tonnes)")
+            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
+            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
             def growth_html(curr, prev):
                 try:
