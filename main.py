@@ -1174,247 +1174,79 @@ def main():
 
             st.markdown("---")
       
-
         if period_choice == "Yearly":
+            import plotly.express as px
+            import plotly.graph_objects as go
 
-            # ============================
-            # PREPARE YEARLY DATA
-            # ============================
-            yearly = (
-                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
-                .sum()
-                .reset_index()
-                .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
-                .fillna(0)
-                .reset_index()
+            # ========= PREPARE DATA =========
+            df_plot = yearly.copy()
+
+            df_plot["Freshwater (Tonnes)"] = df_plot["Freshwater (Tonnes)"].astype(float)
+            df_plot["Marine (Tonnes)"] = df_plot["Marine (Tonnes)"].astype(float)
+
+            # ========= CREATE INTERACTIVE FIGURE =========
+            fig = go.Figure()
+
+            colors = ["blue", "red", "green", "orange", "purple"]
+
+            # ---- Plot Freshwater ----
+            for cl in sorted(df_plot["Cluster"].unique()):
+                sub = df_plot[df_plot["Cluster"] == cl]
+                fig.add_trace(go.Scatter(
+                    x=sub["Year"],
+                    y=sub["Freshwater (Tonnes)"],
+                    mode="lines+markers",
+                    name=f"Freshwater – Cluster {cl}",
+                    line=dict(color="blue"),
+                    marker=dict(size=8),
+                    hovertemplate="<b>Year:</b> %{x}<br><b>Landing:</b> %{y:,.0f} tonnes<extra></extra>"
+                ))
+
+            # ---- Plot Marine ----
+            for cl in sorted(df_plot["Cluster"].unique()):
+                sub = df_plot[df_plot["Cluster"] == cl]
+                fig.add_trace(go.Scatter(
+                    x=sub["Year"],
+                    y=sub["Marine (Tonnes)"],
+                    mode="lines+markers",
+                    name=f"Marine – Cluster {cl}",
+                    line=dict(color="red"),
+                    marker=dict(size=8),
+                    hovertemplate="<b>Year:</b> %{x}<br><b>Landing:</b> %{y:,.0f} tonnes<extra></extra>",
+                    yaxis="y2"
+                ))
+
+            # ---- ADD HIGHLIGHT ON LATEST YEAR ----
+            fig.add_trace(go.Scatter(
+                x=[latest_year],
+                y=[fw_latest],
+                mode="markers",
+                marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
+                name="Highlight – Freshwater"
+            ))
+
+            fig.add_trace(go.Scatter(
+                x=[latest_year],
+                y=[ma_latest],
+                mode="markers",
+                marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
+                name="Highlight – Marine",
+                yaxis="y2"
+            ))
+
+            # ---- Dual Axis Layout ----
+            fig.update_layout(
+                title=f"Yearly Fish Landing Trends (k={best_k})",
+                xaxis=dict(title="Year"),
+                yaxis=dict(title="Freshwater Landing (Tonnes)", color="blue"),
+                yaxis2=dict(title="Marine Landing (Tonnes)", overlaying="y", side="right", color="red"),
+                hovermode="x",
+                template="plotly_white",
+                legend=dict(orientation="h", y=-0.2)
             )
 
-            yearly.rename(columns={
-                "Freshwater": "Freshwater (Tonnes)",
-                "Marine": "Marine (Tonnes)",
-            }, inplace=True)
+            st.plotly_chart(fig, use_container_width=True)
 
-            # Cluster
-            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
-            scaled = StandardScaler().fit_transform(yearly[features])
-            best_k = st.session_state.get("best_k_yearly", 3)
-            yearly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
-
-            st.markdown(f"**Optimal clusters used:** {best_k}")
-
-            melted = yearly.melt(
-                id_vars=["Year", "Cluster"],
-                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
-                var_name="Type",
-                value_name="Landing",
-            )
-
-            # ============================
-            # CASE A: BOTH → DUAL AXIS
-            # ============================
-            if trend_option == "Both":
-                fig, ax1 = plt.subplots(figsize=(14, 6))
-                ax2 = ax1.twinx()
-
-                # Freshwater (left axis)
-                for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
-                    if len(sub):
-                        ax1.plot(
-                            sub["Year"], sub["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="o", color="tab:blue", markersize=6,
-                            label=f"Freshwater – Cluster {cl}"
-                        )
-
-                # Marine (right axis)
-                for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Marine (Tonnes)") & (melted["Cluster"] == cl)]
-                    if len(sub):
-                        ax2.plot(
-                            sub["Year"], sub["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="^", color="tab:red", markersize=6,
-                            label=f"Marine – Cluster {cl}"
-                        )
-
-                # =============================
-                # HIGHLIGHT SELECTED YEAR POINT
-                # =============================
-                try:
-                    # Highlight freshwater use ax1
-                    fw_y = yearly.loc[yearly["Year"] == selected_year, "Freshwater (Tonnes)"].values[0]
-                    ax1.scatter(
-                        selected_year, fw_y,
-                        color="yellow", edgecolor="black",
-                        s=400, zorder=10, label="Selected Year"
-                    )
-
-                    # Highlight marine use ax2
-                    ma_y = yearly.loc[yearly["Year"] == selected_year, "Marine (Tonnes)"].values[0]
-                    ax2.scatter(
-                        selected_year, ma_y,
-                        color="yellow", edgecolor="black",
-                        s=180, zorder=10
-                    )
-                except:
-                    pass
-
-                ax1.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
-                ax2.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
-
-                ax1.tick_params(axis="y", labelcolor="tab:blue")
-                ax2.tick_params(axis="y", labelcolor="tab:red")
-
-                ax1.set_title(f"Yearly Fish Landing Trends (k={best_k})")
-                ax1.grid(True, alpha=0.3)
-
-                #Hover tooltip
-
-                annot = ax1.annotate("", xy=(0,0), xytext=(20,20),
-                     textcoords="offset points", fontsize=10,
-                     bbox=dict(boxstyle="round", fc="yellow", ec="black"),
-                     arrowprops=dict(arrowstyle="->"))
-                annot.set_visible(False)
-
-                def hover(event):
-                    if event.inaxes == ax1:
-                        for cl in sorted(melted["Cluster"].unique()):
-                            sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
-                            for x, y in zip(sub["Year"], sub["Landing"]):
-                                if abs(x - event.xdata) < 0.3 and abs(y - event.ydata) < (y * 0.05):
-                                    annot.xy = (x, y)
-                                    annot.set_text(f"Year: {int(x)}\nLanding: {y:,.0f} tonnes")
-                                    annot.set_visible(True)
-                                    fig.canvas.draw_idle()
-                                    return
-                    annot.set_visible(False)
-
-                fig.canvas.mpl_connect("motion_notify_event", hover)
-
-
-                # Combined legend
-                h1, l1 = ax1.get_legend_handles_labels()
-                h2, l2 = ax2.get_legend_handles_labels()
-                ax1.legend(h1 + h2, l1 + l2, loc="upper center",
-                        bbox_to_anchor=(0.5, -0.15), ncol=4)
-
-                st.pyplot(fig)
-
-            # ============================
-            # CASE B: FRESHWATER ONLY
-            # ============================
-            elif trend_option == "Freshwater":
-                fig, ax = plt.subplots(figsize=(14, 6))
-
-                for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Freshwater (Tonnes)")
-                                & (melted["Cluster"] == cl)]
-                    if len(sub):
-                        ax.plot(
-                            sub["Year"], sub["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="o", color="tab:blue", markersize=6,
-                            label=f"Freshwater – Cluster {cl}"
-                        )
-
-
-                # Highlight selected year
-                try:
-                    fw_y = yearly.loc[yearly["Year"] == selected_year, "Freshwater (Tonnes)"].values[0]
-                    ax.scatter(
-                        selected_year, fw_y,
-                        color="yellow", edgecolor="black",
-                        s=180, zorder=10, label="Selected Year"
-                    )
-                except:
-                    pass
-
-                ax.set_ylabel("Freshwater Landing (Tonnes)")
-                ax.set_title(f"Yearly Fish Landing Trends (Freshwater Only, k={best_k})")
-
-                annot = ax.annotate("", xy=(0,0), xytext=(20,20),
-                     textcoords="offset points", fontsize=10,
-                     bbox=dict(boxstyle="round", fc="yellow", ec="black"),
-                     arrowprops=dict(arrowstyle="->"))
-                annot.set_visible(False)
-
-                def hover(event):
-                    if event.inaxes == ax:
-                        for cl in sorted(melted["Cluster"].unique()):
-                            sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
-                            for x, y in zip(sub["Year"], sub["Landing"]):
-                                if abs(x - event.xdata) < 0.3 and abs(y - event.ydata) < (y * 0.05):
-                                    annot.xy = (x, y)
-                                    annot.set_text(f"Year: {int(x)}\nLanding: {y:,.0f} tonnes")
-                                    annot.set_visible(True)
-                                    fig.canvas.draw_idle()
-                                    return
-                    annot.set_visible(False)
-
-                fig.canvas.mpl_connect("motion_notify_event", hover)
-
-                ax.grid(True, alpha=0.3)
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=4)
-
-                st.pyplot(fig)
-
-            # ============================
-            # CASE C: MARINE ONLY
-            # ============================
-            else:
-                fig, ax = plt.subplots(figsize=(14, 6))
-
-                for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[(melted["Type"] == "Marine (Tonnes)")
-                                & (melted["Cluster"] == cl)]
-                    if len(sub):
-                        ax.plot(
-                            sub["Year"], sub["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="^", color="tab:red", markersize=6,
-                            label=f"Marine – Cluster {cl}"
-                        )
-
-                
-                try:
-                    ma_y = yearly.loc[yearly["Year"] == selected_year, "Marine (Tonnes)"].values[0]
-                    ax.scatter(
-                        selected_year, ma_y,
-                        color="yellow", edgecolor="black",
-                        s=180, zorder=10, label="Selected Year"
-                    )
-                except:
-                    pass
-
-                ax.set_ylabel("Marine Landing (Tonnes)")
-                ax.set_title(f"Yearly Fish Landing Trends (Marine Only, k={best_k})")
-
-                annot = ax.annotate("", xy=(0,0), xytext=(20,20),
-                     textcoords="offset points", fontsize=10,
-                     bbox=dict(boxstyle="round", fc="yellow", ec="black"),
-                     arrowprops=dict(arrowstyle="->"))
-                annot.set_visible(False)
-
-                def hover(event):
-                    if event.inaxes == ax:
-                        for cl in sorted(melted["Cluster"].unique()):
-                            sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
-                            for x, y in zip(sub["Year"], sub["Landing"]):
-                                if abs(x - event.xdata) < 0.3 and abs(y - event.ydata) < (y * 0.05):
-                                    annot.xy = (x, y)
-                                    annot.set_text(f"Year: {int(x)}\nLanding: {y:,.0f} tonnes")
-                                    annot.set_visible(True)
-                                    fig.canvas.draw_idle()
-                                    return
-                    annot.set_visible(False)
-
-                fig.canvas.mpl_connect("motion_notify_event", hover)
-
-                ax.grid(True, alpha=0.3)
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=4)
-
-                st.pyplot(fig)
 
         else:
              # ======================================
@@ -1596,188 +1428,113 @@ def main():
             # MONTHLY TREND PLOTS (RESPOND TO SELECTED YEAR & MONTH)
             # ============================================================
 
-            # Filter dataset for the selected year only
-            monthly_year = monthly[monthly["Year"] == selected_year].copy()
+            # ============================================================
+            # MONTHLY TREND (PLOTLY REPLACEMENT FOR MATPLOTLIB)
+            # ============================================================
 
-            # KMeans clustering
+            import plotly.graph_objects as go
+            import plotly.express as px
+
+            # Prepare monthly dataframe for selected year
+            dfm = monthly.copy()
+            dfm["MonthYear"] = pd.to_datetime(dfm["MonthYear"])
+            dfm["MonthIndex"] = dfm["MonthYear"].dt.month
+
+            dfm_selected = dfm[dfm["Year"] == selected_year].copy()
+
+            # =============== KMEANS ===============
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
-            scaled = StandardScaler().fit_transform(monthly_year[features])
-
+            scaled = StandardScaler().fit_transform(dfm_selected[features])
             best_k = st.session_state.get("best_k_monthly", 3)
-            monthly_year["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
 
+            dfm_selected["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
             st.markdown(f"**Optimal clusters used:** {best_k}")
 
-            # Melt for plotting
-            melted = monthly_year.melt(
-                id_vars=["MonthYear", "Cluster"],
-                value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
-                var_name="Type",
-                value_name="Landing",
+            # =============== BUILD PLOTLY FIGURE ===============
+            fig = go.Figure()
+
+            colors_fw = ["#1f77b4", "#2ca02c", "#17becf", "#9467bd"]
+            colors_ma = ["#d62728", "#ff7f0e", "#e377c2", "#8c564b"]
+
+            # ------------------------------------
+            # FRESHWATER LINES
+            # ------------------------------------
+            for cl in sorted(dfm_selected["Cluster"].unique()):
+                sub = dfm_selected[dfm_selected["Cluster"] == cl]
+
+                fig.add_trace(go.Scatter(
+                    x=sub["MonthIndex"],
+                    y=sub["Freshwater (Tonnes)"],
+                    mode="lines+markers",
+                    name=f"Freshwater – Cluster {cl}",
+                    line=dict(width=3, color=colors_fw[cl % len(colors_fw)]),
+                    marker=dict(size=9),
+                    hovertemplate="<b>Month:</b> %{x}<br><b>Freshwater:</b> %{y:,.0f} tonnes<extra></extra>"
+                ))
+
+            # ------------------------------------
+            # MARINE LINES
+            # ------------------------------------
+            for cl in sorted(dfm_selected["Cluster"].unique()):
+                sub = dfm_selected[dfm_selected["Cluster"] == cl]
+
+                fig.add_trace(go.Scatter(
+                    x=sub["MonthIndex"],
+                    y=sub["Marine (Tonnes)"],
+                    mode="lines+markers",
+                    name=f"Marine – Cluster {cl}",
+                    line=dict(width=3, color=colors_ma[cl % len(colors_ma)]),
+                    marker=dict(size=9),
+                    hovertemplate="<b>Month:</b> %{x}<br><b>Marine:</b> %{y:,.0f} tonnes<extra></extra>",
+                    yaxis="y2"
+                ))
+
+            # =============== HIGHLIGHT SELECTED MONTH ===============
+            fw_val = dfm_selected.loc[dfm_selected["MonthYear"] == selected_date, "Freshwater (Tonnes)"]
+            ma_val = dfm_selected.loc[dfm_selected["MonthYear"] == selected_date, "Marine (Tonnes)"]
+
+            if len(fw_val):
+                fig.add_trace(go.Scatter(
+                    x=[selected_month],
+                    y=[fw_val.values[0]],
+                    mode="markers",
+                    marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
+                    name="Selected Month – Freshwater"
+                ))
+
+            if len(ma_val):
+                fig.add_trace(go.Scatter(
+                    x=[selected_month],
+                    y=[ma_val.values[0]],
+                    mode="markers",
+                    marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
+                    name="Selected Month – Marine",
+                    yaxis="y2"
+                ))
+
+            # =============== LAYOUT ===============
+            fig.update_layout(
+                title=f"Monthly Fish Landing Trends ({selected_year})",
+                xaxis=dict(
+                    title="Month",
+                    tickmode="array",
+                    tickvals=list(range(1, 13)),
+                    ticktext=["Jan","Feb","Mar","Apr","May","Jun","Jul",
+                            "Aug","Sep","Oct","Nov","Dec"]
+                ),
+                yaxis=dict(title="Freshwater (Tonnes)", color="blue"),
+                yaxis2=dict(
+                    title="Marine (Tonnes)",
+                    overlaying="y",
+                    side="right",
+                    color="red"
+                ),
+                hovermode="x unified",
+                template="plotly_white",
+                legend=dict(orientation="h", y=-0.2)
             )
 
-            # Linestyles
-            linestyles = ["solid", "dashed", "dotted", "dashdot"]
-
-            # Highlight selected month
-            highlight_date = selected_date
-
-
-            # ============================================================
-            # CASE 1 — BOTH (Dual Axis)
-            # ============================================================
-            if trend_option == "Both":
-
-                fig, ax1 = plt.subplots(figsize=(14, 6))
-                ax2 = ax1.twinx()
-
-                # --- Freshwater (blue, left) ---
-                for cl in sorted(melted["Cluster"].unique()):
-                    fw_subset = melted[
-                        (melted["Type"] == "Freshwater (Tonnes)") &
-                        (melted["Cluster"] == cl)
-                    ]
-
-                    if len(fw_subset):
-                        ax1.plot(
-                            fw_subset["MonthYear"],
-                            fw_subset["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="o",
-                            color="tab:blue",
-                            markersize=5,
-                            label=f"Freshwater – Cluster {cl}",
-                        )
-
-                # --- Marine (red, right) ---
-                for cl in sorted(melted["Cluster"].unique()):
-                    ma_subset = melted[
-                        (melted["Type"] == "Marine (Tonnes)") &
-                        (melted["Cluster"] == cl)
-                    ]
-
-                    if len(ma_subset):
-                        ax2.plot(
-                            ma_subset["MonthYear"],
-                            ma_subset["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="^",
-                            color="tab:red",
-                            markersize=5,
-                            label=f"Marine – Cluster {cl}",
-                        )
-
-                # Highlight selected month
-                fw_val = monthly_year.loc[monthly_year["MonthYear"] == highlight_date, "Freshwater (Tonnes)"]
-                ma_val = monthly_year.loc[monthly_year["MonthYear"] == highlight_date, "Marine (Tonnes)"]
-
-                if len(fw_val):
-                    ax1.scatter(highlight_date, fw_val.values[0], s=180, color="yellow", edgecolor="black", zorder=5)
-
-                if len(ma_val):
-                    ax2.scatter(highlight_date, ma_val.values[0], s=180, color="yellow", edgecolor="black", zorder=5)
-
-                ax1.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
-                ax2.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
-
-                ax1.tick_params(axis="y", labelcolor="tab:blue")
-                ax2.tick_params(axis="y", labelcolor="tab:red")
-
-                ax1.set_title(f"Monthly Fish Landing Trends in {selected_year} (k={best_k})")
-                ax1.grid(True, alpha=0.3)
-
-                # Combine legends
-                h1, l1 = ax1.get_legend_handles_labels()
-                h2, l2 = ax2.get_legend_handles_labels()
-
-                ax1.legend(
-                    h1 + h2,
-                    l1 + l2,
-                    loc="upper center",
-                    bbox_to_anchor=(0.5, -0.18),
-                    ncol=4
-                )
-
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
-
-
-
-            # ============================================================
-            # CASE 2 — FRESHWATER ONLY
-            # ============================================================
-            elif trend_option == "Freshwater":
-
-                fig, ax = plt.subplots(figsize=(14, 6))
-
-                for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[
-                        (melted["Type"] == "Freshwater (Tonnes)") &
-                        (melted["Cluster"] == cl)
-                    ]
-
-                    if len(sub):
-                        ax.plot(
-                            sub["MonthYear"],
-                            sub["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="o",
-                            color="tab:blue",
-                            markersize=5,
-                            label=f"Freshwater – Cluster {cl}",
-                        )
-
-                # Highlight point
-                fw_val = monthly_year.loc[monthly_year["MonthYear"] == highlight_date, "Freshwater (Tonnes)"]
-                if len(fw_val):
-                    ax.scatter(highlight_date, fw_val.values[0], s=200, color="yellow", edgecolor="black", zorder=5)
-
-                ax.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
-                ax.set_title(f"Monthly Fish Landing Trends (Freshwater Only) in {selected_year}")
-                ax.grid(True, alpha=0.3)
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=4)
-
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
-
-
-
-            # ============================================================
-            # CASE 3 — MARINE ONLY
-            # ============================================================
-            else:
-
-                fig, ax = plt.subplots(figsize=(14, 6))
-
-                for cl in sorted(melted["Cluster"].unique()):
-                    sub = melted[
-                        (melted["Type"] == "Marine (Tonnes)") &
-                        (melted["Cluster"] == cl)
-                    ]
-
-                    if len(sub):
-                        ax.plot(
-                            sub["MonthYear"],
-                            sub["Landing"],
-                            linestyle=linestyles[cl % len(linestyles)],
-                            marker="^",
-                            color="tab:red",
-                            markersize=5,
-                            label=f"Marine – Cluster {cl}",
-                        )
-
-                # Highlight selected month
-                ma_val = monthly_year.loc[monthly_year["MonthYear"] == highlight_date, "Marine (Tonnes)"]
-                if len(ma_val):
-                    ax.scatter(highlight_date, ma_val.values[0], s=200, color="yellow", edgecolor="black", zorder=5)
-
-                ax.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
-                ax.set_title(f"Monthly Fish Landing Trends (Marine Only) in {selected_year}")
-                ax.grid(True, alpha=0.3)
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=4)
-
-                plt.xticks(rotation=45)
-                st.pyplot(fig)
+            st.plotly_chart(fig, use_container_width=True)
 
 
                 
