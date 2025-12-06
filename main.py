@@ -1188,40 +1188,6 @@ def main():
                 )
 
             st.markdown("---")
-      
-
-        if period_choice == "Yearly":
-
-            # ==========================
-            # YEAR SELECTOR (Yearly mode)
-            # ==========================
-
-            # Prepare yearly dataset
-            yearly = (
-                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
-                .sum()
-                .reset_index()
-                .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
-                .fillna(0)
-                .reset_index()
-            )
-
-            yearly.rename(columns={
-                "Freshwater": "Freshwater (Tonnes)",
-                "Marine": "Marine (Tonnes)"
-            }, inplace=True)
-
-            # Year dropdown
-            available_years = sorted(yearly["Year"].unique())
-
-            selected_year = st.selectbox(
-                "Select Year:",
-                available_years,
-                index=len(available_years) - 1  # default = latest year
-            )
-
-            prev_year = selected_year - 1
-
 
             # ============================
             # PREPARE YEARLY DATA
