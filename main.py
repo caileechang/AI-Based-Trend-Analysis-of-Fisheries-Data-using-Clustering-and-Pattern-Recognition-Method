@@ -1238,6 +1238,28 @@ def main():
                             label=f"Marine – Cluster {cl}"
                         )
 
+                # =============================
+                # HIGHLIGHT SELECTED YEAR POINT
+                # =============================
+                try:
+                    # Highlight freshwater use ax1
+                    fw_y = yearly.loc[yearly["Year"] == selected_year, "Freshwater (Tonnes)"].values[0]
+                    ax1.scatter(
+                        selected_year, fw_y,
+                        color="yellow", edgecolor="black",
+                        s=180, zorder=10, label="Selected Year"
+                    )
+
+                    # Highlight marine use ax2
+                    ma_y = yearly.loc[yearly["Year"] == selected_year, "Marine (Tonnes)"].values[0]
+                    ax2.scatter(
+                        selected_year, ma_y,
+                        color="yellow", edgecolor="black",
+                        s=180, zorder=10
+                    )
+                except:
+                    pass
+
                 ax1.set_ylabel("Freshwater Landing (Tonnes)", color="tab:blue")
                 ax2.set_ylabel("Marine Landing (Tonnes)", color="tab:red")
 
@@ -1246,6 +1268,30 @@ def main():
 
                 ax1.set_title(f"Yearly Fish Landing Trends (k={best_k})")
                 ax1.grid(True, alpha=0.3)
+
+                #Hover tooltip
+
+                annot = ax1.annotate("", xy=(0,0), xytext=(20,20),
+                     textcoords="offset points", fontsize=10,
+                     bbox=dict(boxstyle="round", fc="yellow", ec="black"),
+                     arrowprops=dict(arrowstyle="->"))
+                annot.set_visible(False)
+
+                def hover(event):
+                    if event.inaxes == ax1:
+                        for cl in sorted(melted["Cluster"].unique()):
+                            sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
+                            for x, y in zip(sub["Year"], sub["Landing"]):
+                                if abs(x - event.xdata) < 0.3 and abs(y - event.ydata) < (y * 0.05):
+                                    annot.xy = (x, y)
+                                    annot.set_text(f"Year: {int(x)}\nLanding: {y:,.0f} tonnes")
+                                    annot.set_visible(True)
+                                    fig.canvas.draw_idle()
+                                    return
+                    annot.set_visible(False)
+
+                fig.canvas.mpl_connect("motion_notify_event", hover)
+
 
                 # Combined legend
                 h1, l1 = ax1.get_legend_handles_labels()
@@ -1272,8 +1318,42 @@ def main():
                             label=f"Freshwater – Cluster {cl}"
                         )
 
+
+                # Highlight selected year
+                try:
+                    fw_y = yearly.loc[yearly["Year"] == selected_year, "Freshwater (Tonnes)"].values[0]
+                    ax.scatter(
+                        selected_year, fw_y,
+                        color="yellow", edgecolor="black",
+                        s=180, zorder=10, label="Selected Year"
+                    )
+                except:
+                    pass
+
                 ax.set_ylabel("Freshwater Landing (Tonnes)")
                 ax.set_title(f"Yearly Fish Landing Trends (Freshwater Only, k={best_k})")
+
+                annot = ax.annotate("", xy=(0,0), xytext=(20,20),
+                     textcoords="offset points", fontsize=10,
+                     bbox=dict(boxstyle="round", fc="yellow", ec="black"),
+                     arrowprops=dict(arrowstyle="->"))
+                annot.set_visible(False)
+
+                def hover(event):
+                    if event.inaxes == ax:
+                        for cl in sorted(melted["Cluster"].unique()):
+                            sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
+                            for x, y in zip(sub["Year"], sub["Landing"]):
+                                if abs(x - event.xdata) < 0.3 and abs(y - event.ydata) < (y * 0.05):
+                                    annot.xy = (x, y)
+                                    annot.set_text(f"Year: {int(x)}\nLanding: {y:,.0f} tonnes")
+                                    annot.set_visible(True)
+                                    fig.canvas.draw_idle()
+                                    return
+                    annot.set_visible(False)
+
+                fig.canvas.mpl_connect("motion_notify_event", hover)
+
                 ax.grid(True, alpha=0.3)
                 ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=4)
 
@@ -1296,8 +1376,41 @@ def main():
                             label=f"Marine – Cluster {cl}"
                         )
 
+                
+                try:
+                    ma_y = yearly.loc[yearly["Year"] == selected_year, "Marine (Tonnes)"].values[0]
+                    ax.scatter(
+                        selected_year, ma_y,
+                        color="yellow", edgecolor="black",
+                        s=180, zorder=10, label="Selected Year"
+                    )
+                except:
+                    pass
+
                 ax.set_ylabel("Marine Landing (Tonnes)")
                 ax.set_title(f"Yearly Fish Landing Trends (Marine Only, k={best_k})")
+
+                annot = ax.annotate("", xy=(0,0), xytext=(20,20),
+                     textcoords="offset points", fontsize=10,
+                     bbox=dict(boxstyle="round", fc="yellow", ec="black"),
+                     arrowprops=dict(arrowstyle="->"))
+                annot.set_visible(False)
+
+                def hover(event):
+                    if event.inaxes == ax:
+                        for cl in sorted(melted["Cluster"].unique()):
+                            sub = melted[(melted["Type"] == "Freshwater (Tonnes)") & (melted["Cluster"] == cl)]
+                            for x, y in zip(sub["Year"], sub["Landing"]):
+                                if abs(x - event.xdata) < 0.3 and abs(y - event.ydata) < (y * 0.05):
+                                    annot.xy = (x, y)
+                                    annot.set_text(f"Year: {int(x)}\nLanding: {y:,.0f} tonnes")
+                                    annot.set_visible(True)
+                                    fig.canvas.draw_idle()
+                                    return
+                    annot.set_visible(False)
+
+                fig.canvas.mpl_connect("motion_notify_event", hover)
+
                 ax.grid(True, alpha=0.3)
                 ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=4)
 
