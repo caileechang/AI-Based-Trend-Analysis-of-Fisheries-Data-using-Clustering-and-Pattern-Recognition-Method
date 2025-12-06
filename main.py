@@ -1247,7 +1247,7 @@ def main():
                     ax1.scatter(
                         selected_year, fw_y,
                         color="yellow", edgecolor="black",
-                        s=180, zorder=10, label="Selected Year"
+                        s=400, zorder=10, label="Selected Year"
                     )
 
                     # Highlight marine use ax2
