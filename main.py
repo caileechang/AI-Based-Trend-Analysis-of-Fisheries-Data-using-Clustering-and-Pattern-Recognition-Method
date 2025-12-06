@@ -1402,24 +1402,24 @@ def main():
             # ============================================================
             # K-MEANS CLUSTERING
             # ============================================================
-           # features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
-            #scaled = StandardScaler().fit_transform(monthly[features])
-           # best_k = st.session_state.get("best_k_monthly", 3)
+            features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
+            scaled = StandardScaler().fit_transform(monthly[features])
+            best_k = st.session_state.get("best_k_monthly", 3)
 
-           # monthly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
+            monthly["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
 
-           # st.markdown(f"**Optimal clusters used:** {best_k}")
+            st.markdown(f"**Optimal clusters used:** {best_k}")
 
             # Melt for plotting (long format)
-           # melted = monthly.melt(
-           #     id_vars=["MonthYear", "Cluster"],
-           #     value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
-            #    var_name="Type",
-            #    value_name="Landing",
-           # )
+            melted = monthly.melt(
+               id_vars=["MonthYear", "Cluster"],
+               value_vars=["Freshwater (Tonnes)", "Marine (Tonnes)"],
+               var_name="Type",
+               value_name="Landing",
+         )
 
             # Shared linestyles
-          #  linestyles = ["solid", "dashed", "dotted", "dashdot"]
+            linestyles = ["solid", "dashed", "dotted", "dashdot"]
 
             # ======================================================
             # CASE 1 — BOTH (Dual Y-Axis)
