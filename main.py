@@ -1630,7 +1630,7 @@ def main():
             return df
 
         # ============================================================
-        # 1️⃣  MONTHLY COMPOSITION
+        # MONTHLY COMPOSITION
         # ============================================================
         st.markdown("### 📘 Monthly Fish Landing Composition")
 
@@ -1682,7 +1682,7 @@ def main():
             st.error(f"❌ Error in monthly computation: {e}")
 
         # ============================================================
-        # 2️⃣  YEARLY COMPOSITION
+        # YEARLY COMPOSITION
         # ============================================================
         st.markdown("### 📗 Yearly Fish Landing Composition")
 
@@ -1770,34 +1770,38 @@ def main():
         # ------------------------------------------------------------
         # Enhanced Explanation Box
         # ------------------------------------------------------------
-        st.markdown("""
-        <div style="
-            background-color:#eef6ff; 
-            padding:16px; 
-            border-radius:8px; 
-            border-left:6px solid #4a90e2; 
-            margin-bottom:22px;
-            color:#000000;
-            font-size:15px;
-        ">
-        <b style="color:#000000;">Why you are seeing this page:</b><br>
-        The number of clusters (<b>K</b>) affects how states or months are grouped into 
-        meaningful categories such as <b>High</b>, <b>Medium</b>, and <b>Low</b> fish landing performance.
-        A correctly chosen K ensures that all cluster-based visualisations remain 
-        <b>accurate, consistent, and scientifically valid</b>.<br><br>
+        with st.expander("ℹ️ Why This Page Matters (Click to Expand)"):
+            st.markdown("""
+            The number of clusters (K) affects how states or months are grouped into meaningful 
+            categories such as **High**, **Medium**, and **Low** fish landing performance.
 
-    
-        <b>💡 How This Helps Your Analysis</b><br>
-            ✔ The optimal K ensures your clusters are not too many (noise) or too few (overgeneralised).<br>
-            ✔ The cluster meanings show which years/states are strong or weak in freshwater vs marine production.<br>
-            ✔ These same cluster labels are reused in:<br>
-            &nbsp;&nbsp;&nbsp;&nbsp;📈 <b>Yearly Cluster Trends for Marine & Freshwater Fish</b><br>
-            ✔ This makes your trend charts easier to interpret because each cluster now has a real meaning.<br>
-            ✔ You now know what each cluster represents (High Freshwater, Low Marine, etc.) so trends make sense.<br>
+            A correctly chosen **K ensures** that all cluster-based visualisations remain:
+            - accurate  
+            - consistent  
+            - scientifically valid  
 
-       
-        </div>
-        """, unsafe_allow_html=True)
+            ### 🔍 How This Helps Your Analysis
+            - ✔ Ensures your clusters are not too many (noise) or too few (overgeneralised)
+            - ✔ Helps you understand which years/states are strong in **freshwater vs marine**
+            - ✔ Makes downstream visualisations easier to interpret
+        
+            """)
+
+        with st.expander(" Understanding Silhouette Score vs Elbow Method"):
+            st.markdown("""
+            **Silhouette Score:**  
+            - Measures how well-separated clusters are  
+            - Higher score = better cluster quality  
+
+            **Elbow Method (Inertia):**  
+            - Measures how compact clusters are  
+            - The "elbow" shows diminishing improvement  
+
+            Using both methods together helps select the most **statistically valid K**.
+            """)
+
+
+        
 
         
 
