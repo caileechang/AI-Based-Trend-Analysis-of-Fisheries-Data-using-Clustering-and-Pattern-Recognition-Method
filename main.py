@@ -3887,18 +3887,7 @@ def main():
                 • Low Landing + High Efficiency = 💡 Small fleets but very efficient  
                 """)
 
-    elif plot_option == "Power BI Dashboard":
-            import streamlit as st
-
-            st.markdown("""
-                <h2 style='color:#333;'>📊 Power BI Dashboard</h2>
-                <p style='color:#555;'>This dashboard is embedded directly from Power BI to enhance visualization and analytics.</p>
-                """, unsafe_allow_html=True)
-
-            powerbi_url = "https://app.powerbi.com/view?r=eyJrIjoiMGI1ZDU4YjAtYmZhZS00NmJmLTg3YzMtMWMyMzVlNmZkODZhIiwidCI6ImE2M2JiMWE5LTQ4YzItNDQ4Yi04NjkzLTMzMTdiMDBjYTdmYiIsImMiOjEwfQ%3D%3D"
-
-            st.components.v1.iframe(powerbi_url, width=1100, height=800)
-
+  
 
 
 
