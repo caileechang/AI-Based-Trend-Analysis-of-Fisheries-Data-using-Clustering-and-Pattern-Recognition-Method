@@ -1308,6 +1308,20 @@ def main():
 
 
         else:
+            # ======================================
+            # MONTHLY VIEW – PREVENT CRASH IF MONTH COLUMN MISSING
+            # ======================================
+            if "Month" not in df_land.columns:
+                st.error("❌ Your dataset does not have a 'Month' column, so Monthly Cluster Trends cannot be generated.")
+                st.info("""
+                To use Monthly mode, you must upload a dataset containing:
+                - Year  
+                - Month  
+                - Type of Fish  
+                - Fish Landing (Tonnes)
+                """)
+                st.stop()
+
              # ======================================
             # MONTHLY VIEW
             # ======================================
@@ -1495,7 +1509,7 @@ def main():
             import plotly.express as px
             import numpy as np
             import pandas as pd
-            
+
 
             # Prepare monthly dataframe for selected year
             dfm = monthly.copy()
