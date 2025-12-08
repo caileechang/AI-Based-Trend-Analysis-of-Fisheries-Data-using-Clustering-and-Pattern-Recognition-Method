@@ -569,10 +569,7 @@ def hierarchical_clustering(merged_df):
         .reset_index(drop=True)
     )
 
-import pandas as pd
 
-st.set_page_config(layout='wide')
-    
 def main():
     
    
@@ -640,7 +637,10 @@ def main():
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
    
+    import pandas as pd
 
+    st.set_page_config(layout='wide')
+    
     # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
         st.session_state.base_land, st.session_state.base_vess = load_data()
