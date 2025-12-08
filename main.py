@@ -756,7 +756,7 @@ def main():
         "Hierarchical Clustering",
      
       
-        "Geospatial Map (Upgraded)2","Power BI Dashboard" 
+        "Geospatial Map (Upgraded)2"
     ])
 
     
