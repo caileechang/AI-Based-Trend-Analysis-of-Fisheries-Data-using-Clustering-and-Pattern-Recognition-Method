@@ -1039,20 +1039,7 @@ def main():
                 trend_option = st.radio(
                     "Trend:", ["Freshwater", "Marine", "Both"], horizontal=True
                 )
-    # ===========================
-        # PREVENT MONTHLY CRASH
-        # ===========================
-        if period_choice == "Monthly" and "Month" not in df_land.columns:
-            st.error("❌ Monthly analysis cannot run because your dataset does not contain a 'Month' column.")
-            st.info("""
-            Upload a MONTHLY dataset with these required columns:
-            - Year  
-            - Month  
-            - Type of Fish  
-            - Fish Landing (Tonnes)
-            """)
-            st.stop()
-
+    
 
 
         # ============================================
@@ -1321,7 +1308,7 @@ def main():
             
 
 
-        else:
+        if period_choice == "Monthly":
             
              # ======================================
             # MONTHLY VIEW
