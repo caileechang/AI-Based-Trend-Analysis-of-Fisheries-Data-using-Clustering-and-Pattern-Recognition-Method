@@ -19,11 +19,7 @@ import plotly.graph_objects as go
 import hdbscan
 
 
-# -----------------------
-# INITIALISE default page
-# -----------------------
-if "plot_option" not in st.session_state:
-    st.session_state.plot_option = "🏠 Dashboard Overview"
+
 
 
 # Import your clustering modules
