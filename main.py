@@ -579,7 +579,7 @@ def main():
    
     import pandas as pd
 
-    st.set_page_config(layout='wide')
+    #st.set_page_config(layout='wide')
      # ======================================
     # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
     # ======================================
