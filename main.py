@@ -1039,7 +1039,7 @@ def main():
                 trend_option = st.radio(
                     "Trend:", ["Freshwater", "Marine", "Both"], horizontal=True
                 )
-        # ===========================
+    # ===========================
         # PREVENT MONTHLY CRASH
         # ===========================
         if period_choice == "Monthly" and "Month" not in df_land.columns:
