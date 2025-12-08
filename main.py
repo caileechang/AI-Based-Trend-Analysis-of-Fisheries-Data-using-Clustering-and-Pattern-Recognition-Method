@@ -3886,7 +3886,7 @@ def main():
                 • Low Landing + High Efficiency = 💡 Small fleets but very efficient  
                 """)
 
-        elif plot_option == "Power BI Dashboard":
+    elif plot_option == "Power BI Dashboard":
             import streamlit as st
 
             st.markdown("""
