@@ -1306,8 +1306,10 @@ def main():
 
           
             # CLUSTER INTERPRETATION FOR YEARLY
+
           
             st.markdown("## 🔍 Cluster Interpretation Summary")
+            import pandas as pd
 
             df_year = df_plot.copy()
             avg_fw = df_year["Freshwater (Tonnes)"].mean()
