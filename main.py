@@ -573,13 +573,14 @@ def hierarchical_clustering(merged_df):
         .reset_index(drop=True)
     )
 
+import pandas as pd
+
+st.set_page_config(layout='wide')
     
 def main():
     
    
-    import pandas as pd
-
-    #st.set_page_config(layout='wide')
+    
      # ======================================
     # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
     # ======================================
