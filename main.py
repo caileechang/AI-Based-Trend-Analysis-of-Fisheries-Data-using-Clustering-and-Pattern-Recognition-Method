@@ -1601,6 +1601,59 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
 
 
+            # CLUSTER INTERPRETATION 
+        
+            st.markdown("## 🔍 Cluster Interpretation Summary")
+
+            # Compute averages
+            avg_fw = dfm_selected["Freshwater (Tonnes)"].mean()
+            avg_ma = dfm_selected["Marine (Tonnes)"].mean()
+
+            # Prepare interpretation table
+            cluster_summary = []
+
+            for cl in sorted(dfm_selected["Cluster"].unique()):
+                sub = dfm_selected[dfm_selected["Cluster"] == cl]
+
+                fw_mean = sub["Freshwater (Tonnes)"].mean()
+                ma_mean = sub["Marine (Tonnes)"].mean()
+
+                # Determine freshwater meaning
+                if fw_mean >= avg_fw:
+                    fw_label = "High Freshwater"
+                else:
+                    fw_label = "Low Freshwater"
+
+                # Determine marine meaning
+                if ma_mean >= avg_ma:
+                    ma_label = "High Marine"
+                else:
+                    ma_label = "Low Marine"
+
+                # Friendly interpretation name
+                if fw_label == "High Freshwater" and ma_label == "High Marine":
+                    meaning = "🔥 High Production Region"
+                elif fw_label == "High Freshwater" and ma_label == "Low Marine":
+                    meaning = "🐟 Freshwater Dominant Region"
+                elif fw_label == "Low Freshwater" and ma_label == "High Marine":
+                    meaning = "🌊 Marine Dominant Region"
+                else:
+                    meaning = "⚠️ Low Production Region"
+
+                cluster_summary.append([cl, fw_mean, ma_mean, meaning])
+
+            # Display table
+            summary_df = pd.DataFrame(cluster_summary, 
+                columns=["Cluster", "Avg Freshwater", "Avg Marine", "Interpretation"])
+
+            st.dataframe(summary_df.style.format({
+                "Avg Freshwater": "{:,.2f}",
+                "Avg Marine": "{:,.2f}",
+            }))
+
+
+
+
                 
 
                     
