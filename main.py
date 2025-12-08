@@ -1309,7 +1309,7 @@ def main():
 
 
         if period_choice == "Monthly":
-            
+            import pandas as pd
              # ======================================
             # MONTHLY VIEW
             # ======================================
