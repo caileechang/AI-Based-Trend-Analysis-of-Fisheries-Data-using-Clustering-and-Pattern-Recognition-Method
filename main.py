@@ -1029,15 +1029,10 @@ def main():
                 unsafe_allow_html=True
             )
 
-            opt_col1, opt_col2 = st.columns([1, 2])
+          
+            period_choice = st.radio("Period:", ["Yearly", "Monthly"], horizontal=True)
 
-            with opt_col1:
-                period_choice = st.radio("Period:", ["Yearly", "Monthly"], horizontal=True)
-
-            with opt_col2:
-                trend_option = st.radio(
-                    "Trend:", ["Freshwater", "Marine", "Both"], horizontal=True
-                )
+           
     
 
 
