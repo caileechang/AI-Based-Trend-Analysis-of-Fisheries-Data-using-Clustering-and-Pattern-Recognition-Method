@@ -1526,13 +1526,6 @@ def main():
             # Shared linestyles
             linestyles = ["solid", "dashed", "dotted", "dashdot"]
 
-            # ======================================================
-            # CASE 1 — BOTH (Dual Y-Axis)
-            # ======================================================
-            # ============================================================
-            # MONTHLY TREND PLOTS (RESPOND TO SELECTED YEAR & MONTH)
-            # ============================================================
-
             # ============================================================
             # MONTHLY TREND (PLOTLY REPLACEMENT FOR MATPLOTLIB)
             # ============================================================
@@ -1606,7 +1599,7 @@ def main():
                     x=[selected_month],
                     y=[fw_val.values[0]],
                     mode="markers",
-                    marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
+                    marker=dict(size=18, color="white", line=dict(width=2, color="black")),
                     name="Selected Month – Freshwater"
                 ))
 
