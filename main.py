@@ -1244,7 +1244,7 @@ def main():
                 y=[fw_val],
                 mode="markers",
                 marker=dict(size=18, color="white", line=dict(width=2, color="black")),
-                name="Latest year – Freshwater"
+                name="Selected year – Freshwater"
             ))
 
             fig.add_trace(go.Scatter(
@@ -1252,7 +1252,7 @@ def main():
                 y=[ma_val],
                 mode="markers",
                 marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
-                name="Latest year – Marine",
+                name="Selected year – Marine",
                 yaxis="y2"
             ))
 
