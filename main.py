@@ -978,6 +978,9 @@ def main():
 
         import matplotlib.pyplot as plt
         import seaborn as sns
+        import plotly.graph_objects as go
+        import plotly.express as px
+
 
         # ======================================
         # GLOBAL CARD STYLE + CHART STYLES
@@ -1083,12 +1086,28 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
-            latest_year = yearly["Year"].max()
-            prev_year = latest_year - 1
+          # -------- NEW: YEAR SELECTION DROPDOWN --------
+            available_years = sorted(yearly["Year"].unique())
+            latest_year = max(available_years)
+
+            selected_year = st.selectbox(
+                "Select Year:",
+                available_years,
+                index=available_years.index(latest_year)
+            )
+
+            prev_year = selected_year - 1
+
 
             def safe_get(df, year, col):
                 row = df.loc[df["Year"] == year, col]
                 return row.values[0] if len(row) else 0
+            
+            
+            fw_val = safe_get(yearly, selected_year, "Freshwater (Tonnes)")
+            ma_val = safe_get(yearly, selected_year, "Marine (Tonnes)")
+            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
+            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
             def growth_html(curr, prev):
                 try:
@@ -1118,10 +1137,6 @@ def main():
                     "</span>"
                 )
 
-            fw_latest = safe_get(yearly, latest_year, "Freshwater (Tonnes)")
-            fw_prev = safe_get(yearly, prev_year, "Freshwater (Tonnes)")
-            ma_latest = safe_get(yearly, latest_year, "Marine (Tonnes)")
-            ma_prev = safe_get(yearly, prev_year, "Marine (Tonnes)")
 
             # Premium gradient card
             card_style = """
@@ -1152,7 +1167,7 @@ def main():
                     <div style="{card_style}">
                         <h3 style="color:white;">Freshwater Landing</h3>
                         <h1 style="color:white; font-size:42px;"><b>{fw_latest:,.0f}</b> tonnes</h1>
-                        {growth_html(fw_latest, fw_prev)}
+                        {growth_html(fw_val, fw_prev)}
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -1164,47 +1179,16 @@ def main():
                     <div style="{card_style}">
                         <h3 style="color:white;">Marine Landing</h3>
                         <h1 style="color:white; font-size:42px;"><b>{ma_latest:,.0f}</b> tonnes</h1>
-                        {growth_html(ma_latest, ma_prev)}
+                        {growth_html(ma_val, ma_prev)}
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
             st.markdown("---")
-      
-       
-#                     YEARLY VIEW (COMPLETE)
-
-        if period_choice == "Yearly":
-
-            import plotly.graph_objects as go
-            import plotly.express as px
-
+    
             # --------------------------------------------------------
-            # 1️⃣ PREPARE YEARLY DATA
-            # --------------------------------------------------------
-            yearly = (
-                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
-                .sum()
-                .reset_index()
-                .pivot(index="Year", columns="Type of Fish", values="Fish Landing (Tonnes)")
-                .fillna(0)
-                .reset_index()
-            )
-
-            yearly.rename(columns={
-                "Freshwater": "Freshwater (Tonnes)",
-                "Marine": "Marine (Tonnes)"
-            }, inplace=True)
-
-            # Latest year info (for highlight)
-            latest_year = yearly["Year"].max()
-
-            fw_latest = yearly.loc[yearly["Year"] == latest_year, "Freshwater (Tonnes)"].values[0]
-            ma_latest = yearly.loc[yearly["Year"] == latest_year, "Marine (Tonnes)"].values[0]
-
-            # --------------------------------------------------------
-            # 2️⃣ KMEANS CLUSTERING (REQUIRED FOR PLOTLY)
+            #  KMEANS CLUSTERING (REQUIRED FOR PLOTLY)
             # --------------------------------------------------------
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly[features])
@@ -1219,14 +1203,14 @@ def main():
             st.markdown(f"**Optimal clusters used:** {best_k}")
 
             # --------------------------------------------------------
-            # 3️⃣ PREPARE DATAFRAME FOR PLOTTING
+            # PREPARE DATAFRAME FOR PLOTTING
             # --------------------------------------------------------
             df_plot = yearly.copy()
             df_plot["Freshwater (Tonnes)"] = df_plot["Freshwater (Tonnes)"].astype(float)
             df_plot["Marine (Tonnes)"] = df_plot["Marine (Tonnes)"].astype(float)
 
             # --------------------------------------------------------
-            # 4️⃣ BUILD INTERACTIVE PLOTLY FIGURE (dual axis)
+            # BUILD INTERACTIVE PLOTLY FIGURE (dual axis)
             # --------------------------------------------------------
             fig = go.Figure()
 
@@ -1257,12 +1241,12 @@ def main():
                     yaxis="y2"
                 ))
 
-            # --------------------------------------------------------
+        
             #  HIGHLIGHT MOST RECENT YEAR
-            # --------------------------------------------------------
+           
             fig.add_trace(go.Scatter(
                 x=[latest_year],
-                y=[fw_latest],
+                y=[fw_val],
                 mode="markers",
                 marker=dict(size=18, color="white", line=dict(width=2, color="black")),
                 name="Latest year – Freshwater"
@@ -1270,16 +1254,15 @@ def main():
 
             fig.add_trace(go.Scatter(
                 x=[latest_year],
-                y=[ma_latest],
+                y=[ma_val],
                 mode="markers",
                 marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
                 name="Latest year – Marine",
                 yaxis="y2"
             ))
 
-            # --------------------------------------------------------
-            # 6️⃣ LAYOUT SETTINGS
-            # --------------------------------------------------------
+            # LAYOUT SETTINGS
+          
             fig.update_layout(
                 title=f"Yearly Fish Landing Trends (k={best_k})",
                 xaxis=dict(title="Year", tickmode="linear"),
