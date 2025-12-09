@@ -1157,7 +1157,7 @@ def main():
                 </style>
             """, unsafe_allow_html=True)
 
-            st.markdown(f"## Landing Summary in {latest_year}")
+            st.markdown(f"## Landing Summary in {selected_year}")
 
             col1, col2 = st.columns(2)
 
