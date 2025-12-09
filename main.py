@@ -1243,7 +1243,7 @@ def main():
                 x=[latest_year],
                 y=[fw_val],
                 mode="markers",
-                marker=dict(size=18, color="white", line=dict(width=2, color="black")),
+                marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
                 name="Latest year – Freshwater"
             ))
 
