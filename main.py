@@ -1258,14 +1258,14 @@ def main():
                 ))
 
             # --------------------------------------------------------
-            # 5️⃣ HIGHLIGHT MOST RECENT YEAR
+            #  HIGHLIGHT MOST RECENT YEAR
             # --------------------------------------------------------
             fig.add_trace(go.Scatter(
                 x=[latest_year],
                 y=[fw_latest],
                 mode="markers",
                 marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
-                name="Highlight – Freshwater"
+                name="Latest year – Freshwater"
             ))
 
             fig.add_trace(go.Scatter(
@@ -1273,7 +1273,7 @@ def main():
                 y=[ma_latest],
                 mode="markers",
                 marker=dict(size=18, color="yellow", line=dict(width=2, color="black")),
-                name="Highlight – Marine",
+                name="Latest year – Marine",
                 yaxis="y2"
             ))
 
