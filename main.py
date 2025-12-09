@@ -1166,7 +1166,7 @@ def main():
                     f"""
                     <div style="{card_style}">
                         <h3 style="color:white;">Freshwater Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{fw_latest:,.0f}</b> tonnes</h1>
+                        <h1 style="color:white; font-size:42px;"><b>{fw_val:,.0f}</b> tonnes</h1>
                         {growth_html(fw_val, fw_prev)}
                     </div>
                     """,
@@ -1178,7 +1178,7 @@ def main():
                     f"""
                     <div style="{card_style}">
                         <h3 style="color:white;">Marine Landing</h3>
-                        <h1 style="color:white; font-size:42px;"><b>{ma_latest:,.0f}</b> tonnes</h1>
+                        <h1 style="color:white; font-size:42px;"><b>{ma_val:,.0f}</b> tonnes</h1>
                         {growth_html(ma_val, ma_prev)}
                     </div>
                     """,
