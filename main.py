@@ -747,12 +747,9 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
        
-       
         "HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
-     
-      
-        "Geospatial Map (Upgraded)2"
+        "Geospatial Maps"
     ])
 
     
@@ -811,9 +808,8 @@ def main():
 
         st.session_state.yearly_summary = yearly_summary
 
-        # ------------------------------------------------------
-        # A) Summary Cards + Lollipop FIRST
-        # ------------------------------------------------------
+        # A) Summary Cards + Lollipop 
+
 
         # Get latest year
         latest_year = int(yearly_summary["Year"].max())
@@ -900,9 +896,8 @@ def main():
         st.markdown("---")
 
 
-        # ------------------------------------------------------
         # CHART FOR LATEST YEAR
-        # ------------------------------------------------------
+   
         st.markdown(f"### Total Fish Landing by State ({latest_year})")
 
         filtered_sorted = filtered_latest.sort_values(
@@ -954,9 +949,9 @@ def main():
 
         st.markdown("---")
 
-        # ------------------------------------------------------
-        # C) NOW SHOW YEAR SELECTOR & TABLE
-        # ------------------------------------------------------
+      
+        #  SHOW YEAR SELECTOR & TABLE
+  
         st.markdown("### Select a Year to View Full Details")
 
         selected_year = st.selectbox(
@@ -982,9 +977,8 @@ def main():
         import plotly.express as px
 
 
-        # ======================================
-        # GLOBAL CARD STYLE + CHART STYLES
-        # ======================================
+        #  CARD STYLE + CHART STYLES
+      
         card_style = """
             background-color: #1e1e1e;
             padding: 20px;
@@ -1009,7 +1003,7 @@ def main():
         # PAGE HEADER
         # ======================================
         st.markdown("""
-            <h2 style='color:white;'>🎣 Fish Landing Trends (Cluster Analysis)</h2>
+            <h2 style='color:white;'> Fish Landing Trends (Cluster Analysis)</h2>
             <p style='color:#ccc; margin-top:-10px;'>
                 Compare freshwater & marine fish landings across yearly or monthly periods using K-Means cluster grouping.
             </p>
@@ -1033,9 +1027,6 @@ def main():
             period_choice = st.radio("Period:", ["Yearly", "Monthly"], horizontal=True)
 
            
-    
-
-
         # ============================================
         # HELPER FUNCTIONS FOR CLUSTER MEANINGS
         # ============================================
@@ -1059,11 +1050,8 @@ def main():
             return "Mixed Cluster"
 
 
-        # ======================================
         # YEARLY VIEW
-        # ======================================
-        
-        
+       
         if period_choice == "Yearly":
 
             yearly = (
@@ -1081,7 +1069,7 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
-          # -------- NEW: YEAR SELECTION DROPDOWN --------
+          # -------- YEAR SELECTION DROPDOWN --------
             available_years = sorted(yearly["Year"].unique())
             latest_year = max(available_years)
 
@@ -1182,9 +1170,9 @@ def main():
 
             st.markdown("---")
     
-            # --------------------------------------------------------
-            #  KMEANS CLUSTERING (REQUIRED FOR PLOTLY)
-            # --------------------------------------------------------
+    
+            #  K-MEANS CLUSTERING (REQUIRED FOR PLOTLY)
+         
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly[features])
 
@@ -1197,16 +1185,16 @@ def main():
 
             st.markdown(f"**Optimal clusters used:** {best_k}")
 
-            # --------------------------------------------------------
+        
             # PREPARE DATAFRAME FOR PLOTTING
-            # --------------------------------------------------------
+ 
             df_plot = yearly.copy()
             df_plot["Freshwater (Tonnes)"] = df_plot["Freshwater (Tonnes)"].astype(float)
             df_plot["Marine (Tonnes)"] = df_plot["Marine (Tonnes)"].astype(float)
 
-            # --------------------------------------------------------
+            
             # BUILD INTERACTIVE PLOTLY FIGURE (dual axis)
-            # --------------------------------------------------------
+            
             fig = go.Figure()
 
             # ---- Freshwater Lines ----
@@ -1237,7 +1225,7 @@ def main():
                 ))
 
         
-            #  HIGHLIGHT MOST RECENT YEAR
+            #  Highlight selected year points
            
             fig.add_trace(go.Scatter(
                 x=[selected_year],
@@ -1256,7 +1244,7 @@ def main():
                 yaxis="y2"
             ))
 
-            # LAYOUT SETTINGS
+            # layout settings   
           
             fig.update_layout(
                 title=f"Yearly Fish Landing Trends (k={best_k})",
@@ -1274,14 +1262,13 @@ def main():
             )
 
            
-            #  SHOW CHART IN STREAMLIT
+            #  show chart in streamlit
        
             st.plotly_chart(fig, use_container_width=True)
 
           
-            # CLUSTER INTERPRETATION FOR YEARLY
+            # Cluster interpretation summary
 
-          
             st.markdown("## 🔍 Cluster Interpretation Summary")
             import pandas as pd
 
@@ -2842,92 +2829,7 @@ def main():
                 # Call the hierarchical clustering function
             hierarchical_clustering(merged_df)
             
-    elif plot_option == "Geospatial Map":
-                st.subheader("Geospatial Distribution of Fish Landings by Year and Region")
-
-            # Let user choose year
-                available_years = sorted(merged_df['Year'].unique())
-                selected_year = st.selectbox("Select Year", available_years, index=len(available_years)-1)
-
-            # Filter dataset by selected year
-                geo_df = merged_df[merged_df['Year'] == selected_year].copy()
-
-                import re
-                import folium
-                from streamlit_folium import st_folium
-
-            # Manually define coordinates for each region (including subregions)
-                state_coords = {
-                # Johor regions
-                    "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
-                    "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
-                    "JOHOR": [1.4854, 103.7618],
-                    "MELAKA": [2.1896, 102.2501],
-                    "NEGERI SEMBILAN": [2.7258, 101.9424],
-                    "SELANGOR": [3.0738, 101.5183],
-                    "PAHANG": [3.8126, 103.3256],
-                    "TERENGGANU": [5.3302, 103.1408],
-                    "KELANTAN": [6.1254, 102.2381],
-                    "PERAK": [4.5921, 101.0901],
-                    "PULAU PINANG": [5.4164, 100.3327],
-                    "KEDAH": [6.1184, 100.3685],
-                    "PERLIS": [6.4449, 100.2048],
-                    "SABAH": [5.9788, 116.0753],
-                    "SARAWAK": [1.5533, 110.3592],
-                    "W.P. LABUAN": [5.2831, 115.2308]
-            }
-
-                # Clean state names in dataset (remove spaces and unify slashes)
-                geo_df['State_Clean'] = (
-                    geo_df['State']
-                    .astype(str)
-                    .str.upper()
-                    .str.replace(r'\s*/\s*', '/', regex=True)  # Normalize " / " to "/"
-                    .str.replace(r'\s+', ' ', regex=True)      # Remove multiple spaces
-                    .str.strip()
-                )
-
-            # Clean coordinate dictionary
-                clean_coords = { re.sub(r'\s*/\s*', '/', k.upper().strip()): v for k, v in state_coords.items() }
-
-                
-                # Clean coordinate dictionary keys the same way
-            
-        # Now safely map using the cleaned version
-                geo_df['Coords'] = geo_df['State_Clean'].map(clean_coords)
-
-            # Drop regions with no coordinates (to avoid map crash)
-                missing_coords = geo_df[geo_df['Coords'].isna()]['State'].unique()
-                if len(missing_coords) > 0:
-                    st.warning(f"No coordinates found for: {', '.join(missing_coords)}")
-
-                geo_df = geo_df.dropna(subset=['Coords'])
-
-                #  Safety check: make sure there’s data to map
-                if geo_df.empty:
-                    st.warning("No valid locations found for the selected year.")
-                else:
-                # Create Folium map centered on Malaysia
-                    m = folium.Map(location=[4.5, 109.5], zoom_start=6)
-
-        
-
-            # Add markers for each region
-                    for _, row in geo_df.iterrows():
-                        folium.CircleMarker(
-                            location=row['Coords'],
-                            radius=8,
-                            color='blue',
-                            fill=True,
-                            fill_color='cyan',
-                            popup=f"<b>{row['State']}</b><br>"
-                                f"Fish Landing: {row['Total Fish Landing (Tonnes)']:.2f} tonnes<br>"
-                                f"Vessels: {row['Total number of fishing vessels']:.0f}",
-                            tooltip=row['State']
-                        ).add_to(m)
-
-            # Display map
-                    st_folium(m, width=800, height=500)
+    
 
     
     elif plot_option == "Interactive Geospatial Map":
@@ -3607,7 +3509,7 @@ def main():
                 """)
 
 
-    elif plot_option == "Geospatial Map (Upgraded)2":
+    elif plot_option == "Geospatial Maps":
         import folium
         import numpy as np
         import pandas as pd
