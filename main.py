@@ -3885,6 +3885,23 @@ def main():
             </div>
             """, unsafe_allow_html=True)
 
+        st.markdown("""
+        <style>
+        /* Main content background */
+        [data-testid="stAppViewContainer"] {
+            background: linear-gradient(180deg, #020617, #020617);
+        }
+
+        /* Block container (the frame behind your cards) */
+        [data-testid="stVerticalBlock"] {
+            background-color: #020617;
+            padding: 20px;
+            border-radius: 18px;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+
         # =====================================================
         # PAGE TITLE
         # =====================================================
