@@ -749,7 +749,7 @@ def main():
        
         "HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
-        "Geospatial Maps"
+        "Geospatial Maps","Geospatial Maps(2)"
     ])
 
     
@@ -1011,9 +1011,9 @@ def main():
 
         st.markdown("<hr style='border:0.5px solid #444;'>", unsafe_allow_html=True)
 
-        # ======================================
+  
         # OPTIONS SECTION
-        # ======================================
+       
         with st.container():
 
             st.markdown(
@@ -1026,10 +1026,9 @@ def main():
           
             period_choice = st.radio("Period:", ["Yearly", "Monthly"], horizontal=True)
 
-           
-        # ============================================
+     
         # HELPER FUNCTIONS FOR CLUSTER MEANINGS
-        # ============================================
+ 
  
         def interpret_label(fw, ma, avg_fw, avg_ma):
             """Return High/Low FW & Marine meaning."""
@@ -1319,9 +1318,9 @@ def main():
 
         if period_choice == "Monthly":
             import pandas as pd
-             # ======================================
+        
             # MONTHLY VIEW
-            # ======================================
+         
 
             # Prepare monthly data
             monthly = (
@@ -3858,6 +3857,313 @@ def main():
                 • High Landing + Low Efficiency = ⚠️ Many vessels, low productivity  
                 • Low Landing + High Efficiency = 💡 Small fleets but very efficient  
                 """)
+
+
+    elif plot_option == "Geospatial Maps(2)":
+
+        # =====================================================
+        # IMPORTS
+        # =====================================================
+        import folium
+        import numpy as np
+        import pandas as pd
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+
+        from folium.plugins import HeatMap, MiniMap, Fullscreen
+        from streamlit_folium import st_folium
+
+        # =====================================================
+        # HELPER: SECTION TITLE
+        # =====================================================
+        def section_title(title, subtitle=None):
+            st.markdown(f"""
+            <div style="margin-top:35px; margin-bottom:10px;">
+                <h3 style="color:#e5e7eb; margin-bottom:4px;">{title}</h3>
+                {f"<p style='color:#9ca3af; margin-top:0;'>{subtitle}</p>" if subtitle else ""}
+                <hr style="border:0.5px solid #374151;">
+            </div>
+            """, unsafe_allow_html=True)
+
+        # =====================================================
+        # PAGE TITLE
+        # =====================================================
+        section_title(
+            "🌍 Geospatial Heatmap",
+            "Spatial distribution of fish landing, vessels, and fishing efficiency"
+        )
+
+        summary_c = st.container()
+        selection_c = st.container()
+        map_c = st.container()
+        table_c = st.container()
+        chart_c = st.container()
+        info_c = st.container()
+
+        # =====================================================
+        # YEAR SELECTION
+        # =====================================================
+        years = sorted(merged_df["Year"].unique())
+        sel_year = st.selectbox("Select Year", years, index=len(years) - 1)
+
+        df_year = (
+            merged_df[merged_df["Year"] == sel_year]
+            .groupby("State", as_index=False)[
+                ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
+            ]
+            .sum()
+        )
+
+        df_year.rename(columns={
+            "Total Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
+        df_year = df_year[df_year["Landing"] > 0].copy()
+
+        # =====================================================
+        # STATE COORDINATES
+        # =====================================================
+        coordinates = {
+            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+            "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+            "JOHOR": [1.4854, 103.7618],
+            "MELAKA": [2.1896, 102.2501],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "SELANGOR": [3.0738, 101.5183],
+            "PAHANG": [3.8126, 103.3256],
+            "TERENGGANU": [5.3302, 103.1408],
+            "KELANTAN": [6.1254, 102.2381],
+            "PERAK": [4.5921, 101.0901],
+            "PULAU PINANG": [5.4164, 100.3327],
+            "KEDAH": [6.1184, 100.3685],
+            "PERLIS": [6.4449, 100.2048],
+            "SABAH": [5.9788, 116.0753],
+            "SARAWAK": [1.5533, 110.3592],
+            "W.P. LABUAN": [5.2831, 115.2308],
+        }
+
+        df_year["Coords"] = df_year["State"].map(coordinates)
+        df_year = df_year.dropna(subset=["Coords"]).copy()
+
+        # =====================================================
+        # EFFICIENCY CALCULATION
+        # =====================================================
+        df_year["Efficiency"] = df_year["Landing"] / df_year["Vessels"].replace(0, np.nan)
+
+        eff_valid = df_year["Efficiency"].dropna()
+        eff_avg = eff_valid.mean()
+
+        q_low, q_mid = eff_valid.quantile([0.33, 0.66])
+
+        def eff_category(x):
+            if pd.isna(x):
+                return "No Data"
+            if x <= q_low:
+                return "Low"
+            elif x <= q_mid:
+                return "Medium"
+            return "High"
+
+        df_year["Eff_Category"] = df_year["Efficiency"].apply(eff_category)
+
+        eff_colors = {
+            "High": "#16a34a",
+            "Medium": "#facc15",
+            "Low": "#ef4444",
+            "No Data": "lightgray"
+        }
+
+        # =====================================================
+        # SUMMARY CARDS (PROFESSIONAL)
+        # =====================================================
+        with summary_c:
+
+            total_land = df_year["Landing"].sum()
+            total_vess = df_year["Vessels"].sum()
+            high = df_year.loc[df_year["Landing"].idxmax()]
+            low = df_year.loc[df_year["Landing"].idxmin()]
+
+            style_blue = """
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            padding: 26px;
+            border-radius: 22px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            height: 170px;
+            """
+
+            style_green = """
+            background: linear-gradient(145deg, #065f46, #047857);
+            padding: 26px;
+            border-radius: 22px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            height: 170px;
+            """
+
+            style_red = """
+            background: linear-gradient(145deg, #7f1d1d, #991b1b);
+            padding: 26px;
+            border-radius: 22px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            height: 170px;
+            """
+
+            text_title = "color:#e5e7eb; font-size:15px;"
+            text_value = "color:white; font-size:36px; font-weight:700;"
+            text_state = "color:#f9fafb; font-size:20px; font-weight:600;"
+
+            c1, c2, c3, c4 = st.columns(4)
+
+            with c1:
+                st.markdown(f"""
+                <div style="{style_blue}">
+                    <div style="{text_title}">Total Landing (Tonnes)</div>
+                    <div style="{text_value}">{total_land:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with c2:
+                st.markdown(f"""
+                <div style="{style_blue}">
+                    <div style="{text_title}">Total Vessels</div>
+                    <div style="{text_value}">{total_vess:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with c3:
+                st.markdown(f"""
+                <div style="{style_green}">
+                    <div style="{text_title}">Highest Landing</div>
+                    <div style="{text_state}">{high['State']}</div>
+                    <div style="{text_value}">{high['Landing']:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with c4:
+                st.markdown(f"""
+                <div style="{style_red}">
+                    <div style="{text_title}">Lowest Landing</div>
+                    <div style="{text_state}">{low['State']}</div>
+                    <div style="{text_value}">{low['Landing']:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # =====================================================
+        # FILTERS
+        # =====================================================
+        section_title("🎛 Filters")
+
+        f1, f2, f3 = st.columns([1.2, 1.6, 1.2])
+
+        with f1:
+            state_list = sorted(df_year["State"].unique())
+            selected_states = st.multiselect("States", state_list, default=state_list)
+
+        with f2:
+            map_theme = st.radio("Map Theme", ["Light", "Dark", "Satellite"], horizontal=True)
+
+        df = df_year[df_year["State"].isin(selected_states)].copy()
+
+        tile_map = {
+            "Light": "CartoDB positron",
+            "Dark": "CartoDB dark_matter",
+            "Satellite": "Esri.WorldImagery",
+        }
+
+        # =====================================================
+        # MAP
+        # =====================================================
+        m = folium.Map(location=[4.2, 108.5], zoom_start=6, tiles=None)
+        folium.TileLayer(tile_map[map_theme], control=False).add_to(m)
+
+        m.fit_bounds([
+            [df["Coords"].apply(lambda x: x[0]).min(),
+            df["Coords"].apply(lambda x: x[1]).min()],
+            [df["Coords"].apply(lambda x: x[0]).max(),
+            df["Coords"].apply(lambda x: x[1]).max()]
+        ])
+
+        HeatMap(
+            [[lat, lon, val] for (lat, lon), val in zip(df["Coords"], df["Landing"])],
+            radius=35, blur=22, min_opacity=0.35
+        ).add_to(folium.FeatureGroup("Landing Heatmap").add_to(m))
+
+        HeatMap(
+            [[lat, lon, val] for (lat, lon), val in zip(df["Coords"], df["Vessels"])],
+            radius=35, blur=22,
+            gradient={0.2: "#3b82f6", 0.6: "#22d3ee", 1: "#ef4444"}
+        ).add_to(folium.FeatureGroup("Vessels Heatmap").add_to(m))
+
+        eff_df = df.dropna(subset=["Efficiency"])
+        HeatMap(
+            [[lat, lon, val] for (lat, lon), val in zip(eff_df["Coords"], eff_df["Efficiency"])],
+            radius=35, blur=25,
+            gradient={0.2:"#6d28d9", 0.5:"#9333ea", 0.8:"#c084fc", 1:"#f5f3ff"}
+        ).add_to(folium.FeatureGroup("Efficiency Heatmap").add_to(m))
+
+        for _, r in df.iterrows():
+            lat, lon = r["Coords"]
+            folium.CircleMarker(
+                [lat, lon],
+                radius=9,
+                color="#111827",
+                fill=True,
+                fill_color=eff_colors[r["Eff_Category"]],
+                fill_opacity=0.85,
+                tooltip=r["State"]
+            ).add_to(m)
+
+        MiniMap(toggle_display=True).add_to(m)
+        Fullscreen().add_to(m)
+        folium.LayerControl(collapsed=False).add_to(m)
+
+        with map_c:
+            st_folium(m, height=600, width="100%")
+
+        # =====================================================
+        # TABLE
+        # =====================================================
+        section_title("📊 State Summary Table")
+
+        st.dataframe(
+            df.sort_values("Landing", ascending=False),
+            use_container_width=True,
+            height=360
+        )
+
+        # =====================================================
+        # CHART
+        # =====================================================
+        section_title("📈 Efficiency Comparison")
+
+        fig, ax = plt.subplots(figsize=(11, 4))
+        sns.barplot(
+            data=df.dropna(subset=["Efficiency"]).sort_values("Efficiency", ascending=False),
+            x="State", y="Efficiency",
+            hue="Eff_Category", palette=eff_colors,
+            dodge=False, ax=ax
+        )
+
+        ax.axhline(eff_avg, linestyle="--", color="#9ca3af", label="National Avg")
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+        ax.legend(bbox_to_anchor=(1, 1))
+
+        st.pyplot(fig)
+
+        # =====================================================
+        # INTERPRETATION
+        # =====================================================
+        with info_c:
+            with st.expander("ℹ️ How to interpret this dashboard"):
+                st.markdown("""
+                • **Landing Heatmap** – Total fish landing volume  
+                • **Vessels Heatmap** – Distribution of fishing vessels  
+                • **Efficiency Heatmap** – Landing per vessel  
+                
+                **Marker colors:**  
+                🟢 High efficiency 🟡 Medium 🔴 Low
+                """)
+
 
   
 
