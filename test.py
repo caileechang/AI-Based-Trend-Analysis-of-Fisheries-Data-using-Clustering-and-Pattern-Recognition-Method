@@ -569,6 +569,13 @@ def hierarchical_clustering(merged_df):
         .reset_index(drop=True)
     )
 
+import streamlit as st
+import pandas as pd
+
+st.set_page_config(
+    layout="wide",
+    page_title="Fisheries Clustering & Pattern Recognition Dashboard"
+)
 
 def main():
     
@@ -577,69 +584,119 @@ def main():
      # ======================================
     # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
     # ======================================
+    
+   
+
+   
+    
+
     st.markdown("""
     <style>
 
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(12px); }
-        to   { opacity: 1; transform: translateY(0); }
+    /* ===== GLOBAL BACKGROUND ===== */
+    html, body, .stApp {
+        background-color: #ffffff !important;
+        color: #111111 !important;
     }
 
+    /* ===== SIDEBAR ===== */
+    [data-testid="stSidebar"] {
+        background-color: #f5f7fa !important;
+        border-right: 1px solid #e5e7eb;
+    }
+
+    /* ===== TEXT ===== */
+    h1, h2, h3, h4, h5, h6,
+    p, span, label {
+        color: #111111 !important;
+    }
+
+    /* ===== INPUTS ===== */
+    input, textarea, select {
+        background-color: #ffffff !important;
+        color: #111111 !important;
+        border: 1px solid #d1d5db !important;
+    }
+
+    /* ===== DATAFRAMES ===== */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"] {
+        background-color: white !important;
+    }
+
+    /* ===== CARD ===== */
     .neu-card {
-        background: #1b1b1b;
-        border-radius: 24px;
-        padding: 28px;
-        margin-bottom: 20px;
-        border: 1px solid rgba(255,255,255,0.06);
-
-        /* NEUMORPHISM SHADOW */
-        box-shadow:
-            9px 9px 20px rgba(0,0,0,0.55),
-            -9px -9px 20px rgba(255,255,255,0.04);
-
-        animation: fadeIn 0.55s ease-out;
-        transition: all 0.25s ease;
-        position: relative;
-        overflow: hidden;
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
     }
 
-    /* HOVER EFFECT */
-    .neu-card:hover {
-        transform: translateY(-6px);
-        box-shadow:
-            12px 12px 28px rgba(0,0,0,0.65),
-            -12px -12px 28px rgba(255,255,255,0.06);
+    /* ===== FILE UPLOADER ===== */
+    [data-testid="stFileUploader"] {
+        background-color: #ffffff !important;
+        border: 1px dashed #cbd5e1 !important;
+        border-radius: 12px;
+        padding: 18px;
     }
 
-    /* SHIMMER HIGHLIGHT */
-    .shimmer {
-        background: linear-gradient(
-            90deg,
-            rgba(255,255,255,0) 0%,
-            rgba(255,255,255,0.15) 50%,
-            rgba(255,255,255,0) 100%
-        );
-        position: absolute;
-        top:0; left:0;
-        height:100%; width:100%;
-        transform: translateX(-100%);
-        animation: shimmerMove 2.7s infinite;
+    [data-testid="stFileUploader"] section {
+        background-color: #f8fafc !important;
     }
 
-    @keyframes shimmerMove {
-        0%   { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
+    [data-testid="stFileUploader"] button {
+        background-color: #2563eb !important;
+        color: white !important;
+        border-radius: 8px !important;
+    }
+
+   
+    /* ===== RADIO BUTTON COLORS (LIGHT MODE) ===== */
+
+    /* Radio label text */
+    [data-testid="stRadio"] label {
+        color: #111111 !important;
+    }
+
+    /* Unselected radio outer circle */
+    [data-testid="stRadio"] input[type="radio"] + div {
+        border: 2px solid #93c5fd !important;   /* light blue */
+        background-color: white !important;
+    }
+
+    /* Selected radio outer circle */
+    [data-testid="stRadio"] input[type="radio"]:checked + div {
+        border-color: #2563eb !important;       /* blue-600 */
+    }
+
+    /* Selected radio inner dot */
+    [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+        background-color: #2563eb !important;   /* blue-600 */
+    }
+
+
+    </style>
+    """, unsafe_allow_html=True)
+
+  
+
+    # ===== HIDE STREAMLIT TOP BLACK BAR =====
+    st.markdown("""
+    <style>
+
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+
+    .stApp {
+        padding-top: 0;
     }
 
     </style>
     """, unsafe_allow_html=True)
 
-    #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
-   
-    import pandas as pd
-
-    st.set_page_config(layout='wide')
     
     # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
@@ -653,7 +710,7 @@ def main():
         df_land = st.session_state.base_land
         df_vess = st.session_state.base_vess
 
-
+    
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
@@ -870,20 +927,21 @@ def main():
                 prev_val = row["Prev_Year"]
                 growth_html = growth_text(total, prev_val)
 
+
                 card_html = f"""
                 <div style="
-                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
+                    background: #ffffff;
                     border-radius: 14px;
                     padding: 18px 18px 14px 18px;
-                    border: 1px solid rgba(0,255,255,0.35);
-                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
+                    border: 1px solid #e5e7eb;
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
                     min-height: 150px;
                 ">
-                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
+                    <div style="font-size:18px; color:'black'; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
+                        <b style="color:black; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
-                    <div style="font-size:30px; color:white; font-weight:bold;">
+                    <div style="font-size:30px; color:black; font-weight:bold;">
                         {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
                     </div>
                     <div style="margin-top:8px;">
@@ -892,12 +950,15 @@ def main():
                 </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
+                
+
 
         st.markdown("---")
 
 
         # CHART FOR LATEST YEAR
    
+        # CHART FOR LATEST YEAR
         st.markdown(f"### Total Fish Landing by State ({latest_year})")
 
         filtered_sorted = filtered_latest.sort_values(
@@ -907,47 +968,68 @@ def main():
         import plotly.graph_objects as go
         fig = go.Figure()
 
-        # Stem lines
+        # Stem / connecting lines
         fig.add_trace(
             go.Scatter(
                 x=filtered_sorted["Total Fish Landing (Tonnes)"],
                 y=filtered_sorted["State"],
                 mode="lines",
-                line=dict(color="rgba(0,255,255,0.3)", width=3),
+                line=dict(color="#94a3b8", width=2),  # slate-400
                 hoverinfo="skip",
                 showlegend=False,
             )
         )
 
-        # Neon markers
+        # Markers + values
         fig.add_trace(
             go.Scatter(
                 x=filtered_sorted["Total Fish Landing (Tonnes)"],
                 y=filtered_sorted["State"],
                 mode="markers+text",
-                marker=dict(color="#00E5FF", size=11, line=dict(color="white", width=1)),
+                marker=dict(
+                    color="#0284c7",                  # blue-600
+                    size=10,
+                    line=dict(color="white", width=1)
+                ),
                 text=[f"{v:,.0f}" for v in filtered_sorted["Total Fish Landing (Tonnes)"]],
                 textposition="middle right",
-                textfont=dict(color="white", size=11),
+                textfont=dict(color="#111111", size=11),
                 hovertemplate="State: %{y}<br>Landing: %{x:,.0f}<extra></extra>",
                 showlegend=False,
             )
         )
 
         fig.update_layout(
-            template="plotly_dark",
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
+            template="plotly_white",
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+
+            font=dict(color="#111111", size=13),
+
             xaxis=dict(
                 title="Total Fish Landing (Tonnes)",
-                gridcolor="rgba(255,255,255,0.08)",
+                title_font=dict(color="#111111", size=14),
+                tickfont=dict(color="#111111"),
+                gridcolor="#e5e7eb",
+                zerolinecolor="#e5e7eb",
+                showline=True,
+                linecolor="#9ca3af",
             ),
-            yaxis=dict(title="", categoryorder="array", categoryarray=filtered_sorted["State"]),
-            margin=dict(l=40, r=20, t=50, b=40),
-        )
-        st.plotly_chart(fig, use_container_width=True)
 
+            yaxis=dict(
+                title="",
+                tickfont=dict(color="#111111"),
+                gridcolor="#e5e7eb",
+                categoryorder="array",
+                categoryarray=filtered_sorted["State"],
+            ),
+
+            margin=dict(l=40, r=20, t=60, b=40),
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
         st.markdown("---")
+
 
       
         #  SHOW YEAR SELECTOR & TABLE
@@ -1121,14 +1203,16 @@ def main():
 
 
             # Premium gradient card
+           
             card_style = """
-                background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
+                background: #ffffff;
                 padding: 30px 35px;
                 border-radius: 20px;
-                border: 1.2px solid rgba(0, 255, 200, 0.25);
-                box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.08);
                 transition: all 0.25s ease;
             """
+
 
             st.markdown("""
                 <style>
@@ -1429,13 +1513,15 @@ def main():
             # PREMIUM SUMMARY CARDS
             # ======================================
 
+            
             card_style = """
-                background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
+                background: #ffffff;
                 padding: 30px 35px;
                 border-radius: 20px;
-                border: 1.2px solid rgba(0, 255, 200, 0.25);
-                box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.08);
             """
+
 
             st.markdown(f"## Landing Summary in {selected_month_name} {selected_year}")
 
@@ -3617,30 +3703,34 @@ def main():
 
             # BLUE CARD (Normal)
             style_blue = """
-                background: linear-gradient(135deg, #00557a 0%, #006b8e 100%);
+                background: #ffffff;
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid rgba(255,255,255,0.14);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
             """
+
 
             # GREEN CARD (Highest Landing)
             style_green = """
-                background: linear-gradient(135deg, #0f7b53 0%, #0a5f46 100%);
+                background: #ffffff;
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid rgba(255,255,255,0.14);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
             """
+
+
 
             # RED CARD (Lowest Landing)
             style_red = """
-                background: linear-gradient(135deg, #8a1f1f 0%, #a02020 100%);
+                background: #ffffff;
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid rgba(255,255,255,0.14);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
             """
+
 
             # TEXT STYLE (white contrast)
             text_title = "color:white; font-size:18px; font-weight:500;"
