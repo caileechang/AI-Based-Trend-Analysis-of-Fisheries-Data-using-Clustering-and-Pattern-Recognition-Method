@@ -611,11 +611,11 @@ def main():
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div {
-            border-color: #2563eb;
+            border-color: white;
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-            background-color: #2563eb;
+            background-color: white;
         }
     }
 
@@ -627,11 +627,11 @@ def main():
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div {
-            border-color: #60a5fa;
+            border-color: white;
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-            background-color: #60a5fa;
+            background-color: white;
         }
     }
 
