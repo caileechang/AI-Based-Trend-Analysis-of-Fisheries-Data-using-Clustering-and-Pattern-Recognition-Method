@@ -640,6 +640,93 @@ def main():
     import pandas as pd
 
     st.set_page_config(layout='wide')
+
+    # ==================================================
+    # THEME TOGGLE SWITCH
+    # ==================================================
+    if "dark_mode" not in st.session_state:
+        st.session_state.dark_mode = True  # default = dark (since your site is dark now)
+
+    with st.sidebar:
+        st.markdown("### 🌗 Theme")
+        st.session_state.dark_mode = st.toggle(
+            "Dark mode",
+            value=st.session_state.dark_mode
+        )
+
+def apply_theme(dark_mode=True):
+
+    if dark_mode:
+        # ================= DARK MODE =================
+        st.markdown("""
+        <style>
+        html, body, .stApp {
+            background-color: #0f172a;
+            color: #e5e7eb;
+        }
+
+        [data-testid="stSidebar"] {
+            background-color: #020617;
+        }
+
+        h1, h2, h3, h4, h5, h6,
+        p, span, label, div {
+            color: #e5e7eb !important;
+        }
+
+        input, textarea, select {
+            background-color: #020617 !important;
+            color: #e5e7eb !important;
+            border: 1px solid #334155 !important;
+        }
+
+        .neu-card {
+            background: #020617;
+            border-radius: 18px;
+            padding: 26px;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    else:
+        # ================= LIGHT MODE =================
+        st.markdown("""
+        <style>
+        html, body, .stApp {
+            background-color: #ffffff;
+            color: #111111;
+        }
+
+        [data-testid="stSidebar"] {
+            background-color: #f5f7fa;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        h1, h2, h3, h4, h5, h6,
+        p, span, label, div {
+            color: #111111 !important;
+        }
+
+        input, textarea, select {
+            background-color: #ffffff !important;
+            color: #111111 !important;
+            border: 1px solid #d1d5db !important;
+        }
+
+        .neu-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 26px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    apply_theme(st.session_state.dark_mode)
+
     
     # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
@@ -906,6 +993,22 @@ def main():
 
         import plotly.graph_objects as go
         fig = go.Figure()
+
+        plotly_template = (
+            "plotly_dark"
+            if st.session_state.dark_mode
+            else "plotly_white"
+        )
+
+        fig.update_layout(
+            template=plotly_template,
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(
+                color="white" if st.session_state.dark_mode else "#111111"
+            )
+        )
+
 
         # Stem lines
         fig.add_trace(
@@ -1195,6 +1298,22 @@ def main():
             # BUILD INTERACTIVE PLOTLY FIGURE (dual axis)
             
             fig = go.Figure()
+
+            plotly_template = (
+                "plotly_dark"
+                if st.session_state.dark_mode
+                else "plotly_white"
+            )
+
+            fig.update_layout(
+                template=plotly_template,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(
+                    color="white" if st.session_state.dark_mode else "#111111"
+                )
+            )
+
 
             # ---- Freshwater Lines ----
             for cl in sorted(df_plot["Cluster"].unique()):
@@ -1517,6 +1636,22 @@ def main():
 
             # =============== BUILD PLOTLY FIGURE ===============
             fig = go.Figure()
+
+            plotly_template = (
+                "plotly_dark"
+                if st.session_state.dark_mode
+                else "plotly_white"
+            )
+
+            fig.update_layout(
+                template=plotly_template,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(
+                    color="white" if st.session_state.dark_mode else "#111111"
+                )
+            )
+
 
             colors_fw = ["#1f77b4", "#2ca02c", "#17becf", "#9467bd"]
             colors_ma = ["#d62728", "#ff7f0e", "#e377c2", "#8c564b"]
@@ -1990,6 +2125,21 @@ def main():
             plt.close('all')
 
             fig = plt.figure(figsize=(5, 4), dpi=150)
+            plotly_template = (
+                "plotly_dark"
+                if st.session_state.dark_mode
+                else "plotly_white"
+            )
+
+            fig.update_layout(
+                template=plotly_template,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(
+                    color="white" if st.session_state.dark_mode else "#111111"
+                )
+            )
+
             ax = fig.add_subplot(111, projection='3d')
 
             # PREMIUM COLOR PALETTE
@@ -2040,6 +2190,21 @@ def main():
             ax.view_init(elev=elev, azim=azim)
 
             plt.tight_layout()
+            plotly_template = (
+                "plotly_dark"
+                if st.session_state.dark_mode
+                else "plotly_white"
+            )
+
+            fig.update_layout(
+                template=plotly_template,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(
+                    color="white" if st.session_state.dark_mode else "#111111"
+                )
+            )
+
             st.pyplot(fig, use_container_width=False)
 
         # ===================================================
