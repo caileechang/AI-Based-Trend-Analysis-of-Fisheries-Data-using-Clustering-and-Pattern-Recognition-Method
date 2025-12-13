@@ -936,6 +936,7 @@ def main():
 
         # CHART FOR LATEST YEAR
    
+        # CHART FOR LATEST YEAR
         st.markdown(f"### Total Fish Landing by State ({latest_year})")
 
         filtered_sorted = filtered_latest.sort_values(
@@ -945,52 +946,68 @@ def main():
         import plotly.graph_objects as go
         fig = go.Figure()
 
-        # Stem lines
+        # Stem / connecting lines
         fig.add_trace(
             go.Scatter(
                 x=filtered_sorted["Total Fish Landing (Tonnes)"],
                 y=filtered_sorted["State"],
                 mode="lines",
-                line=dict(color="rgba(0,255,255,0.3)", width=3),
+                line=dict(color="#94a3b8", width=2),  # slate-400
                 hoverinfo="skip",
                 showlegend=False,
             )
         )
 
-        # Neon markers
+        # Markers + values
         fig.add_trace(
             go.Scatter(
                 x=filtered_sorted["Total Fish Landing (Tonnes)"],
                 y=filtered_sorted["State"],
                 mode="markers+text",
-                marker=dict(color="#00E5FF", size=11, line=dict(color="white", width=1)),
+                marker=dict(
+                    color="#0284c7",                  # blue-600
+                    size=10,
+                    line=dict(color="white", width=1)
+                ),
                 text=[f"{v:,.0f}" for v in filtered_sorted["Total Fish Landing (Tonnes)"]],
                 textposition="middle right",
-                textfont=dict(color="white", size=11),
+                textfont=dict(color="#111111", size=11),
                 hovertemplate="State: %{y}<br>Landing: %{x:,.0f}<extra></extra>",
                 showlegend=False,
             )
         )
 
         fig.update_layout(
-            
             template="plotly_white",
             paper_bgcolor="white",
             plot_bgcolor="white",
-            font=dict(color="#111111")
-            ,
-        
+
+            font=dict(color="#111111", size=13),
 
             xaxis=dict(
                 title="Total Fish Landing (Tonnes)",
-                gridcolor="rgba(255,255,255,0.08)",
+                title_font=dict(color="#111111", size=14),
+                tickfont=dict(color="#111111"),
+                gridcolor="#e5e7eb",
+                zerolinecolor="#e5e7eb",
+                showline=True,
+                linecolor="#9ca3af",
             ),
-            yaxis=dict(title="", categoryorder="array", categoryarray=filtered_sorted["State"]),
-            margin=dict(l=40, r=20, t=50, b=40),
-        )
-        st.plotly_chart(fig, use_container_width=True)
 
+            yaxis=dict(
+                title="",
+                tickfont=dict(color="#111111"),
+                gridcolor="#e5e7eb",
+                categoryorder="array",
+                categoryarray=filtered_sorted["State"],
+            ),
+
+            margin=dict(l=40, r=20, t=60, b=40),
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
         st.markdown("---")
+
 
       
         #  SHOW YEAR SELECTOR & TABLE
