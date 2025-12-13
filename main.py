@@ -603,37 +603,38 @@ def main():
         border: 1px solid rgba(0,0,0,0.08);
     }
 
-    /* ===== LIGHT MODE RADIO ===== */
+/* ===== LIGHT MODE RADIO ===== */
     @media (prefers-color-scheme: light) {
         [data-testid="stRadio"] input[type="radio"] + div {
-            border: 2px solid white;
-            background-color: white;
+            border: 2px solid transparent !important;   /* 🔹 changed */
+            background-color: transparent !important;   /* 🔹 changed */
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div {
-            border-color: white;
+            border-color: transparent !important;       /* 🔹 changed */
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-            background-color: white;
+            background-color: #2563eb !important;       /* keep dot visible */
         }
     }
 
     /* ===== DARK MODE RADIO ===== */
     @media (prefers-color-scheme: dark) {
         [data-testid="stRadio"] input[type="radio"] + div {
-            border: 2px solid #60a5fa;
-            background-color: transparent;
+            border: 2px solid transparent !important;   /* 🔹 changed */
+            background-color: transparent !important;
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div {
-            border-color: white;
+            border-color: transparent !important;
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-            background-color: white;
+            background-color: #60a5fa !important;
         }
     }
+
 
    
    
