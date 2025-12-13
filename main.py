@@ -870,8 +870,61 @@ def main():
             return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}%{label}</span>"
         medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
-        
+        st.markdown("""
+        <style>
+
+        /* ===== TOP 3 CARDS — LIGHT MODE ===== */
+        @media (prefers-color-scheme: light) {
+            .top-card {
+                background: #ffffff;
+                border-radius: 18px;
+                padding: 26px;
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+                color: #111111;
+                min-height: 150px;
+            }
+
+            .top-card .value {
+                color: #111111;
+            }
+
+            .top-card .unit {
+                color: #6b7280;
+            }
+        }
+
+        /* ===== TOP 3 CARDS — DARK MODE ===== */
+        @media (prefers-color-scheme: dark) {
+            .top-card {
+                background: radial-gradient(
+                    circle at top left,
+                    rgba(0,255,255,0.25),
+                    rgba(0,0,0,0.9)
+                );
+                border-radius: 18px;
+                padding: 26px;
+                border: 1px solid rgba(0,255,255,0.35);
+                box-shadow: 0 0 18px rgba(0,255,255,0.18);
+                color: white;
+                min-height: 150px;
+            }
+
+            .top-card .value {
+                color: white;
+            }
+
+            .top-card .unit {
+                color: #cbd5e1;
+            }
+        }
+
+        </style>
+        """, unsafe_allow_html=True)
+
+       
         st.markdown(f"### 🏅 Top 3 States in {latest_year}")
+        
 
         card_cols = st.columns(3)
         
