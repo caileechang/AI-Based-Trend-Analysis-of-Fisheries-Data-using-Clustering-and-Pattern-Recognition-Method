@@ -897,7 +897,7 @@ def main():
                         <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
                     <div style="font-size:30px; color:white; font-weight:bold;">
-                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
+                        {total:,.0f} <span style="font-size:16px; color:white;">tonnes</span>
                     </div>
                     <div style="margin-top:8px;">
                         {growth_html}
