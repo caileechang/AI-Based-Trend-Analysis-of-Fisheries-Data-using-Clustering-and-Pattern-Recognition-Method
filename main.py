@@ -606,7 +606,7 @@ def main():
     /* ===== LIGHT MODE RADIO ===== */
     @media (prefers-color-scheme: light) {
         [data-testid="stRadio"] input[type="radio"] + div {
-            border: 2px solid #93c5fd;
+            border: 2px solid white;
             background-color: white;
         }
 
