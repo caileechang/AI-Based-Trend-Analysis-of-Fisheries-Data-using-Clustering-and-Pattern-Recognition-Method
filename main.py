@@ -932,6 +932,7 @@ def main():
             paper_bgcolor="white",
             plot_bgcolor="white",
             font=dict(color="#111111")
+            ,
         
 
             xaxis=dict(
