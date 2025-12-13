@@ -652,26 +652,29 @@ def main():
     }
 
    
-    /* ===== RADIO BUTTON TEXT ===== */
+    /* ===== RADIO BUTTON COLORS (LIGHT MODE) ===== */
+
+    /* Radio label text */
     [data-testid="stRadio"] label {
         color: #111111 !important;
-        font-size: 15px;
     }
 
-    /* ===== UNSELECTED RADIO ===== */
+    /* Unselected radio outer circle */
     [data-testid="stRadio"] input[type="radio"] + div {
-        border-color: #9ca3af !important;
+        border: 2px solid #93c5fd !important;   /* light blue */
+        background-color: white !important;
     }
 
-    /* ===== SELECTED RADIO (INNER DOT) ===== */
-    [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-        background-color: #2563eb !important;  /* blue */
-    }
-
-    /* ===== SELECTED RADIO (OUTER RING) ===== */
+    /* Selected radio outer circle */
     [data-testid="stRadio"] input[type="radio"]:checked + div {
-        border-color: #2563eb !important;
+        border-color: #2563eb !important;       /* blue-600 */
     }
+
+    /* Selected radio inner dot */
+    [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+        background-color: #2563eb !important;   /* blue-600 */
+    }
+
 
     </style>
     """, unsafe_allow_html=True)
