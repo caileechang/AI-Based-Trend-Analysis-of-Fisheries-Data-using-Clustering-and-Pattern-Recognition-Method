@@ -636,30 +636,7 @@ def main():
     }
 
    
-    /* Remove focus outline from radio inputs */
-    [data-testid="stRadio"] input[type="radio"]:focus {
-        outline: none !important;
-        box-shadow: none !important;
-    }
-
-    /* Remove focus outline from label containers */
-    [data-testid="stRadio"] label:focus,
-    [data-testid="stRadio"] label:focus-visible {
-        outline: none !important;
-        box-shadow: none !important;
-    }
-
-    /* Remove focus ring from option wrapper divs */
-    [data-testid="stRadio"] div[tabindex]:focus,
-    [data-testid="stRadio"] div[tabindex]:focus-visible {
-        outline: none !important;
-        box-shadow: none !important;
-    }
-
-    /* Remove blue selection rectangle caused by browser */
-    [data-testid="stRadio"] * {
-        -webkit-tap-highlight-color: transparent !important;
-    }
+   
 
     </style>
     """, unsafe_allow_html=True)
