@@ -888,14 +888,21 @@ def main():
 
                 
                 card_html = f"""
-                <div class="top-card">
-                    <div style="font-size:18px; margin-bottom:6px;">
+                <div style="
+                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
+                    border-radius: 14px;
+                    padding: 18px 18px 14px 18px;
+                    border: 1px solid rgba(0,255,255,0.35);
+                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
+                    min-height: 150px;
+                ">
+                    <div style="font-size:18px; color:white; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        <b style="margin-left:6px;">#{idx+1} {state}</b>
+                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
 
-                    <div class="value" style="font-size:30px;">
-                        {total:,.0f} <span class="unit">tonnes</span>
+                    <div style="font-size:30px; color:white; font-weight:bold;">
+                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
                     </div>
 
                     <div style="margin-top:8px;">
@@ -904,6 +911,7 @@ def main():
                 </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
+
 
                 
 
