@@ -871,14 +871,70 @@ def main():
         medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
         
+        st.markdown("""
+        <style>
+
+        /* ===============================
+        TOP 3 CARDS — LIGHT MODE
+        ================================ */
+        @media (prefers-color-scheme: light) {
+            .top-card {
+                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+                border: 1.5px solid #38bdf8;
+                border-radius: 14px;
+                padding: 18px;
+                min-height: 150px;
+                box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+                color: #0f172a;
+            }
+
+            .top-card .value {
+                color: #0f172a;
+                font-weight: 700;
+            }
+
+            .top-card .unit {
+                color: #475569;
+            }
+        }
+
+        /* ===============================
+        TOP 3 CARDS — DARK MODE
+        ================================ */
+        @media (prefers-color-scheme: dark) {
+            .top-card {
+                background: radial-gradient(
+                    circle at top left,
+                    rgba(0,255,255,0.35),
+                    rgba(0,0,0,0.95)
+                );
+                border: 1px solid rgba(0,255,255,0.45);
+                border-radius: 14px;
+                padding: 18px;
+                min-height: 150px;
+                box-shadow:
+                    0 0 26px rgba(0,255,255,0.45),
+                    inset 0 0 14px rgba(0,255,255,0.2);
+                color: white;
+            }
+
+            .top-card .value {
+                color: white;
+            }
+
+            .top-card .unit {
+                color: #cbd5e1;
+            }
+        }
+
+        </style>
+        """, unsafe_allow_html=True)
 
        
         st.markdown(f"### 🏅 Top 3 States in {latest_year}")
-        
 
         card_cols = st.columns(3)
-        
-        
+
         for idx, (_, row) in enumerate(top3.iterrows()):
             with card_cols[idx]:
                 state = row["State"]
@@ -886,23 +942,17 @@ def main():
                 prev_val = row["Prev_Year"]
                 growth_html = growth_text(total, prev_val)
 
-                
                 card_html = f"""
-                <div style="
-                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
-                    border-radius: 14px;
-                    padding: 18px 18px 14px 18px;
-                    border: 1px solid rgba(0,255,255,0.35);
-                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
-                    min-height: 150px;
-                ">
-                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
+                <div class="top-card">
+                    <div style="font-size:18px; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
+                        <b style="margin-left:6px;">#{idx+1} {state}</b>
                     </div>
-                    <div style="font-size:30px; color:white; font-weight:bold;">
-                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
+
+                    <div class="value" style="font-size:30px;">
+                        {total:,.0f} <span class="unit">tonnes</span>
                     </div>
+
                     <div style="margin-top:8px;">
                         {growth_html}
                     </div>
@@ -910,9 +960,10 @@ def main():
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
 
-                
-
         st.markdown("---")
+
+
+      
 
 
         # CHART FOR LATEST YEAR
