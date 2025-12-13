@@ -607,6 +607,11 @@ def main():
     @media (prefers-color-scheme: light) {
         [data-testid="stRadio"] input[type="radio"] + div {
             border: 2px solid #93c5fd;
+            background-color: white;
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div {
+            border-color: #2563eb;
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div::before {
@@ -618,6 +623,11 @@ def main():
     @media (prefers-color-scheme: dark) {
         [data-testid="stRadio"] input[type="radio"] + div {
             border: 2px solid #60a5fa;
+            background-color: transparent;
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div {
+            border-color: #60a5fa;
         }
 
         [data-testid="stRadio"] input[type="radio"]:checked + div::before {
@@ -625,7 +635,22 @@ def main():
         }
     }
 
-    </style>
+    /* ===== REMOVE BLUE FOCUS / SELECTION FRAME ===== */
+    [data-testid="stRadio"] *:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    [data-testid="stRadio"] label {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    [data-testid="stRadio"] div[role="radiogroup"] {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
     """, unsafe_allow_html=True)
 
 
