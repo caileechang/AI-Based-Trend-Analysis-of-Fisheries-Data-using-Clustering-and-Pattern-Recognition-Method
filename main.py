@@ -580,44 +580,59 @@ def main():
     st.markdown("""
     <style>
 
-    /* ---------- GLOBAL APP BACKGROUND ---------- */
-    .stApp {
-        background-color: #ffffff;
-        color: #111111;
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ---------- SIDEBAR ---------- */
-    [data-testid="stSidebar"] {
-        background-color: #f5f7fa;
-    }
-
-    /* ---------- TEXT ---------- */
-    h1, h2, h3, h4, h5, h6, p, span, label {
-        color: #111111 !important;
-    }
-
-    /* ---------- CARD STYLE (LIGHT MODE) ---------- */
     .neu-card {
-        background: #ffffff;
-        border-radius: 20px;
+        background: #1b1b1b;
+        border-radius: 24px;
         padding: 28px;
         margin-bottom: 20px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid rgba(255,255,255,0.06);
 
+        /* NEUMORPHISM SHADOW */
         box-shadow:
-            0 6px 18px rgba(0,0,0,0.08);
+            9px 9px 20px rgba(0,0,0,0.55),
+            -9px -9px 20px rgba(255,255,255,0.04);
 
+        animation: fadeIn 0.55s ease-out;
         transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
     }
 
+    /* HOVER EFFECT */
     .neu-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 26px rgba(0,0,0,0.12);
+        transform: translateY(-6px);
+        box-shadow:
+            12px 12px 28px rgba(0,0,0,0.65),
+            -12px -12px 28px rgba(255,255,255,0.06);
+    }
+
+    /* SHIMMER HIGHLIGHT */
+    .shimmer {
+        background: linear-gradient(
+            90deg,
+            rgba(255,255,255,0) 0%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0) 100%
+        );
+        position: absolute;
+        top:0; left:0;
+        height:100%; width:100%;
+        transform: translateX(-100%);
+        animation: shimmerMove 2.7s infinite;
+    }
+
+    @keyframes shimmerMove {
+        0%   { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
     }
 
     </style>
     """, unsafe_allow_html=True)
-
 
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
@@ -857,14 +872,11 @@ def main():
 
                 card_html = f"""
                 <div style="
-                    background: linear-gradient(135deg, #f0fdfa, #ffffff);
-                    border: 1px solid #99f6e4;
-                    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-
+                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
                     border-radius: 14px;
                     padding: 18px 18px 14px 18px;
-                    
-                    
+                    border: 1px solid rgba(0,255,255,0.35);
+                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
                     min-height: 150px;
                 ">
                     <div style="font-size:18px; color:'white'; margin-bottom:6px;">
@@ -923,11 +935,9 @@ def main():
         )
 
         fig.update_layout(
-            template="plotly_white",
-            plot_bgcolor="white",
-            paper_bgcolor="white",
-            
-            
+            template="plotly_dark",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(
                 title="Total Fish Landing (Tonnes)",
                 gridcolor="rgba(255,255,255,0.08)",
