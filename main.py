@@ -569,6 +569,13 @@ def hierarchical_clustering(merged_df):
         .reset_index(drop=True)
     )
 
+import streamlit as st
+import pandas as pd
+
+st.set_page_config(
+    layout="wide",
+    page_title="Fisheries Clustering & Pattern Recognition Dashboard"
+)
 
 def main():
     
@@ -578,12 +585,10 @@ def main():
     # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
     # ======================================
     
-    #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
+   
 
    
-    import pandas as pd
-
-    st.set_page_config(layout='wide')
+    
 
     st.markdown("""
     <style>
@@ -600,7 +605,7 @@ def main():
         border-right: 1px solid #e5e7eb;
     }
 
-    /* ===== TEXT (SAFE ELEMENTS ONLY) ===== */
+    /* ===== TEXT ===== */
     h1, h2, h3, h4, h5, h6,
     p, span, label {
         color: #111111 !important;
@@ -619,7 +624,7 @@ def main():
         background-color: white !important;
     }
 
-    /* ===== UNIVERSAL CARD STYLE ===== */
+    /* ===== CARD ===== */
     .neu-card {
         background: #ffffff;
         border-radius: 16px;
@@ -628,8 +633,32 @@ def main():
         box-shadow: 0 6px 16px rgba(0,0,0,0.08);
     }
 
+    /* ===== FILE UPLOADER ===== */
+    [data-testid="stFileUploader"] {
+        background-color: #ffffff !important;
+        border: 1px dashed #cbd5e1 !important;
+        border-radius: 12px;
+        padding: 18px;
+    }
+
+    [data-testid="stFileUploader"] section {
+        background-color: #f8fafc !important;
+    }
+
+    [data-testid="stFileUploader"] button {
+        background-color: #2563eb !important;
+        color: white !important;
+        border-radius: 8px !important;
+    }
+
+    /* ===== RADIO ===== */
+    [data-testid="stRadio"] label {
+        color: #111111 !important;
+    }
+
     </style>
     """, unsafe_allow_html=True)
+
 
     
     # --- Load base data or use newly merged uploaded data ---
@@ -644,7 +673,7 @@ def main():
         df_land = st.session_state.base_land
         df_vess = st.session_state.base_vess
 
-
+    
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
