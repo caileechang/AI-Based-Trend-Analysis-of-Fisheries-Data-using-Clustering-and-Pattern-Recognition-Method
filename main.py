@@ -635,21 +635,32 @@ def main():
         }
     }
 
-    /* ===== REMOVE BLUE FOCUS / SELECTION FRAME ===== */
-    [data-testid="stRadio"] *:focus {
+   
+    /* Remove focus outline from radio inputs */
+    [data-testid="stRadio"] input[type="radio"]:focus {
         outline: none !important;
         box-shadow: none !important;
     }
 
-    [data-testid="stRadio"] label {
+    /* Remove focus outline from label containers */
+    [data-testid="stRadio"] label:focus,
+    [data-testid="stRadio"] label:focus-visible {
         outline: none !important;
         box-shadow: none !important;
     }
 
-    [data-testid="stRadio"] div[role="radiogroup"] {
+    /* Remove focus ring from option wrapper divs */
+    [data-testid="stRadio"] div[tabindex]:focus,
+    [data-testid="stRadio"] div[tabindex]:focus-visible {
         outline: none !important;
         box-shadow: none !important;
     }
+
+    /* Remove blue selection rectangle caused by browser */
+    [data-testid="stRadio"] * {
+        -webkit-tap-highlight-color: transparent !important;
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
