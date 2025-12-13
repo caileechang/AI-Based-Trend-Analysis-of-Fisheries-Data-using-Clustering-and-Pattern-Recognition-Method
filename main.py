@@ -651,13 +651,32 @@ def main():
         border-radius: 8px !important;
     }
 
-    /* ===== RADIO ===== */
+   
+    /* ===== RADIO BUTTON TEXT ===== */
     [data-testid="stRadio"] label {
         color: #111111 !important;
+        font-size: 15px;
+    }
+
+    /* ===== UNSELECTED RADIO ===== */
+    [data-testid="stRadio"] input[type="radio"] + div {
+        border-color: #9ca3af !important;
+    }
+
+    /* ===== SELECTED RADIO (INNER DOT) ===== */
+    [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+        background-color: #2563eb !important;  /* blue */
+    }
+
+    /* ===== SELECTED RADIO (OUTER RING) ===== */
+    [data-testid="stRadio"] input[type="radio"]:checked + div {
+        border-color: #2563eb !important;
     }
 
     </style>
     """, unsafe_allow_html=True)
+
+  
 
     # ===== HIDE STREAMLIT TOP BLACK BAR =====
     st.markdown("""
