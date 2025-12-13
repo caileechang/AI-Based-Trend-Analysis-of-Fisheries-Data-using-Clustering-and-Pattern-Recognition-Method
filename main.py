@@ -885,7 +885,7 @@ def main():
 
                 card_html = f"""
                 <div style="
-                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25));
+                    background: radial-gradient(circle at top left, rgba(0,255,255,0.75));
                     border-radius: 14px;
                     padding: 18px 18px 14px 18px;
                     border: 1px solid rgba(0,255,255,0.35);
