@@ -650,8 +650,12 @@ def main():
         outline: none !important;
         box-shadow: none !important;
     }
-
+    </style>
     """, unsafe_allow_html=True)
+
+
+                
+    #""", unsafe_allow_html=True)
 
 
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
