@@ -659,6 +659,21 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
+    # ===== HIDE STREAMLIT TOP BLACK BAR =====
+    st.markdown("""
+    <style>
+
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+
+    .stApp {
+        padding-top: 0;
+    }
+
+    </style>
+    """, unsafe_allow_html=True)
+
 
     
     # --- Load base data or use newly merged uploaded data ---
