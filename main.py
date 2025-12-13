@@ -924,51 +924,42 @@ def main():
 
        
         st.markdown(f"### 🏅 Top 3 States in {latest_year}")
+        
 
         card_cols = st.columns(3)
-
+        
+        
         for idx, (_, row) in enumerate(top3.iterrows()):
             with card_cols[idx]:
-
                 state = row["State"]
                 total = row["Total Fish Landing (Tonnes)"]
                 prev_val = row["Prev_Year"]
-
-                # Growth calculation
-                if pd.notna(prev_val) and prev_val > 0:
-                    growth_pct = ((total - prev_val) / prev_val) * 100
-                    growth_icon = "↑" if growth_pct >= 0 else "↓"
-                    growth_color = "#16a34a" if growth_pct >= 0 else "#dc2626"
-                    growth_text = f"""
-                    <span style="color:{growth_color}; font-weight:500;">
-                        {growth_icon} {abs(growth_pct):.1f}% vs 2022
-                    </span>
-                    """
-                else:
-                    growth_text = "<span style='color:#9ca3af;'>No data</span>"
+                growth_html = growth_text(total, prev_val)
 
                 card_html = f"""
-                <div class="top-card">
-                    <div style="font-size:18px; font-weight:600;">
+                <div style="
+                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
+                    border-radius: 14px;
+                    padding: 18px 18px 14px 18px;
+                    border: 1px solid rgba(0,255,255,0.35);
+                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
+                    min-height: 150px;
+                ">
+                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        #{idx+1} {state}
+                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
-
-                    <div class="value" style="font-size:32px; font-weight:800; margin-top:10px;">
-                        {total:,.0f}
-                        <span class="unit" style="font-size:16px;"> tonnes</span>
+                    <div style="font-size:30px; color:white; font-weight:bold;">
+                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
                     </div>
-
                     <div style="margin-top:8px;">
-                        {growth_text}
+                        {growth_html}
                     </div>
                 </div>
                 """
-
                 st.markdown(card_html, unsafe_allow_html=True)
 
         st.markdown("---")
-
 
 
         # CHART FOR LATEST YEAR
