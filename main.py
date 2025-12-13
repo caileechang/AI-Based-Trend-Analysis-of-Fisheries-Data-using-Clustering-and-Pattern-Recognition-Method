@@ -577,63 +577,7 @@ def main():
      # ======================================
     # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
     # ======================================
-    st.markdown("""
-    <style>
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(12px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .neu-card {
-        background: #1b1b1b;
-        border-radius: 24px;
-        padding: 28px;
-        margin-bottom: 20px;
-        border: 1px solid rgba(255,255,255,0.06);
-
-        /* NEUMORPHISM SHADOW */
-        box-shadow:
-            9px 9px 20px rgba(0,0,0,0.55),
-            -9px -9px 20px rgba(255,255,255,0.04);
-
-        animation: fadeIn 0.55s ease-out;
-        transition: all 0.25s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    /* HOVER EFFECT */
-    .neu-card:hover {
-        transform: translateY(-6px);
-        box-shadow:
-            12px 12px 28px rgba(0,0,0,0.65),
-            -12px -12px 28px rgba(255,255,255,0.06);
-    }
-
-    /* SHIMMER HIGHLIGHT */
-    .shimmer {
-        background: linear-gradient(
-            90deg,
-            rgba(255,255,255,0) 0%,
-            rgba(255,255,255,0.15) 50%,
-            rgba(255,255,255,0) 100%
-        );
-        position: absolute;
-        top:0; left:0;
-        height:100%; width:100%;
-        transform: translateX(-100%);
-        animation: shimmerMove 2.7s infinite;
-    }
-
-    @keyframes shimmerMove {
-        0%   { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-
-    </style>
-    """, unsafe_allow_html=True)
-
+    
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
    
@@ -641,91 +585,51 @@ def main():
 
     st.set_page_config(layout='wide')
 
-    # ==================================================
-    # THEME TOGGLE SWITCH
-    # ==================================================
-    if "dark_mode" not in st.session_state:
-        st.session_state.dark_mode = True  # default = dark (since your site is dark now)
+    st.markdown("""
+    <style>
 
-    with st.sidebar:
-        st.markdown("### 🌗 Theme")
-        st.session_state.dark_mode = st.toggle(
-            "Dark mode",
-            value=st.session_state.dark_mode
-        )
+    /* ===== GLOBAL BACKGROUND ===== */
+    html, body, .stApp {
+        background-color: #ffffff !important;
+        color: #111111 !important;
+    }
 
-def apply_theme(dark_mode=True):
+    /* ===== SIDEBAR ===== */
+    [data-testid="stSidebar"] {
+        background-color: #f5f7fa !important;
+        border-right: 1px solid #e5e7eb;
+    }
 
-    if dark_mode:
-        # ================= DARK MODE =================
-        st.markdown("""
-        <style>
-        html, body, .stApp {
-            background-color: #0f172a;
-            color: #e5e7eb;
-        }
+    /* ===== TEXT (SAFE ELEMENTS ONLY) ===== */
+    h1, h2, h3, h4, h5, h6,
+    p, span, label {
+        color: #111111 !important;
+    }
 
-        [data-testid="stSidebar"] {
-            background-color: #020617;
-        }
+    /* ===== INPUTS ===== */
+    input, textarea, select {
+        background-color: #ffffff !important;
+        color: #111111 !important;
+        border: 1px solid #d1d5db !important;
+    }
 
-        h1, h2, h3, h4, h5, h6,
-        p, span, label, div {
-            color: #e5e7eb !important;
-        }
+    /* ===== DATAFRAMES ===== */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"] {
+        background-color: white !important;
+    }
 
-        input, textarea, select {
-            background-color: #020617 !important;
-            color: #e5e7eb !important;
-            border: 1px solid #334155 !important;
-        }
+    /* ===== UNIVERSAL CARD STYLE ===== */
+    .neu-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
 
-        .neu-card {
-            background: #020617;
-            border-radius: 18px;
-            padding: 26px;
-            border: 1px solid #334155;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-    else:
-        # ================= LIGHT MODE =================
-        st.markdown("""
-        <style>
-        html, body, .stApp {
-            background-color: #ffffff;
-            color: #111111;
-        }
-
-        [data-testid="stSidebar"] {
-            background-color: #f5f7fa;
-            border-right: 1px solid #e5e7eb;
-        }
-
-        h1, h2, h3, h4, h5, h6,
-        p, span, label, div {
-            color: #111111 !important;
-        }
-
-        input, textarea, select {
-            background-color: #ffffff !important;
-            color: #111111 !important;
-            border: 1px solid #d1d5db !important;
-        }
-
-        .neu-card {
-            background: #ffffff;
-            border-radius: 18px;
-            padding: 26px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-        }
-        </style>
-        """, unsafe_allow_html=True)
-
-    apply_theme(st.session_state.dark_mode)
+    </style>
+    """, unsafe_allow_html=True)
 
     
     # --- Load base data or use newly merged uploaded data ---
@@ -957,13 +861,14 @@ def apply_theme(dark_mode=True):
                 prev_val = row["Prev_Year"]
                 growth_html = growth_text(total, prev_val)
 
+
                 card_html = f"""
                 <div style="
-                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
+                    background: #ffffff;
                     border-radius: 14px;
                     padding: 18px 18px 14px 18px;
-                    border: 1px solid rgba(0,255,255,0.35);
-                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
+                    border: 1px solid #e5e7eb;
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
                     min-height: 150px;
                 ">
                     <div style="font-size:18px; color:'white'; margin-bottom:6px;">
@@ -994,22 +899,6 @@ def apply_theme(dark_mode=True):
         import plotly.graph_objects as go
         fig = go.Figure()
 
-        plotly_template = (
-            "plotly_dark"
-            if st.session_state.dark_mode
-            else "plotly_white"
-        )
-
-        fig.update_layout(
-            template=plotly_template,
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(
-                color="white" if st.session_state.dark_mode else "#111111"
-            )
-        )
-
-
         # Stem lines
         fig.add_trace(
             go.Scatter(
@@ -1038,9 +927,13 @@ def apply_theme(dark_mode=True):
         )
 
         fig.update_layout(
-            template="plotly_dark",
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
+            
+            template="plotly_white",
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            font=dict(color="#111111")
+        
+
             xaxis=dict(
                 title="Total Fish Landing (Tonnes)",
                 gridcolor="rgba(255,255,255,0.08)",
@@ -1224,14 +1117,16 @@ def apply_theme(dark_mode=True):
 
 
             # Premium gradient card
+           
             card_style = """
-                background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
+                background: #ffffff;
                 padding: 30px 35px;
                 border-radius: 20px;
-                border: 1.2px solid rgba(0, 255, 200, 0.25);
-                box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.08);
                 transition: all 0.25s ease;
             """
+
 
             st.markdown("""
                 <style>
@@ -1298,22 +1193,6 @@ def apply_theme(dark_mode=True):
             # BUILD INTERACTIVE PLOTLY FIGURE (dual axis)
             
             fig = go.Figure()
-
-            plotly_template = (
-                "plotly_dark"
-                if st.session_state.dark_mode
-                else "plotly_white"
-            )
-
-            fig.update_layout(
-                template=plotly_template,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(
-                    color="white" if st.session_state.dark_mode else "#111111"
-                )
-            )
-
 
             # ---- Freshwater Lines ----
             for cl in sorted(df_plot["Cluster"].unique()):
@@ -1548,13 +1427,15 @@ def apply_theme(dark_mode=True):
             # PREMIUM SUMMARY CARDS
             # ======================================
 
+            
             card_style = """
-                background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
+                background: #ffffff;
                 padding: 30px 35px;
                 border-radius: 20px;
-                border: 1.2px solid rgba(0, 255, 200, 0.25);
-                box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.08);
             """
+
 
             st.markdown(f"## Landing Summary in {selected_month_name} {selected_year}")
 
@@ -1636,22 +1517,6 @@ def apply_theme(dark_mode=True):
 
             # =============== BUILD PLOTLY FIGURE ===============
             fig = go.Figure()
-
-            plotly_template = (
-                "plotly_dark"
-                if st.session_state.dark_mode
-                else "plotly_white"
-            )
-
-            fig.update_layout(
-                template=plotly_template,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(
-                    color="white" if st.session_state.dark_mode else "#111111"
-                )
-            )
-
 
             colors_fw = ["#1f77b4", "#2ca02c", "#17becf", "#9467bd"]
             colors_ma = ["#d62728", "#ff7f0e", "#e377c2", "#8c564b"]
@@ -2125,21 +1990,6 @@ def apply_theme(dark_mode=True):
             plt.close('all')
 
             fig = plt.figure(figsize=(5, 4), dpi=150)
-            plotly_template = (
-                "plotly_dark"
-                if st.session_state.dark_mode
-                else "plotly_white"
-            )
-
-            fig.update_layout(
-                template=plotly_template,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(
-                    color="white" if st.session_state.dark_mode else "#111111"
-                )
-            )
-
             ax = fig.add_subplot(111, projection='3d')
 
             # PREMIUM COLOR PALETTE
@@ -2190,21 +2040,6 @@ def apply_theme(dark_mode=True):
             ax.view_init(elev=elev, azim=azim)
 
             plt.tight_layout()
-            plotly_template = (
-                "plotly_dark"
-                if st.session_state.dark_mode
-                else "plotly_white"
-            )
-
-            fig.update_layout(
-                template=plotly_template,
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(
-                    color="white" if st.session_state.dark_mode else "#111111"
-                )
-            )
-
             st.pyplot(fig, use_container_width=False)
 
         # ===================================================
@@ -3782,30 +3617,34 @@ def apply_theme(dark_mode=True):
 
             # BLUE CARD (Normal)
             style_blue = """
-                background: linear-gradient(135deg, #00557a 0%, #006b8e 100%);
+                background: #ffffff;
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid rgba(255,255,255,0.14);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
             """
+
 
             # GREEN CARD (Highest Landing)
             style_green = """
-                background: linear-gradient(135deg, #0f7b53 0%, #0a5f46 100%);
+                background: #ffffff;
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid rgba(255,255,255,0.14);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
             """
+
+
 
             # RED CARD (Lowest Landing)
             style_red = """
-                background: linear-gradient(135deg, #8a1f1f 0%, #a02020 100%);
+                background: #ffffff;
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid rgba(255,255,255,0.14);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
             """
+
 
             # TEXT STYLE (white contrast)
             text_title = "color:white; font-size:18px; font-weight:500;"
