@@ -893,6 +893,26 @@ def main():
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
 
+                card_html = f"""
+                <div  style="
+                    <div style="font-size:18px; margin-bottom:6px;">
+                        <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
+                        <b style="margin-left:6px;">#{idx+1} {state}</b>
+                    </div>
+                ">
+                  
+                    <div class="value" style="font-size:30px;">
+                        {total:,.0f} <span class="unit">tonnes</span>
+                    </div>
+
+                    <div style="margin-top:8px;">
+                        {growth_html}
+                    </div>
+                </div>
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+
+
         st.markdown("---")
 
 
