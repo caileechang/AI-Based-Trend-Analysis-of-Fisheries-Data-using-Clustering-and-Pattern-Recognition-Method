@@ -890,6 +890,7 @@ def main():
 
                 card_html = f"""
                 <div  style="
+                    border-radius: 14px;
                     <div style="font-size:18px; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
                         <b style="margin-left:6px;">#{idx+1} {state}</b>
