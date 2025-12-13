@@ -582,29 +582,47 @@ def main():
 
     /* ===== AUTO LIGHT / DARK MODE ===== */
 
-    /* Background */
     .stApp {
         background-color: var(--background-color);
         color: var(--text-color);
     }
 
-    /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: var(--secondary-background-color);
     }
 
-    /* Text */
     h1, h2, h3, h4, h5, h6,
     p, span, label {
         color: var(--text-color);
     }
 
-    /* Cards */
     .neu-card {
         background-color: var(--secondary-background-color);
-        border: 1px solid rgba(0,0,0,0.08);
         border-radius: 16px;
         padding: 24px;
+        border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    /* ===== LIGHT MODE RADIO ===== */
+    @media (prefers-color-scheme: light) {
+        [data-testid="stRadio"] input[type="radio"] + div {
+            border: 2px solid #93c5fd;
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+            background-color: #2563eb;
+        }
+    }
+
+    /* ===== DARK MODE RADIO ===== */
+    @media (prefers-color-scheme: dark) {
+        [data-testid="stRadio"] input[type="radio"] + div {
+            border: 2px solid #60a5fa;
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+            background-color: #60a5fa;
+        }
     }
 
     </style>
