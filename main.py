@@ -917,7 +917,7 @@ def main():
                 ">
                     <div style="font-size:18px; color:'black'; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
+                        <b style="color:black; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
                     <div style="font-size:30px; color:black; font-weight:bold;">
                         {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
