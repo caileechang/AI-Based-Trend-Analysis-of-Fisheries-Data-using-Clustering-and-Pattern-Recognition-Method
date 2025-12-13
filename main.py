@@ -961,6 +961,7 @@ def main():
                 st.markdown(card_html, unsafe_allow_html=True)
 
         st.markdown("---")
+        st.markdown("---")
 
 
       
