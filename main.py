@@ -905,7 +905,6 @@ def main():
                 prev_val = row["Prev_Year"]
                 growth_html = growth_text(total, prev_val)
 
-
                 card_html = f"""
                 <div style="
                     background: #ffffff;
@@ -915,19 +914,26 @@ def main():
                     box-shadow: 0 6px 16px rgba(0,0,0,0.08);
                     min-height: 150px;
                 ">
-                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
+                    <!-- Header -->
+                    <div style="font-size:18px; margin-bottom:6px; color:#111111;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
+                        <b style="margin-left:6px;">#{idx+1} {state}</b>
                     </div>
-                    <div style="font-size:30px; color:white; font-weight:bold;">
-                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
+
+                    <!-- Main number -->
+                    <div style="font-size:30px; font-weight:bold; color:#111111;">
+                        {total:,.0f}
+                        <span style="font-size:16px; color:#6b7280;"> tonnes</span>
                     </div>
-                    <div style="margin-top:8px;">
+
+                    <!-- Growth -->
+                    <div style="margin-top:8px; color:#374151;">
                         {growth_html}
                     </div>
                 </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
+
 
         st.markdown("---")
 
