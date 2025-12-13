@@ -870,74 +870,7 @@ def main():
             return f"<span style='color:{color}; font-size:16px;'>{arrow} {change:.1f}%{label}</span>"
         medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
-        st.markdown("""
-        <style>
-
-        /* ===============================
-        TOP 3 CARDS — LIGHT MODE
-        ================================ */
-        @media (prefers-color-scheme: light) {
-            .top-card {
-                background: linear-gradient(
-                    135deg,
-                    #e6fffa 0%,
-                    #ccfbf1 100%
-                );
-                border: 2px solid #14b8a6;   /* sharp neon border */
-                box-shadow: 
-                    0 0 0 2px rgba(20,184,166,0.35),
-                    0 6px 18px rgba(0,0,0,0.08);
-                color: #064e3b;
-            }
-
-            .top-card .value {
-                color: #064e3b;
-                font-weight: 700;
-            }
-
-            .top-card .unit {
-                color: #047857;
-            }
-
-            .top-card .growth-up {
-                color: #16a34a;
-            }
-
-            .top-card .growth-down {
-                color: #dc2626;
-            }
-        }
-
-
-        /* ===============================
-        TOP 3 CARDS — DARK MODE
-        ================================ */
-        @media (prefers-color-scheme: dark) {
-            .top-card {
-                background: linear-gradient(
-                    135deg,
-                    #0fb9b1 0%,
-                    #0a3d62 100%
-                );
-                border: 1px solid rgba(0,255,255,0.4);
-                box-shadow:
-                    0 0 22px rgba(0,255,255,0.35),
-                    inset 0 0 12px rgba(0,255,255,0.15);
-                color: white;
-            }
-
-            .top-card .value {
-                color: white;
-            }
-
-            .top-card .unit {
-                color: #cbd5e1;
-            }
-        }
-
-
-        </style>
-        """, unsafe_allow_html=True)
+        
 
        
         st.markdown(f"### 🏅 Top 3 States in {latest_year}")
