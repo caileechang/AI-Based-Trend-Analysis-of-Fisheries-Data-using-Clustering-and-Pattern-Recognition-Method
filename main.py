@@ -2094,7 +2094,7 @@ def main():
             st.stop()
 
         # =====================================================
-        # 2️⃣ PREPARE FEATURES
+        # PREPARE FEATURES
         # =====================================================
         df = df[[
             "State",
@@ -2109,12 +2109,12 @@ def main():
         }, inplace=True)
 
         # =====================================================
-        # 3️⃣ SCALING
+        #  SCALING
         # =====================================================
         X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
         # =====================================================
-        # 4️⃣ AUTO-TUNE HDBSCAN PARAMETERS
+        #  AUTO-TUNE HDBSCAN PARAMETERS
         # =====================================================
         n_points = len(df)
 
@@ -2125,10 +2125,8 @@ def main():
         # min_samples tied to min_cluster_size
         min_samples = min_cluster_size
 
-
-
         # =====================================================
-        # 5️⃣ RUN HDBSCAN
+        #  RUN HDBSCAN
         # =====================================================
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
@@ -2141,11 +2139,11 @@ def main():
         # Safe normalization
         max_score = df["Outlier_Score"].max()
         if max_score > 0:
-            df["Outlier_Norm"] = df["Outlier_Score"] / max_score
+            df["Outlier_Scores"] = df["Outlier_Score"] / max_score
         else:
-            df["Outlier_Norm"] = 0.0
+            df["Outlier_Scores"] = 0.0
 
-        df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+        df["Anomaly"] = df["Outlier_Scores"] >= 0.65
 
         # =====================================================
         # 6️⃣ EXPLANATION RULES
