@@ -747,7 +747,7 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
        
-        "HDBSCAN Outlier Detection","HDBSCAN",
+        "HDBSCAN Outlier Detection","Monthly HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps","Geospatial Maps(2)"
     ])
@@ -970,6 +970,146 @@ def main():
         st.markdown(f"### Fish Landing by State — {selected_year}")
         st.dataframe(filtered_selected, use_container_width=True, height=350)
 
+    elif plot_option == "Monthly HDBSCAN Outlier Detection":
+
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from sklearn.preprocessing import StandardScaler
+        import hdbscan
+
+        st.subheader("Monthly HDBSCAN Outlier Detection (State-Level Fish Landing)")
+        st.markdown(
+            "<p style='color:#ccc'>Detect unusual monthly landing patterns across states.</p>",
+            unsafe_allow_html=True
+        )
+
+        # --------------------------------------------
+        # 1. Select Year
+        # --------------------------------------------
+        years = sorted(merged_df["Year"].unique())
+        sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
+
+        df = merged_df[merged_df["Year"] == sel_year].copy()
+        if df.empty:
+            st.error("No data for selected year.")
+            st.stop()
+
+        # --------------------------------------------
+        # 2. Prepare MONTHLY features (NO yearly totals)
+        # --------------------------------------------
+        df = df[[
+            "State",
+            "Year",
+            "Month",
+            "Marine (Tonnes)",
+            "Freshwater (Tonnes)"
+        ]].dropna()
+
+        df.rename(columns={
+            "Marine (Tonnes)": "Marine",
+            "Freshwater (Tonnes)": "Freshwater"
+        }, inplace=True)
+
+        # --------------------------------------------
+        # 3. Scaling
+        # --------------------------------------------
+        X = StandardScaler().fit_transform(df[["Marine", "Freshwater"]])
+
+        # --------------------------------------------
+        # 4. Run HDBSCAN
+        # --------------------------------------------
+        clusterer = hdbscan.HDBSCAN(
+            min_samples=4,
+            min_cluster_size=4,
+            prediction_data=True
+        ).fit(X)
+
+        df["Cluster"] = clusterer.labels_
+        df["Outlier_Score"] = clusterer.outlier_scores_
+        df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
+        df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+
+        # --------------------------------------------
+        # 5. Explanation rules (MONTHLY logic)
+        # --------------------------------------------
+        avg_marine = df["Marine"].mean()
+        avg_fresh = df["Freshwater"].mean()
+
+        def explain(row):
+            M = row["Marine"]
+            F = row["Freshwater"]
+
+            if M > avg_marine and F < avg_fresh:
+                return "🌊 Marine surge → Seasonal marine peak or offshore concentration"
+            if M < avg_marine and F > avg_fresh:
+                return "🚰 Freshwater dominance → Inland or river-based spike"
+            if M < avg_marine and F < avg_fresh:
+                return "🛑 Low activity → Off-season or environmental disruption"
+            if M > avg_marine and F > avg_fresh:
+                return "🔥 Exceptional month → Unusually high total landing"
+            return "Unusual monthly landing pattern"
+
+        df["Explanation"] = df.apply(explain, axis=1)
+
+        # --------------------------------------------
+        # 6. Outlier Table
+        # --------------------------------------------
+        st.markdown("### 🔍 Detected Monthly Outliers")
+
+        outliers = df[df["Anomaly"] == True][[
+            "State", "Month", "Marine", "Freshwater", "Outlier_Norm", "Explanation"
+        ]]
+
+        if outliers.empty:
+            st.success("No significant monthly anomalies detected.")
+        else:
+            st.dataframe(outliers, use_container_width=True)
+
+        # --------------------------------------------
+        # 7. Scatter Plot
+        # --------------------------------------------
+        st.markdown("### 📈 Marine vs Freshwater (Monthly Outliers)")
+
+        fig, ax = plt.subplots(figsize=(14, 10))
+
+        sns.scatterplot(
+            data=df,
+            x="Marine",
+            y="Freshwater",
+            hue="Outlier_Norm",
+            palette="viridis",
+            s=90,
+            ax=ax
+        )
+
+        ano = df[df["Anomaly"] == True]
+        ax.scatter(
+            ano["Marine"],
+            ano["Freshwater"],
+            s=220,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Outlier"
+        )
+
+        for _, r in ano.iterrows():
+            ax.text(
+                r["Marine"] * 1.01,
+                r["Freshwater"] * 1.01,
+                f"{r['State']} ({r['Month']})",
+                color="red",
+                fontsize=8,
+                fontweight="bold"
+            )
+
+        ax.set_xlabel("Marine Landing (Tonnes)")
+        ax.set_ylabel("Freshwater Landing (Tonnes)")
+        ax.set_title(f"Monthly HDBSCAN Outlier Detection ({sel_year})")
+        ax.grid(alpha=0.3)
+        ax.legend()
+
+        st.pyplot(fig)
 
 
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
