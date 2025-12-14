@@ -2370,7 +2370,7 @@ def main():
         ax.set_title("Sensitivity of Anomaly Detection to Threshold")
         ax.grid(alpha=0.3)
         ax.legend()
-        st.pyplot(fig)
+        
 
 
 
