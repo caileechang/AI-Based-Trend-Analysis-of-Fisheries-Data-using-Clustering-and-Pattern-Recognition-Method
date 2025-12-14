@@ -2300,7 +2300,7 @@ def main():
                     f"<b>{row['State']}</b><br>"
                     f"Landing: {row['Landing']:.0f} tonnes<br>"
                     f"Vessels: {row['Vessels']:.0f}<br>"
-                    f"Score: {row['Outlier_Norm']:.2f}<br>"
+                    f"Score: {row['Anomaly_Score']:.2f}<br>"
                     f"<i>{row['Explanation']}</i>"
                 ),
             ).add_to(m)
