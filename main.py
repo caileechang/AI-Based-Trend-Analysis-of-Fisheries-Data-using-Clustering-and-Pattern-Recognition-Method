@@ -697,24 +697,33 @@ def main():
             elif all(f.name.lower().endswith(".csv") for f in uploaded_files):
 
                 if len(uploaded_files) != 2:
-                    st.error("Please upload exactly TWO CSV files: Landing & Vessels.")
+                    st.error("Please upload exactly TWO CSV files.")
                     st.stop()
+
+                st.info("Please assign each CSV file to its dataset type.")
+
+                # Let user choose which file is which
+                file_labels = {}
 
                 for f in uploaded_files:
-                    name = f.name.lower()
-
-                    if "landing" in name:
-                        user_land = pd.read_csv(f)
-                    elif "vessel" in name:
-                        user_vess = pd.read_csv(f)
-
-                if user_land is None or user_vess is None:
-                    st.error(
-                        "CSV filenames must contain keywords: 'landing' and 'vessel'."
+                    label = st.selectbox(
+                        f"Select dataset type for `{f.name}`",
+                        ["Fish Landing", "Fish Vessels"],
+                        key=f.name
                     )
+                    file_labels[label] = f
+
+                # Prevent duplicate assignment
+                if len(file_labels) != 2:
+                    st.error("Each dataset type must be assigned exactly once.")
                     st.stop()
 
+                # Read CSVs
+                user_land = pd.read_csv(file_labels["Fish Landing"])
+                user_vess = pd.read_csv(file_labels["Fish Vessels"])
+
                 st.success("CSV files loaded successfully (Landing + Vessels).")
+
 
             # =====================================================
             # INVALID MIX
