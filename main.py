@@ -656,7 +656,7 @@ def main():
 
     # Upload 
     st.sidebar.markdown("### Upload Your Dataset")
-    uploaded_file = st.sidebar.file_uploader("Upload dataset (.xlsx or .csv)", type=["xlsx","csv"])
+    uploaded_file = st.sidebar.file_uploader("Upload dataset (.xlsx )", type=["xlsx"])
 
     
     if uploaded_file:
