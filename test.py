@@ -758,7 +758,7 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
        
-        "HDBSCAN Outlier Detection",
+        "HDBSCAN Outlier Detection",H
         "Hierarchical Clustering",
         "Geospatial Maps","Geospatial Maps(2)"
     ])
