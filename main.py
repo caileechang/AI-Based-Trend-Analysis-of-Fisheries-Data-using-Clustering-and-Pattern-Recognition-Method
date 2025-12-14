@@ -2346,7 +2346,7 @@ def main():
         else:
             df["Outlier_Score"] = 0.0
 
-        df["Anomaly"] = df["Outlier_Score"] >= 0.65
+        df["Anomaly"] = df["Outlier_Score"] >= 0.90
 
         st.markdown("### 🔬 Sensitivity Analysis (Outlier Threshold)")
 
