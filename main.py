@@ -2295,9 +2295,7 @@ def main():
             unsafe_allow_html=True
         )
 
-        # =====================================================
-        # 1️⃣ SELECT YEAR
-        # =====================================================
+        # SELECT YEAR
         years = sorted(merged_df["Year"].unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years) - 1)
 
@@ -2306,9 +2304,7 @@ def main():
             st.error("No data for selected year.")
             st.stop()
 
-        # =====================================================
         # PREPARE FEATURES
-        # =====================================================
         df = df[[
             "State",
             "Year",
@@ -2321,14 +2317,10 @@ def main():
             "Total number of fishing vessels": "Vessels"
         }, inplace=True)
 
-        # =====================================================
         #  SCALING
-        # =====================================================
         X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
-        # =====================================================
         #  AUTO-TUNE HDBSCAN PARAMETERS
-        # =====================================================
         n_points = len(df)
 
         # min_cluster_size ≈ √N (clamped)
@@ -2337,10 +2329,8 @@ def main():
 
         # min_samples tied to min_cluster_size
         min_samples = min_cluster_size
-
-        # =====================================================
+   
         #  RUN HDBSCAN
-        # =====================================================
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=min_samples,
@@ -2358,9 +2348,33 @@ def main():
 
         df["Anomaly"] = df["Outlier_Score"] >= 0.65
 
-        # =====================================================
-        # 6️⃣ EXPLANATION RULES
-        # =====================================================
+        st.markdown("### 🔬 Sensitivity Analysis (Outlier Threshold)")
+
+        thresholds = np.arange(0.40, 0.90, 0.05)
+        results = []
+
+        for t in thresholds:
+            anomaly_count = (df["Outlier_Score"] >= t).sum()
+            results.append({
+                "Threshold": round(t, 2),
+                "Anomalies": anomaly_count
+            })
+
+        sens_df = pd.DataFrame(results)
+        st.dataframe(sens_df, use_container_width=True)
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(sens_df["Threshold"], sens_df["Anomalies"], marker="o")
+        ax.axvline(0.65, color="red", linestyle="--", label="Selected Threshold (0.65)")
+        ax.set_xlabel("Outlier Threshold")
+        ax.set_ylabel("Number of Detected Anomalies")
+        ax.set_title("Sensitivity of Anomaly Detection to Threshold")
+        ax.grid(alpha=0.3)
+        ax.legend()
+        st.pyplot(fig)
+
+
+
+        #  EXPLANATION RULES 
         avg_land = df["Landing"].mean()
         avg_ves = df["Vessels"].mean()
 
@@ -2379,9 +2393,9 @@ def main():
 
         df["Explanation"] = df.apply(explain, axis=1)
 
-        # =====================================================
-        # 7️⃣ OUTLIER TABLE
-        # =====================================================
+       
+        #  OUTLIER TABLE
+      
         st.markdown("### 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"]][[
@@ -2393,9 +2407,8 @@ def main():
         else:
             st.dataframe(outliers, use_container_width=True)
 
-        # =====================================================
-        # 8️⃣ SCATTER PLOT + LEGEND
-        # =====================================================
+   
+        # SCATTER PLOT 
         header_left, header_right = st.columns([3, 1])
 
         with header_left:
