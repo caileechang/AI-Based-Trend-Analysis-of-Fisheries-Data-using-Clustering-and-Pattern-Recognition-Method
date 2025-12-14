@@ -657,37 +657,75 @@ def main():
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     # uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
-    uploaded_file = st.sidebar.file_uploader("Upload dataset (.xlsx or .csv)", type=["xlsx", "csv"])
+   # uploaded_file = st.sidebar.file_uploader("Upload dataset (.xlsx or .csv)", type=["xlsx", "csv"])
 
+ 
 
-    if uploaded_file:
+    uploaded_files = st.file_uploader(
+        "Upload Excel (1 file) or CSV (2 files)",
+        type=["xlsx", "csv"],
+        accept_multiple_files=True
+    )
+
+    user_land = None
+    user_vess = None
+
+    if uploaded_files:
         try:
-            file_ext = uploaded_file.name.split(".")[-1].lower()
+            # =====================================================
+            # CASE 1: Excel (.xlsx) → ONE file, TWO sheets
+            # =====================================================
+            if len(uploaded_files) == 1 and uploaded_files[0].name.lower().endswith(".xlsx"):
+                uploaded_file = uploaded_files[0]
 
-
-            if file_ext == "xlsx":
                 excel_data = pd.ExcelFile(uploaded_file)
                 sheet_names = [s.lower() for s in excel_data.sheet_names]
 
                 if "fish landing" in sheet_names and "fish vessels" in sheet_names:
                     user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
                     user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
+                    st.success("Excel file loaded successfully (Fish Landing + Fish Vessels).")
                 else:
-                    st.warning(
-                        "The Excel file must contain sheets named 'Fish Landing' and 'Fish Vessels'."
+                    st.error(
+                        "Excel must contain sheets named 'Fish Landing' and 'Fish Vessels'."
                     )
-                    user_land, user_vess = None, None
+                    st.stop()
 
-            elif file_ext == "csv":
-                # Simply read CSV, no column enforcement
-                user_land = pd.read_csv(uploaded_file)
-                user_vess = None  # Keep existing vessel data
-                st.info("CSV file detected. Using existing vessel dataset.")
+            # =====================================================
+            # CASE 2: CSV → TWO separate files
+            # =====================================================
+            elif all(f.name.lower().endswith(".csv") for f in uploaded_files):
 
+                if len(uploaded_files) != 2:
+                    st.error("Please upload exactly TWO CSV files: Landing & Vessels.")
+                    st.stop()
+
+                for f in uploaded_files:
+                    name = f.name.lower()
+
+                    if "landing" in name:
+                        user_land = pd.read_csv(f)
+                    elif "vessel" in name:
+                        user_vess = pd.read_csv(f)
+
+                if user_land is None or user_vess is None:
+                    st.error(
+                        "CSV filenames must contain keywords: 'landing' and 'vessel'."
+                    )
+                    st.stop()
+
+                st.success("CSV files loaded successfully (Landing + Vessels).")
+
+            # =====================================================
+            # INVALID MIX
+            # =====================================================
             else:
-                st.error("Unsupported file format.")
+                st.error("Do not mix Excel and CSV files. Upload either ONE Excel or TWO CSVs.")
                 st.stop()
 
+        
+
+    
         
                 
 
