@@ -374,7 +374,7 @@ def hierarchical_clustering(merged_df):
     Z = linkage(scaled, method="ward")
 
     # ----------------------------
-    # Silhouette Validation (k = 2–6)
+    # Silhouette Validation 
     # ----------------------------
     st.markdown("### Silhouette Score Validation")
 
@@ -411,7 +411,7 @@ def hierarchical_clustering(merged_df):
     col1, col2 = st.columns([1, 1])
 
     # ----------------------------
-    # 1️⃣ Silhouette Line Chart
+    # Silhouette Line Chart
     # ----------------------------
     with col1:
         fig, ax = plt.subplots(figsize=(5, 3))
@@ -429,7 +429,7 @@ def hierarchical_clustering(merged_df):
         st.pyplot(fig)
 
     # ----------------------------
-    # 2️⃣ Silhouette Table
+    # Silhouette Table
     # ----------------------------
     with col2:
         df_sil = (
@@ -490,7 +490,7 @@ def hierarchical_clustering(merged_df):
     with st.container():
         st.pyplot(g.fig)
 
-    # --- FIX: allow Streamlit to continue rendering ---
+
     st.write("")
     st.markdown("<br>", unsafe_allow_html=True)
     st.divider()
@@ -654,21 +654,67 @@ def main():
         df_vess = st.session_state.base_vess
 
 
-    # Upload additional yearly CSV
-    st.sidebar.markdown("### Upload Your Yearly Dataset")
-    uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
+    # Upload 
+    st.sidebar.markdown("### Upload Your Dataset")
+    uploaded_file = st.sidebar.file_uploader("Upload dataset (.xlsx or .csv)", type=["xlsx","csv"])
 
+    
     if uploaded_file:
             try:
-                excel_data = pd.ExcelFile(uploaded_file)
-                sheet_names = [s.lower() for s in excel_data.sheet_names]
-        
-                if "fish landing" in sheet_names and "fish vessels" in sheet_names:
-                    user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
-                    user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
+                file_ext = uploaded_file.name.split(".")[-1].lower()
+
+                # ===============================
+                # CASE 1: EXCEL (.xlsx)
+                # ===============================
+                if file_ext == "xlsx":
+                    excel_data = pd.ExcelFile(uploaded_file)
+                    sheet_names = [s.lower() for s in excel_data.sheet_names]
+
+                    if "fish landing" in sheet_names and "fish vessels" in sheet_names:
+                        user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
+                        user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
+                    else:
+                        st.warning(
+                            "The Excel file must contain sheets named 'Fish Landing' and 'Fish Vessels'."
+                        )
+                        user_land, user_vess = None, None
+
+                # ===============================
+                # CASE 2: CSV (.csv)
+                # ===============================
+                elif file_ext == "csv":
+                    user_land = pd.read_csv(uploaded_file)
+                    user_vess = None  # Use existing vessel data
+
+                    required_cols = {
+                        "State", "Year", "Month", "Type of Fish", "Fish Landing (Tonnes)"
+                    }
+
+                    if not required_cols.issubset(user_land.columns):
+                        st.error(
+                            "CSV file must contain columns: "
+                            "State, Year, Month, Type of Fish, Fish Landing (Tonnes)"
+                        )
+                        st.stop()
+
+                    st.info("CSV file detected. Vessel data will use existing system data.")
+
                 else:
-                    st.warning(" The uploaded file must contain sheets named 'Fish Landing' and 'Fish Vessels'.")
-                    user_land, user_vess = None, None
+                    st.error("Unsupported file format.")
+                    st.stop()
+
+                # ===============================
+                # COMMON SUCCESS BLOCK
+                # ===============================
+                if user_land is not None:
+                    st.info(
+                        f"Detected uploaded years: "
+                        f"{sorted(user_land['Year'].dropna().astype(int).unique().tolist())}"
+                    )
+
+            except Exception as e:
+                st.error(f"Error reading uploaded file: {e}")
+
         
                 if user_land is not None:
                     #st.subheader("New dataset uploaded")
