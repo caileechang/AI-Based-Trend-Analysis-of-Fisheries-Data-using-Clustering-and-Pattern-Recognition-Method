@@ -2134,16 +2134,16 @@ def main():
             prediction_data=True
         ).fit(X)
 
-        df["Outlier_Score"] = clusterer.outlier_scores_
+        df["Anomaly_Score"] = clusterer.outlier_scores_
 
         # Safe normalization
         max_score = df["Outlier_Score"].max()
         if max_score > 0:
-            df["Anomaly_Score"] = df["Outlier_Score"] / max_score
+            df["Outlier_Score"] = df["Anomaly_Score"] / max_score
         else:
-            df["Anomaly_Score"] = 0.0
+            df["Outlier_Score"] = 0.0
 
-        df["Anomaly"] = df["Anomaly_Score"] >= 0.65
+        df["Anomaly"] = df["Outlier_Score"] >= 0.65
 
         # =====================================================
         # 6️⃣ EXPLANATION RULES
@@ -2172,7 +2172,7 @@ def main():
         st.markdown("### 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"]][[
-            "State", "Landing", "Vessels", "Anomaly_Score", "Explanation"
+            "State", "Landing", "Vessels", "Outlier_Score", "Explanation"
         ]]
 
         if outliers.empty:
@@ -2204,7 +2204,7 @@ def main():
                 data=df,
                 x="Vessels",
                 y="Landing",
-                hue="Anomaly_Score",
+                hue="Outlier_Score",
                 palette="viridis",
                 s=100,
                 ax=ax
@@ -2300,7 +2300,7 @@ def main():
                     f"<b>{row['State']}</b><br>"
                     f"Landing: {row['Landing']:.0f} tonnes<br>"
                     f"Vessels: {row['Vessels']:.0f}<br>"
-                    f"Score: {row['Anomaly_Score']:.2f}<br>"
+                    f"Score: {row['Outlier_Score']:.2f}<br>"
                     f"<i>{row['Explanation']}</i>"
                 ),
             ).add_to(m)
