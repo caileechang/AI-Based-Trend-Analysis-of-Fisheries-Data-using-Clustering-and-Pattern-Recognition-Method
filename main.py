@@ -2611,7 +2611,158 @@ def main():
         st_folium(m, height=550, width=800)
 
 
-    
+    elif plot_option == "Monthly HDBSCAN Outlier Detection":
+
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import calendar
+        from sklearn.preprocessing import StandardScaler
+        import hdbscan
+
+        st.subheader("Monthly HDBSCAN Outlier Detection (Total Fish Landing)")
+        st.markdown(
+            "<p style='color:#ccc'>Detect abnormal monthly fish landing volumes at state level.</p>",
+            unsafe_allow_html=True
+        )
+
+        # ======================================
+        # 1️⃣ SELECT YEAR
+        # ======================================
+        years = sorted(merged_monthly["Year"].unique())
+        selected_year = st.selectbox(
+            "Select Year:",
+            years,
+            index=len(years) - 1
+        )
+
+        df = merged_monthly[merged_monthly["Year"] == selected_year].copy()
+        if df.empty:
+            st.warning("No data available for this year.")
+            st.stop()
+
+        # ======================================
+        # 2️⃣ PREPARE MONTHLY DATA (ONE VARIABLE ONLY)
+        # ======================================
+        df = df[[
+            "State",
+            "Year",
+            "Month",
+            "Fish Landing (Tonnes)"
+        ]].dropna()
+
+        df.rename(columns={
+            "Fish Landing (Tonnes)": "Landing"
+        }, inplace=True)
+
+        # ======================================
+        # 3️⃣ SCALE (REQUIRED FOR HDBSCAN)
+        # ======================================
+        X = StandardScaler().fit_transform(df[["Landing"]])
+
+        # ======================================
+        # 4️⃣ RUN HDBSCAN (OUTLIER MODE)
+        # ======================================
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=5,
+            min_samples=5,
+            prediction_data=True
+        ).fit(X)
+
+        df["Outlier_Score"] = clusterer.outlier_scores_
+
+        # Normalize safely
+        max_score = df["Outlier_Score"].max()
+        if max_score > 0:
+            df["Outlier_Norm"] = df["Outlier_Score"] / max_score
+        else:
+            df["Outlier_Norm"] = 0.0
+
+        # Threshold (you can tune this)
+        df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+
+        # ======================================
+        # 5️⃣ EXPLANATION (SIMPLE & CORRECT)
+        # ======================================
+        avg_landing = df["Landing"].mean()
+
+        def explain(row):
+            if row["Landing"] > avg_landing:
+                return "📈 Unusually high monthly landing"
+            else:
+                return "📉 Unusually low monthly landing"
+
+        df["Explanation"] = df.apply(explain, axis=1)
+
+        # ======================================
+        # 6️⃣ OUTLIER TABLE
+        # ======================================
+        st.markdown("### 🔍 Detected Monthly Outliers")
+
+        outliers = df[df["Anomaly"]].copy()
+        outliers["Month"] = outliers["Month"].apply(
+            lambda m: calendar.month_name[int(m)]
+        )
+
+        if outliers.empty:
+            st.success("No significant monthly anomalies detected.")
+        else:
+            st.dataframe(
+                outliers[[
+                    "State",
+                    "Month",
+                    "Landing",
+                    "Outlier_Norm",
+                    "Explanation"
+                ]],
+                use_container_width=True
+            )
+
+        # ======================================
+        # 7️⃣ VISUALISATION (1D DISTRIBUTION)
+        # ======================================
+        st.markdown("### 📊 Monthly Landing Distribution (Outliers Highlighted)")
+
+        fig, ax = plt.subplots(figsize=(14, 4))
+
+        sns.stripplot(
+            data=df,
+            x="Landing",
+            jitter=True,
+            size=6,
+            alpha=0.6,
+            ax=ax
+        )
+
+        ano = df[df["Anomaly"]]
+
+        ax.scatter(
+            ano["Landing"],
+            [0] * len(ano),
+            s=180,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Outlier"
+        )
+
+        for _, r in ano.iterrows():
+            ax.text(
+                r["Landing"],
+                0.03,
+                f"{r['State']} ({calendar.month_abbr[int(r['Month'])]})",
+                fontsize=8,
+                color="red",
+                rotation=45
+            )
+
+        ax.set_xlabel("Total Monthly Fish Landing (Tonnes)")
+        ax.set_yticks([])
+        ax.set_title(f"Monthly HDBSCAN Outlier Detection – {selected_year}")
+        ax.legend()
+        ax.grid(alpha=0.3)
+
+        st.pyplot(fig)
+
 
     elif plot_option == "Automatic DBSCAN":
         import numpy as np  
