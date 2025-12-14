@@ -2346,31 +2346,9 @@ def main():
         else:
             df["Outlier_Score"] = 0.0
 
-        df["Anomaly"] = df["Outlier_Score"] >= 0.90
+        df["Anomaly"] = df["Outlier_Score"] >= 0.65
 
-        st.markdown("### 🔬 Sensitivity Analysis (Outlier Threshold)")
-
-        thresholds = np.arange(0.40, 0.90, 0.05)
-        results = []
-
-        for t in thresholds:
-            anomaly_count = (df["Outlier_Score"] >= t).sum()
-            results.append({
-                "Threshold": round(t, 2),
-                "Anomalies": anomaly_count
-            })
-
-        sens_df = pd.DataFrame(results)
-        st.dataframe(sens_df, use_container_width=True)
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.plot(sens_df["Threshold"], sens_df["Anomalies"], marker="o")
-        ax.axvline(0.65, color="red", linestyle="--", label="Selected Threshold (0.65)")
-        ax.set_xlabel("Outlier Threshold")
-        ax.set_ylabel("Number of Detected Anomalies")
-        ax.set_title("Sensitivity of Anomaly Detection to Threshold")
-        ax.grid(alpha=0.3)
-        ax.legend()
-        
+    
 
 
 
