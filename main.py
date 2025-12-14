@@ -2204,7 +2204,7 @@ def main():
                 data=df,
                 x="Vessels",
                 y="Landing",
-                hue="Outlier_Norm",
+                hue="Anomaly_Score",
                 palette="viridis",
                 s=100,
                 ax=ax
