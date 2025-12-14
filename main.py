@@ -2125,16 +2125,7 @@ def main():
         # min_samples tied to min_cluster_size
         min_samples = min_cluster_size
 
-       # st.markdown(
-    #     f"""
-    #     <p style="color:#aaa; font-size:13px;">
-    #     <b>Auto HDBSCAN parameters</b><br>
-    #     min_cluster_size = {min_cluster_size}<br>
-    #     min_samples = {min_samples}
-    #     </p>
-    #     """,
-    #     unsafe_allow_html=True
-    # )
+
 
         st.markdown(f"""
         <p style="color:#aaa; font-size:13px;">
