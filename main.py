@@ -747,7 +747,7 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
        
-        "HDBSCAN Outlier Detection",
+        "HDBSCAN Outlier Detection","HDBSCAN Monthly Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps","Geospatial Maps(2)"
     ])
@@ -1872,11 +1872,10 @@ def main():
         import seaborn as sns
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
     
-        # --- Step 1: Prepare data ---
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
     
-        # --- Step 2: Compute inertia (Elbow) and silhouette for k = 2–10 ---
+        # Compute inertia (Elbow) and silhouette 
         ks = range(2, 11)
         inertia = []
         silhouette = []
@@ -1888,10 +1887,10 @@ def main():
             sil = silhouette_score(scaled, labels)
             silhouette.append(sil)
     
-        # --- Step 3: Determine the best k (highest silhouette) ---
+        # Determine the best k (highest silhouette) ---
         best_k = ks[np.argmax(silhouette)]
     
-        # --- Step 4: Plot both metrics side by side ---
+        # Plot both metrics side by side ---
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
     
         # Elbow plot
@@ -1901,7 +1900,6 @@ def main():
         ax1.set_ylabel("Inertia")
         ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
         ax1.legend()
-    
         # Silhouette plot
         ax2.plot(ks, silhouette, marker='o', color='orange')
         ax2.set_title("Silhouette Score")
@@ -1909,18 +1907,17 @@ def main():
         ax2.set_ylabel("Score")
         ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
         ax2.legend()
-    
         st.pyplot(fig)
     
-        # --- Step 5: Fit the final model using best_k ---
+        #  Fit the final model using best_k ---
         final_model = KMeans(n_clusters=best_k, random_state=42)
         merged_df['Cluster'] = final_model.fit_predict(scaled)
     
-        # --- Step 6: Display summary ---
+        #  Display summary ---
         st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
         st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
     
-        # --- Step 7: Show 2D scatter ---
+        #  Show 2D scatter ---
         fig2, ax = plt.subplots(figsize=(10, 6))
         sns.scatterplot(
             data=merged_df,
@@ -1946,15 +1943,10 @@ def main():
 
         st.subheader("Automatic 3D K-Means Clustering")
 
-        # ---------------------------------------------------
-        # STEP 1: PREPARE DATA
-        # ---------------------------------------------------
+        # PREPARE DATA
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
-
-        # ---------------------------------------------------
-        # STEP 2: AUTOMATICALLY FIND BEST k (Silhouette)
-        # ---------------------------------------------------
+        # AUTOMATICALLY FIND BEST k (Silhouette)
         sil_scores = {}
         for k in range(2, 11):
             kmeans = KMeans(n_clusters=k, random_state=42)
@@ -1962,42 +1954,27 @@ def main():
             sil_scores[k] = silhouette_score(scaled, labels)
 
         best_k = max(sil_scores, key=sil_scores.get)
-
-        # ---------------------------------------------------
-        # STEP 3: FIT FINAL MODEL
-        # ---------------------------------------------------
+        # FIT FINAL MODEL
         final_model = KMeans(n_clusters=best_k, random_state=42)
         merged_df['Cluster'] = final_model.fit_predict(scaled)
-
-        # ---------------------------------------------------
-        # STEP 4: USER CHOICES
-        # ---------------------------------------------------
+        # USER CHOICES
         vis_mode = st.radio(
             "Select visualization type:",
             ["Static", "Interactive"],
             horizontal=True
         )
-
         st.markdown(f"**Optimal number of clusters:** {best_k}")
         st.markdown("Clusters selected automatically using the highest Silhouette score.")
-
-        # ===================================================
         # STATIC VERSION 
-        # ===================================================
         if vis_mode == "Static":
             st.sidebar.markdown("### Adjust 3D View")
             elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
             azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
-           
-
             plt.close('all')
-
             fig = plt.figure(figsize=(5, 4), dpi=150)
             ax = fig.add_subplot(111, projection='3d')
-
             # PREMIUM COLOR PALETTE
             cmap = plt.cm.coolwarm
-
             # Scatter plot with nicer styling
             ax.scatter(
                 merged_df['Total number of fishing vessels'],
@@ -2011,10 +1988,6 @@ def main():
                 linewidth=0.4,
                 depthshade=True
             )
-
-            # =====================================================
-            # MODERN GRID & BACKGROUND WITHOUT USING _axinfo
-            # =====================================================
 
             # Light grey background
             ax.set_facecolor("#F5F5F5")
@@ -2038,16 +2011,13 @@ def main():
                 pad=12,
                 color="#222"
             )
-
             # Camera angles
             ax.view_init(elev=elev, azim=azim)
 
             plt.tight_layout()
             st.pyplot(fig, use_container_width=False)
 
-        # ===================================================
-        # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
-        # ===================================================
+        # PLOTLY (FULL 3D ROTATION)
         else:
             fig = px.scatter_3d(
                 merged_df,
@@ -2417,10 +2387,8 @@ def main():
                     unsafe_allow_html=True)
       
        
-
-        # --------------------------------------------
-        # 1. Select Year
-        # --------------------------------------------
+       
+        # Select Year
         years = sorted(merged_df["Year"].unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
@@ -2429,9 +2397,7 @@ def main():
             st.error("No data for selected year.")
             st.stop()
 
-        # --------------------------------------------
-        # 2. Prepare features
-        # --------------------------------------------
+        #  Prepare features
         df = df[[
             "State",
             "Year",
@@ -2444,14 +2410,9 @@ def main():
             "Total number of fishing vessels": "Vessels"
         }, inplace=True)
 
-        # --------------------------------------------
-        # 3. Scaling
-        # --------------------------------------------
+        #  Scaling    
         X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
-
-        # --------------------------------------------
-        # 4. Run HDBSCAN
-        # --------------------------------------------
+        #  Run HDBSCAN
         clusterer = hdbscan.HDBSCAN(
             min_samples=3,
             min_cluster_size=3,
@@ -2463,9 +2424,7 @@ def main():
         df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
         df["Anomaly"] = df["Outlier_Norm"] >= 0.65   # anomaly threshold
 
-        # --------------------------------------------
-        # 5. Explanation rules
-        # --------------------------------------------
+        #  Explanation rules
         avg_land = df["Landing"].mean()
         avg_ves = df["Vessels"].mean()
 
@@ -2485,9 +2444,7 @@ def main():
 
         df["Explanation"] = df.apply(explain, axis=1)
 
-        # --------------------------------------------
-        # 6. Outlier Table
-        # --------------------------------------------
+        #  Outlier Table
         st.markdown("### 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"] == True][[
@@ -2499,10 +2456,8 @@ def main():
         else:
             st.dataframe(outliers, use_container_width=True)
 
-        # --------------------------------------------
-        # 7. Scatter Plot Visualization (with Aligned Legend)
-        # --------------------------------------------
-
+        # Scatter Plot Visualization 
+  
         # 🔹 Create a shared header row so both columns align perfectly
         header_left, header_right = st.columns([3, 1])
 
@@ -2523,8 +2478,7 @@ def main():
         with col_plot:
 
             fig, ax = plt.subplots(figsize=(15, 12))
-           
-
+        
             sns.scatterplot(
                 data=df,
                 x="Vessels",
@@ -2569,7 +2523,6 @@ def main():
 
         with col_legend:
 
-          
             st.markdown("""
             <div style="
                 background-color:#111;
@@ -2602,11 +2555,7 @@ def main():
             </div>
             """, unsafe_allow_html=True)
 
-
-
-        # --------------------------------------------
-        # 8. MAP VISUALIZATION
-        # --------------------------------------------
+        #  MAP VISUALIZATION
         st.markdown("### 🗺️ Map of Anomalous States")
 
         import folium
@@ -2662,6 +2611,202 @@ def main():
         st_folium(m, height=550, width=800)
 
 
+    elif plot_option == "HDBSCAN Monthly Outlier Detection":
+
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import hdbscan
+        from sklearn.preprocessing import StandardScaler
+        import folium
+        from streamlit_folium import st_folium
+
+        st.subheader("📊 Monthly HDBSCAN Outlier Detection (State-Level)")
+        st.markdown(
+            "<p style='color:#ccc'>Detect unusual monthly landing–vessel relationships at the state level.</p>",
+            unsafe_allow_html=True
+        )
+
+        # -------------------------------------------------
+        # 1️⃣ User selects Year
+        # -------------------------------------------------
+        years = sorted(merged_df["Year"].unique())
+        sel_year = st.selectbox("Select Year:", years, index=len(years) - 1)
+
+        # -------------------------------------------------
+        # 2️⃣ Prepare MONTHLY state-level data
+        # -------------------------------------------------
+        df = merged_df[merged_df["Year"] == sel_year].copy()
+
+        df = df[[
+            "State",
+            "Month",
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]].dropna()
+
+        df.rename(columns={
+            "Total Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
+        if df.empty:
+            st.error("No data available for selected year.")
+            st.stop()
+
+        # -------------------------------------------------
+        # 3️⃣ Scaling (CRITICAL for HDBSCAN)
+        # -------------------------------------------------
+        X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+
+        # -------------------------------------------------
+        # 4️⃣ Run HDBSCAN
+        # -------------------------------------------------
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=4,     # slightly higher for monthly stability
+            min_samples=3,
+            prediction_data=True
+        )
+
+        clusterer.fit(X)
+
+        df["Cluster"] = clusterer.labels_
+        df["Outlier_Score"] = clusterer.outlier_scores_
+
+        # Normalize scores (0–1)
+        df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
+
+        # Threshold (adjustable)
+        df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+
+        # -------------------------------------------------
+        # 5️⃣ Rule-based explanation (interpretability)
+        # -------------------------------------------------
+        avg_land = df["Landing"].mean()
+        avg_ves = df["Vessels"].mean()
+
+        def explain(row):
+            L, V = row["Landing"], row["Vessels"]
+
+            if L > avg_land and V < avg_ves:
+                return "⚡ High landing with few vessels → unusually efficient month"
+            if L < avg_land and V > avg_ves:
+                return "🐟 Low landing despite many vessels → possible inefficiency"
+            if L < avg_land and V < avg_ves:
+                return "🛶 Low activity → seasonal or small-scale fishing"
+            if L > avg_land and V > avg_ves:
+                return "⚓ Intensive operations → high fishing pressure"
+            return "Unusual monthly pattern"
+
+        df["Explanation"] = df.apply(explain, axis=1)
+
+        # -------------------------------------------------
+        # 6️⃣ Outlier Table
+        # -------------------------------------------------
+        st.markdown("### 🔍 Detected Monthly Outliers")
+
+        outliers = df[df["Anomaly"]][
+            ["State", "Month", "Landing", "Vessels", "Outlier_Norm", "Explanation"]
+        ]
+
+        if outliers.empty:
+            st.success("No significant monthly anomalies detected.")
+        else:
+            st.dataframe(outliers, use_container_width=True)
+
+        # -------------------------------------------------
+        # 7️⃣ Scatter Plot (MONTHLY POINTS)
+        # -------------------------------------------------
+        st.markdown("### 📈 Monthly Landing vs Vessels")
+
+        fig, ax = plt.subplots(figsize=(14, 10))
+
+        sns.scatterplot(
+            data=df,
+            x="Vessels",
+            y="Landing",
+            hue="Outlier_Norm",
+            palette="viridis",
+            s=90,
+            ax=ax
+        )
+
+        # Highlight anomalies
+        ano = df[df["Anomaly"]]
+        ax.scatter(
+            ano["Vessels"],
+            ano["Landing"],
+            s=240,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Outlier"
+        )
+
+        # Annotate (State + Month)
+        for _, r in ano.iterrows():
+            ax.text(
+                r["Vessels"] + 0.5,
+                r["Landing"] + 0.5,
+                f"{r['State']} (M{int(r['Month'])})",
+                fontsize=8,
+                color="red"
+            )
+
+        ax.set_xlabel("Total Fishing Vessels")
+        ax.set_ylabel("Total Fish Landing (Tonnes)")
+        ax.set_title(f"Monthly Outlier Detection ({sel_year})")
+        ax.grid(alpha=0.3)
+        ax.legend()
+
+        st.pyplot(fig)
+
+        # -------------------------------------------------
+        # 8️⃣ Map Visualization (Monthly Outliers)
+        # -------------------------------------------------
+        st.markdown("### 🗺️ Map of Monthly Anomalous States")
+
+        coords = {
+            "JOHOR": [1.49, 103.76],
+            "SELANGOR": [3.07, 101.52],
+            "PERAK": [4.59, 101.09],
+            "PAHANG": [3.81, 103.33],
+            "TERENGGANU": [5.33, 103.14],
+            "KEDAH": [6.12, 100.37],
+            "SABAH": [5.98, 116.07],
+            "SARAWAK": [1.55, 110.36],
+            "KELANTAN": [6.12, 102.24],
+            "PULAU PINANG": [5.41, 100.33],
+            "PERLIS": [6.44, 100.20],
+            "NEGERI SEMBILAN": [2.73, 101.94],
+            "MELAKA": [2.19, 102.25],
+            "W.P. LABUAN": [5.28, 115.23],
+        }
+
+        df["Coords"] = df["State"].map(coords)
+
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+
+        for _, r in df[df["Anomaly"]].iterrows():
+            if r["Coords"] is None:
+                continue
+
+            folium.CircleMarker(
+                location=r["Coords"],
+                radius=7,
+                color="red",
+                fill=True,
+                fill_color="red",
+                popup=(
+                    f"<b>{r['State']}</b><br>"
+                    f"Month: {int(r['Month'])}<br>"
+                    f"Landing: {r['Landing']:.0f}<br>"
+                    f"Vessels: {r['Vessels']:.0f}<br>"
+                    f"Score: {r['Outlier_Norm']:.2f}<br>"
+                    f"<i>{r['Explanation']}</i>"
+                )
+            ).add_to(m)
+
+        st_folium(m, height=550)
 
 
 
