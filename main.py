@@ -747,7 +747,7 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
        
-        "HDBSCAN Outlier Detection",
+        "HDBSCAN Outlier Detection","Monthly HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps"
     ])
@@ -2057,7 +2057,220 @@ def main():
 
 
     
-        
+    elif plot_option == "Monthly HDBSCAN Outlier Detection":
+
+        import numpy as np
+        import calendar
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from sklearn.preprocessing import StandardScaler
+        import hdbscan
+        import folium
+        from streamlit_folium import st_folium
+
+        # =====================================================
+        # PAGE HEADER
+        # =====================================================
+        st.subheader("Monthly Temporal Anomaly Inspection (HDBSCAN)")
+        st.markdown(
+            "<p style='color:#ccc'>Inspect abnormal monthly fish landing behaviour by state.</p>",
+            unsafe_allow_html=True
+        )
+
+        # =====================================================
+        # 1️⃣ SELECT YEAR (MODEL CONTEXT)
+        # =====================================================
+        years = sorted(merged_monthly["Year"].unique())
+        sel_year = st.selectbox("Select Year:", years, index=len(years) - 1)
+
+        df_year = merged_monthly[merged_monthly["Year"] == sel_year].copy()
+        if df_year.empty:
+            st.warning("No data available for the selected year.")
+            st.stop()
+
+        # =====================================================
+        # 2️⃣ PREPARE MONTHLY DATA (STATE–MONTH POINTS)
+        # =====================================================
+        df_year = df_year[[
+            "State",
+            "Year",
+            "Month",
+            "Fish Landing (Tonnes)"
+        ]].dropna()
+
+        df_year.rename(columns={
+            "Fish Landing (Tonnes)": "Landing"
+        }, inplace=True)
+
+        # =====================================================
+        # 3️⃣ AUTO-TUNE HDBSCAN (BASED ON DATA SIZE)
+        # =====================================================
+        n_points = len(df_year)
+
+        min_cluster_size = int(np.sqrt(n_points))
+        min_cluster_size = max(6, min(min_cluster_size, 20))
+        min_samples = min_cluster_size
+
+        # =====================================================
+        # 4️⃣ RUN HDBSCAN (TRAIN ON ALL MONTHS)
+        # =====================================================
+        X = StandardScaler().fit_transform(df_year[["Landing"]])
+
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            prediction_data=True
+        ).fit(X)
+
+        df_year["Outlier_Score"] = clusterer.outlier_scores_
+
+        max_score = df_year["Outlier_Score"].max()
+        df_year["Outlier_Norm"] = (
+            df_year["Outlier_Score"] / max_score if max_score > 0 else 0
+        )
+
+        df_year["Anomaly"] = df_year["Outlier_Norm"] >= 0.65
+
+        # =====================================================
+        # 5️⃣ SELECT MONTH (VIEW FILTER ONLY)
+        # =====================================================
+        months = sorted(df_year["Month"].unique())
+        sel_month = st.selectbox(
+            "Select Month:",
+            months,
+            format_func=lambda m: calendar.month_name[int(m)]
+        )
+
+        df_month = df_year[df_year["Month"] == sel_month].copy()
+
+        # =====================================================
+        # 6️⃣ EXPLANATION (MONTH-RELATIVE)
+        # =====================================================
+        avg_month = df_year[df_year["Month"] == sel_month]["Landing"].mean()
+
+        def explain(row):
+            if row["Landing"] > avg_month:
+                return "📈 Unusually high landing for this month"
+            else:
+                return "📉 Unusually low landing for this month"
+
+        df_month["Explanation"] = df_month.apply(explain, axis=1)
+
+        # =====================================================
+        # 7️⃣ STATE-LEVEL TABLE (WHAT HAPPENED THIS MONTH?)
+        # =====================================================
+        st.markdown(
+            f"### 🔍 State-Level Status — {calendar.month_name[int(sel_month)]} {sel_year}"
+        )
+
+        st.dataframe(
+            df_month[[
+                "State",
+                "Landing",
+                "Outlier_Norm",
+                "Anomaly",
+                "Explanation"
+            ]].sort_values("Outlier_Norm", ascending=False),
+            use_container_width=True
+        )
+
+        # =====================================================
+        # 8️⃣ DISTRIBUTION VIEW (TEMPORAL CONTEXT)
+        # =====================================================
+        st.markdown("### 📊 Monthly Landing Distribution (Anomalies Highlighted)")
+
+        fig, ax = plt.subplots(figsize=(14, 4))
+
+        sns.stripplot(
+            data=df_year,
+            x="Landing",
+            jitter=True,
+            size=6,
+            alpha=0.4,
+            ax=ax
+        )
+
+        ano = df_month[df_month["Anomaly"]]
+
+        ax.scatter(
+            ano["Landing"],
+            [0] * len(ano),
+            s=180,
+            facecolors="none",
+            edgecolors="red",
+            linewidth=2,
+            label="Anomaly"
+        )
+
+        for _, r in ano.iterrows():
+            ax.text(
+                r["Landing"],
+                0.03,
+                r["State"],
+                fontsize=8,
+                color="red",
+                rotation=45
+            )
+
+        ax.set_xlabel("Total Monthly Fish Landing (Tonnes)")
+        ax.set_yticks([])
+        ax.set_title(f"Temporal Anomaly Inspection — {calendar.month_name[int(sel_month)]} {sel_year}")
+        ax.legend()
+        ax.grid(alpha=0.3)
+
+        st.pyplot(fig)
+
+        # =====================================================
+        # 9️⃣ MAP VIEW (MONTH-SPECIFIC)
+        # =====================================================
+        st.markdown("### 🗺️ Spatial View of Monthly Anomalies")
+
+        coords = {
+            "JOHOR TIMUR/EAST JOHORE": [2.0, 104.1],
+            "JOHOR BARAT/WEST JOHORE": [1.9, 103.3],
+            "JOHOR": [1.4854, 103.7618],
+            "MELAKA": [2.1896, 102.2501],
+            "NEGERI SEMBILAN": [2.7258, 101.9424],
+            "SELANGOR": [3.0738, 101.5183],
+            "PAHANG": [3.8126, 103.3256],
+            "TERENGGANU": [5.3302, 103.1408],
+            "KELANTAN": [6.1254, 102.2381],
+            "PERAK": [4.5921, 101.0901],
+            "PULAU PINANG": [5.4164, 100.3327],
+            "KEDAH": [6.1184, 100.3685],
+            "PERLIS": [6.4449, 100.2048],
+            "SABAH": [5.9788, 116.0753],
+            "SARAWAK": [1.5533, 110.3592],
+            "W.P. LABUAN": [5.2831, 115.2308],
+        }
+
+        df_month["Coords"] = df_month["State"].map(coords)
+
+        m = folium.Map(location=[4.5, 109.5], zoom_start=6)
+
+        for _, row in df_month.iterrows():
+            if row["Coords"] is None:
+                continue
+
+            lat, lon = row["Coords"]
+            color = "red" if row["Anomaly"] else "blue"
+
+            folium.CircleMarker(
+                location=[lat, lon],
+                radius=8,
+                color=color,
+                fill=True,
+                fill_color=color,
+                popup=(
+                    f"<b>{row['State']}</b><br>"
+                    f"Landing: {row['Landing']:.0f} tonnes<br>"
+                    f"Outlier Score: {row['Outlier_Norm']:.2f}<br>"
+                    f"<i>{row['Explanation']}</i>"
+                ),
+            ).add_to(m)
+
+        st_folium(m, height=550, width=800)
+    
 
   
 
