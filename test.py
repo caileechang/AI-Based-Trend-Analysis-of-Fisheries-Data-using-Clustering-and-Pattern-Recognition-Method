@@ -64,8 +64,6 @@ def prepare_yearly(df_land, df_vess):
     valid_states = [s.upper().strip() for s in valid_states]
 
    
-    # CLEAN df_land (FISH LANDING)
-   
     land = df_land.copy()
     land['State'] = (
         land['State']
@@ -76,10 +74,9 @@ def prepare_yearly(df_land, df_vess):
             .str.strip()
     )
 
-    # REMOVE MALAYSIA-level rows BEFORE fuzzy match
     land = land[~land['State'].str.startswith("MALAYSIA")]
 
-    # Fuzzy matching for df_land
+    # Fuzzy matching 
     def match_state_land(name):
         matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.75)
         return matches[0] if matches else np.nan
@@ -360,6 +357,7 @@ def hierarchical_clustering(merged_df):
         .reset_index()
     )
 
+    #hierarchical clustering
     features = ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
 
     # ----------------------------
@@ -569,13 +567,6 @@ def hierarchical_clustering(merged_df):
         .reset_index(drop=True)
     )
 
-import streamlit as st
-import pandas as pd
-
-st.set_page_config(
-    layout="wide",
-    page_title="Fisheries Clustering & Pattern Recognition Dashboard"
-)
 
 def main():
     
@@ -584,119 +575,82 @@ def main():
      # ======================================
     # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
     # ======================================
-    
-   
-
-   
-    
-
     st.markdown("""
     <style>
 
-    /* ===== GLOBAL BACKGROUND ===== */
-    html, body, .stApp {
-        background-color: #ffffff !important;
-        color: #111111 !important;
-    }
-
-    /* ===== SIDEBAR ===== */
-    [data-testid="stSidebar"] {
-        background-color: #f5f7fa !important;
-        border-right: 1px solid #e5e7eb;
-    }
-
-    /* ===== TEXT ===== */
-    h1, h2, h3, h4, h5, h6,
-    p, span, label {
-        color: #111111 !important;
-    }
-
-    /* ===== INPUTS ===== */
-    input, textarea, select {
-        background-color: #ffffff !important;
-        color: #111111 !important;
-        border: 1px solid #d1d5db !important;
-    }
-
-    /* ===== DATAFRAMES ===== */
-    [data-testid="stDataFrame"],
-    [data-testid="stTable"] {
-        background-color: white !important;
-    }
-
-    /* ===== CARD ===== */
-    .neu-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 24px;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-    }
-
-    /* ===== FILE UPLOADER ===== */
-    [data-testid="stFileUploader"] {
-        background-color: #ffffff !important;
-        border: 1px dashed #cbd5e1 !important;
-        border-radius: 12px;
-        padding: 18px;
-    }
-
-    [data-testid="stFileUploader"] section {
-        background-color: #f8fafc !important;
-    }
-
-    [data-testid="stFileUploader"] button {
-        background-color: #2563eb !important;
-        color: white !important;
-        border-radius: 8px !important;
-    }
-
-   
-    /* ===== RADIO BUTTON COLORS (LIGHT MODE) ===== */
-
-    /* Radio label text */
-    [data-testid="stRadio"] label {
-        color: #111111 !important;
-    }
-
-    /* Unselected radio outer circle */
-    [data-testid="stRadio"] input[type="radio"] + div {
-        border: 2px solid #93c5fd !important;   /* light blue */
-        background-color: white !important;
-    }
-
-    /* Selected radio outer circle */
-    [data-testid="stRadio"] input[type="radio"]:checked + div {
-        border-color: #2563eb !important;       /* blue-600 */
-    }
-
-    /* Selected radio inner dot */
-    [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-        background-color: #2563eb !important;   /* blue-600 */
-    }
-
-
-    </style>
-    """, unsafe_allow_html=True)
-
-  
-
-    # ===== HIDE STREAMLIT TOP BLACK BAR =====
-    st.markdown("""
-    <style>
-
-    header[data-testid="stHeader"] {
-        display: none;
-    }
+    /* ===== AUTO LIGHT / DARK MODE ===== */
 
     .stApp {
-        padding-top: 0;
+        background-color: var(--background-color);
+        color: var(--text-color);
     }
+
+    [data-testid="stSidebar"] {
+        background-color: var(--secondary-background-color);
+    }
+
+    h1, h2, h3, h4, h5, h6,
+    p, span, label {
+        color: var(--text-color);
+    }
+
+    .neu-card {
+        background-color: var(--secondary-background-color);
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid rgba(0,0,0,0.08);
+    }
+
+/* ===== LIGHT MODE RADIO ===== */
+    @media (prefers-color-scheme: light) {
+        [data-testid="stRadio"] input[type="radio"] + div {
+            border: 2px solid transparent !important;   /* 🔹 changed */
+            background-color: transparent !important;   /* 🔹 changed */
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div {
+            border-color: transparent !important;       /* 🔹 changed */
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+            background-color: #2563eb !important;       /* keep dot visible */
+        }
+    }
+
+    /* ===== DARK MODE RADIO ===== */
+    @media (prefers-color-scheme: dark) {
+        [data-testid="stRadio"] input[type="radio"] + div {
+            border: 2px solid transparent !important;   /* 🔹 changed */
+            background-color: transparent !important;
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div {
+            border-color: transparent !important;
+        }
+
+        [data-testid="stRadio"] input[type="radio"]:checked + div::before {
+            background-color: #60a5fa !important;
+        }
+    }
+
+
+   
+   
 
     </style>
     """, unsafe_allow_html=True)
 
 
+                
+    #""", unsafe_allow_html=True)
+
+
+    #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
+
+   
+    import pandas as pd
+
+    st.set_page_config(layout='wide')
     
     # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
@@ -710,7 +664,7 @@ def main():
         df_land = st.session_state.base_land
         df_vess = st.session_state.base_vess
 
-    
+
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
@@ -779,7 +733,7 @@ def main():
 
                     df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
 
-                                        # Update session state immediately and keep merged data
+                    # Update session state immediately and keep merged data
                     st.session_state.base_land = df_land.copy()
                     st.session_state.base_vess = df_vess.copy()
                     st.session_state.data_updated = True  # mark that new data exists
@@ -927,22 +881,21 @@ def main():
                 prev_val = row["Prev_Year"]
                 growth_html = growth_text(total, prev_val)
 
-
                 card_html = f"""
                 <div style="
-                    background: #ffffff;
+                    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.85));
                     border-radius: 14px;
                     padding: 18px 18px 14px 18px;
-                    border: 1px solid #e5e7eb;
-                    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+                    border: 1px solid rgba(0,255,255,0.35);
+                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
                     min-height: 150px;
                 ">
-                    <div style="font-size:18px; color:'black'; margin-bottom:6px;">
+                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
                         <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        <b style="color:black; margin-left:6px;">#{idx+1} {state}</b>
+                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
-                    <div style="font-size:30px; color:black; font-weight:bold;">
-                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
+                    <div style="font-size:30px; color:white; font-weight:bold;">
+                        {total:,.0f} <span style="font-size:16px; color:white;">tonnes</span>
                     </div>
                     <div style="margin-top:8px;">
                         {growth_html}
@@ -950,15 +903,19 @@ def main():
                 </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
+
                 
 
 
         st.markdown("---")
+       
+
+
+      
 
 
         # CHART FOR LATEST YEAR
    
-        # CHART FOR LATEST YEAR
         st.markdown(f"### Total Fish Landing by State ({latest_year})")
 
         filtered_sorted = filtered_latest.sort_values(
@@ -968,68 +925,47 @@ def main():
         import plotly.graph_objects as go
         fig = go.Figure()
 
-        # Stem / connecting lines
+        # Stem lines
         fig.add_trace(
             go.Scatter(
                 x=filtered_sorted["Total Fish Landing (Tonnes)"],
                 y=filtered_sorted["State"],
                 mode="lines",
-                line=dict(color="#94a3b8", width=2),  # slate-400
+                line=dict(color="rgba(0,255,255,0.3)", width=3),
                 hoverinfo="skip",
                 showlegend=False,
             )
         )
 
-        # Markers + values
+        # Neon markers
         fig.add_trace(
             go.Scatter(
                 x=filtered_sorted["Total Fish Landing (Tonnes)"],
                 y=filtered_sorted["State"],
                 mode="markers+text",
-                marker=dict(
-                    color="#0284c7",                  # blue-600
-                    size=10,
-                    line=dict(color="white", width=1)
-                ),
+                marker=dict(color="#00E5FF", size=11, line=dict(color="white", width=1)),
                 text=[f"{v:,.0f}" for v in filtered_sorted["Total Fish Landing (Tonnes)"]],
                 textposition="middle right",
-                textfont=dict(color="#111111", size=11),
+                textfont=dict(color="white", size=11),
                 hovertemplate="State: %{y}<br>Landing: %{x:,.0f}<extra></extra>",
                 showlegend=False,
             )
         )
 
         fig.update_layout(
-            template="plotly_white",
-            paper_bgcolor="white",
-            plot_bgcolor="white",
-
-            font=dict(color="#111111", size=13),
-
+            template="plotly_dark",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
             xaxis=dict(
                 title="Total Fish Landing (Tonnes)",
-                title_font=dict(color="#111111", size=14),
-                tickfont=dict(color="#111111"),
-                gridcolor="#e5e7eb",
-                zerolinecolor="#e5e7eb",
-                showline=True,
-                linecolor="#9ca3af",
+                gridcolor="rgba(255,255,255,0.08)",
             ),
-
-            yaxis=dict(
-                title="",
-                tickfont=dict(color="#111111"),
-                gridcolor="#e5e7eb",
-                categoryorder="array",
-                categoryarray=filtered_sorted["State"],
-            ),
-
-            margin=dict(l=40, r=20, t=60, b=40),
+            yaxis=dict(title="", categoryorder="array", categoryarray=filtered_sorted["State"]),
+            margin=dict(l=40, r=20, t=50, b=40),
         )
-
         st.plotly_chart(fig, use_container_width=True)
-        st.markdown("---")
 
+        st.markdown("---")
 
       
         #  SHOW YEAR SELECTOR & TABLE
@@ -1203,16 +1139,14 @@ def main():
 
 
             # Premium gradient card
-           
             card_style = """
-                background: #ffffff;
+                background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
                 padding: 30px 35px;
                 border-radius: 20px;
-                border: 1px solid #e5e7eb;
-                box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+                border: 1.2px solid rgba(0, 255, 200, 0.25);
+                box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
                 transition: all 0.25s ease;
             """
-
 
             st.markdown("""
                 <style>
@@ -1254,7 +1188,7 @@ def main():
             st.markdown("---")
     
     
-            #  K-MEANS CLUSTERING (REQUIRED FOR PLOTLY)
+            #  K-MEANS CLUSTERING 
          
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly[features])
@@ -1268,18 +1202,12 @@ def main():
 
             st.markdown(f"**Optimal clusters used:** {best_k}")
 
-        
             # PREPARE DATAFRAME FOR PLOTTING
- 
             df_plot = yearly.copy()
             df_plot["Freshwater (Tonnes)"] = df_plot["Freshwater (Tonnes)"].astype(float)
             df_plot["Marine (Tonnes)"] = df_plot["Marine (Tonnes)"].astype(float)
-
-            
             # BUILD INTERACTIVE PLOTLY FIGURE (dual axis)
-            
             fig = go.Figure()
-
             # ---- Freshwater Lines ----
             for cl in sorted(df_plot["Cluster"].unique()):
                 sub = df_plot[df_plot["Cluster"] == cl]
@@ -1292,7 +1220,6 @@ def main():
                     marker=dict(size=7),
                     hovertemplate="<b>Year:</b> %{x}<br><b>Freshwater:</b> %{y:,.0f} tonnes<extra></extra>",
                 ))
-
             # ---- Marine Lines (right axis) ----
             for cl in sorted(df_plot["Cluster"].unique()):
                 sub = df_plot[df_plot["Cluster"] == cl]
@@ -1306,10 +1233,7 @@ def main():
                     hovertemplate="<b>Year:</b> %{x}<br><b>Marine:</b> %{y:,.0f} tonnes<extra></extra>",
                     yaxis="y2"
                 ))
-
-        
             #  Highlight selected year points
-           
             fig.add_trace(go.Scatter(
                 x=[selected_year],
                 y=[fw_val],
@@ -1513,15 +1437,13 @@ def main():
             # PREMIUM SUMMARY CARDS
             # ======================================
 
-            
             card_style = """
-                background: #ffffff;
+                background: linear-gradient(135deg, #06373d 0%, #001f24 100%);
                 padding: 30px 35px;
                 border-radius: 20px;
-                border: 1px solid #e5e7eb;
-                box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+                border: 1.2px solid rgba(0, 255, 200, 0.25);
+                box-shadow: 0 0 18px rgba(0, 255, 200, 0.12);
             """
-
 
             st.markdown(f"## Landing Summary in {selected_month_name} {selected_year}")
 
@@ -1592,27 +1514,19 @@ def main():
             dfm["MonthIndex"] = dfm["MonthYear"].dt.month
 
             dfm_selected = dfm[dfm["Year"] == selected_year].copy()
-
             # =============== KMEANS ===============
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(dfm_selected[features])
             best_k = st.session_state.get("best_k_monthly", 3)
-
             dfm_selected["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
             st.markdown(f"**Optimal clusters used:** {best_k}")
-
             # =============== BUILD PLOTLY FIGURE ===============
             fig = go.Figure()
-
             colors_fw = ["#1f77b4", "#2ca02c", "#17becf", "#9467bd"]
             colors_ma = ["#d62728", "#ff7f0e", "#e377c2", "#8c564b"]
-
-            # ------------------------------------
             # FRESHWATER LINES
-            # ------------------------------------
             for cl in sorted(dfm_selected["Cluster"].unique()):
                 sub = dfm_selected[dfm_selected["Cluster"] == cl]
-
                 fig.add_trace(go.Scatter(
                     x=sub["MonthIndex"],
                     y=sub["Freshwater (Tonnes)"],
@@ -1622,13 +1536,9 @@ def main():
                     marker=dict(size=9),
                     hovertemplate="<b>Month:</b> %{x}<br><b>Freshwater:</b> %{y:,.0f} tonnes<extra></extra>"
                 ))
-
-            # ------------------------------------
             # MARINE LINES
-            # ------------------------------------
             for cl in sorted(dfm_selected["Cluster"].unique()):
                 sub = dfm_selected[dfm_selected["Cluster"] == cl]
-
                 fig.add_trace(go.Scatter(
                     x=sub["MonthIndex"],
                     y=sub["Marine (Tonnes)"],
@@ -1767,9 +1677,8 @@ def main():
             )
             return df
 
-        # ============================================================
         # MONTHLY COMPOSITION
-        # ============================================================
+     
         st.markdown("### 📘 Monthly Fish Landing Composition")
 
         try:
@@ -2522,14 +2431,13 @@ def main():
             "Total number of fishing vessels"
         ]].dropna()
 
+        #HDBSCAN
         df.rename(columns={
             "Total Fish Landing (Tonnes)": "Landing",
             "Total number of fishing vessels": "Vessels"
         }, inplace=True)
 
-        # --------------------------------------------
-        # 3. Scaling
-        # --------------------------------------------
+        # Scaling
         X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
         # --------------------------------------------
@@ -3703,34 +3611,30 @@ def main():
 
             # BLUE CARD (Normal)
             style_blue = """
-                background: #ffffff;
+                background: linear-gradient(135deg, #00557a 0%, #006b8e 100%);
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid #e5e7eb;
-                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+                border: 1px solid rgba(255,255,255,0.14);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             """
-
 
             # GREEN CARD (Highest Landing)
             style_green = """
-                background: #ffffff;
+                background: linear-gradient(135deg, #0f7b53 0%, #0a5f46 100%);
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid #e5e7eb;
-                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+                border: 1px solid rgba(255,255,255,0.14);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             """
-
-
 
             # RED CARD (Lowest Landing)
             style_red = """
-                background: #ffffff;
+                background: linear-gradient(135deg, #8a1f1f 0%, #a02020 100%);
                 padding: 24px;
                 border-radius: 18px;
-                border: 1px solid #e5e7eb;
-                box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+                border: 1px solid rgba(255,255,255,0.14);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             """
-
 
             # TEXT STYLE (white contrast)
             text_title = "color:white; font-size:18px; font-weight:500;"
@@ -3953,43 +3857,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-st.markdown(f"### 🏅 Top 3 States in {latest_year}")
-        
-
-        card_cols = st.columns(3)
-        
-        
-        for idx, (_, row) in enumerate(top3.iterrows()):
-            with card_cols[idx]:
-                state = row["State"]
-                total = row["Total Fish Landing (Tonnes)"]
-                prev_val = row["Prev_Year"]
-                growth_html = growth_text(total, prev_val)
-
-                card_html = f"""
-                <div style="
-                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
-                    border-radius: 14px;
-                    padding: 18px 18px 14px 18px;
-                    border: 1px solid rgba(0,255,255,0.35);
-                    box-shadow: 0 0 18px rgba(0,255,255,0.18);
-                    min-height: 150px;
-                ">
-                    <div style="font-size:18px; color:'white'; margin-bottom:6px;">
-                        <span style="color:{medal_colors[idx]}; font-size:22px;">●</span>
-                        <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
-                    </div>
-                    <div style="font-size:30px; color:white; font-weight:bold;">
-                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
-                    </div>
-                    <div style="margin-top:8px;">
-                        {growth_html}
-                    </div>
-                </div>
-                """
-                st.markdown(card_html, unsafe_allow_html=True)
-
-        st.markdown("---")

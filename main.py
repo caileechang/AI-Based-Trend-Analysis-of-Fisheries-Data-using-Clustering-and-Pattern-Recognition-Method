@@ -580,72 +580,59 @@ def main():
     st.markdown("""
     <style>
 
-    /* ===== AUTO LIGHT / DARK MODE ===== */
-
-    .stApp {
-        background-color: var(--background-color);
-        color: var(--text-color);
-    }
-
-    [data-testid="stSidebar"] {
-        background-color: var(--secondary-background-color);
-    }
-
-    h1, h2, h3, h4, h5, h6,
-    p, span, label {
-        color: var(--text-color);
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
     }
 
     .neu-card {
-        background-color: var(--secondary-background-color);
-        border-radius: 16px;
-        padding: 24px;
-        border: 1px solid rgba(0,0,0,0.08);
+        background: #1b1b1b;
+        border-radius: 24px;
+        padding: 28px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255,255,255,0.06);
+
+        /* NEUMORPHISM SHADOW */
+        box-shadow:
+            9px 9px 20px rgba(0,0,0,0.55),
+            -9px -9px 20px rgba(255,255,255,0.04);
+
+        animation: fadeIn 0.55s ease-out;
+        transition: all 0.25s ease;
+        position: relative;
+        overflow: hidden;
     }
 
-/* ===== LIGHT MODE RADIO ===== */
-    @media (prefers-color-scheme: light) {
-        [data-testid="stRadio"] input[type="radio"] + div {
-            border: 2px solid transparent !important;   /* 🔹 changed */
-            background-color: transparent !important;   /* 🔹 changed */
-        }
-
-        [data-testid="stRadio"] input[type="radio"]:checked + div {
-            border-color: transparent !important;       /* 🔹 changed */
-        }
-
-        [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-            background-color: #2563eb !important;       /* keep dot visible */
-        }
+    /* HOVER EFFECT */
+    .neu-card:hover {
+        transform: translateY(-6px);
+        box-shadow:
+            12px 12px 28px rgba(0,0,0,0.65),
+            -12px -12px 28px rgba(255,255,255,0.06);
     }
 
-    /* ===== DARK MODE RADIO ===== */
-    @media (prefers-color-scheme: dark) {
-        [data-testid="stRadio"] input[type="radio"] + div {
-            border: 2px solid transparent !important;   /* 🔹 changed */
-            background-color: transparent !important;
-        }
-
-        [data-testid="stRadio"] input[type="radio"]:checked + div {
-            border-color: transparent !important;
-        }
-
-        [data-testid="stRadio"] input[type="radio"]:checked + div::before {
-            background-color: #60a5fa !important;
-        }
+    /* SHIMMER HIGHLIGHT */
+    .shimmer {
+        background: linear-gradient(
+            90deg,
+            rgba(255,255,255,0) 0%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0) 100%
+        );
+        position: absolute;
+        top:0; left:0;
+        height:100%; width:100%;
+        transform: translateX(-100%);
+        animation: shimmerMove 2.7s infinite;
     }
 
-
-   
-   
+    @keyframes shimmerMove {
+        0%   { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
 
     </style>
     """, unsafe_allow_html=True)
-
-
-                
-    #""", unsafe_allow_html=True)
-
 
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
 
@@ -885,7 +872,7 @@ def main():
 
                 card_html = f"""
                 <div style="
-                    background: radial-gradient(circle at top left, rgba(96, 165, 250, 0.85));
+                    background: radial-gradient(circle at top left, rgba(0,255,255,0.25), rgba(0,0,0,0.9));
                     border-radius: 14px;
                     padding: 18px 18px 14px 18px;
                     border: 1px solid rgba(0,255,255,0.35);
@@ -897,7 +884,7 @@ def main():
                         <b style="color:white; margin-left:6px;">#{idx+1} {state}</b>
                     </div>
                     <div style="font-size:30px; color:white; font-weight:bold;">
-                        {total:,.0f} <span style="font-size:16px; color:white;">tonnes</span>
+                        {total:,.0f} <span style="font-size:16px; color:#bbb;">tonnes</span>
                     </div>
                     <div style="margin-top:8px;">
                         {growth_html}
@@ -910,10 +897,6 @@ def main():
 
 
         st.markdown("---")
-       
-
-
-      
 
 
         # CHART FOR LATEST YEAR
