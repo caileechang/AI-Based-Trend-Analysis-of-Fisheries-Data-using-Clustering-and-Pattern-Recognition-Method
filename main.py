@@ -2137,7 +2137,7 @@ def main():
         df["Anomaly_Score"] = clusterer.outlier_scores_
 
         # Safe normalization
-        max_score = df["Outlier_Score"].max()
+        max_score = df["Anomaly_Score"].max()
         if max_score > 0:
             df["Outlier_Score"] = df["Anomaly_Score"] / max_score
         else:
