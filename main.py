@@ -653,7 +653,8 @@ def main():
         df_land = st.session_state.base_land
         df_vess = st.session_state.base_vess
 
-
+    import streamlit as st
+    import pandas as pd
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     # uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
