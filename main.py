@@ -2139,11 +2139,11 @@ def main():
         # Safe normalization
         max_score = df["Outlier_Score"].max()
         if max_score > 0:
-            df["Outlier_Scores"] = df["Outlier_Score"] / max_score
+            df["Anomaly_Score"] = df["Outlier_Score"] / max_score
         else:
-            df["Outlier_Scores"] = 0.0
+            df["Anomaly_Score"] = 0.0
 
-        df["Anomaly"] = df["Outlier_Scores"] >= 0.65
+        df["Anomaly"] = df["Anomaly_Score"] >= 0.65
 
         # =====================================================
         # 6️⃣ EXPLANATION RULES
