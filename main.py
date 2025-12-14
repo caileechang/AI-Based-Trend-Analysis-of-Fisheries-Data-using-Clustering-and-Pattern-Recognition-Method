@@ -2172,7 +2172,7 @@ def main():
         st.markdown("### 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"]][[
-            "State", "Landing", "Vessels", "Outlier_Norm", "Explanation"
+            "State", "Landing", "Vessels", "Anomaly_Score", "Explanation"
         ]]
 
         if outliers.empty:
