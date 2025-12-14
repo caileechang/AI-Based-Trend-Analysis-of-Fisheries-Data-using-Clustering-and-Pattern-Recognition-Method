@@ -661,7 +661,7 @@ def main():
 
  
 
-    uploaded_files = st.file_uploader(
+    uploaded_files = st.sidebar.file_uploader(
         "Upload Excel (1 file) or CSV (2 files)",
         type=["xlsx", "csv"],
         accept_multiple_files=True
