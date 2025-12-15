@@ -913,7 +913,7 @@ def main():
        
         "HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
-        "Geospatial Maps","Geospatial Maps(2)"
+        "Geospatial Maps"
     ])
 
     
