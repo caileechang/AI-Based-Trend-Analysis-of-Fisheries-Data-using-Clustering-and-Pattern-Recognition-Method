@@ -2119,6 +2119,7 @@ def main():
         import seaborn as sns
         import numpy as np
         import pandas as pd
+        import plotly.express as px
         
         from mpl_toolkits.mplot3d import Axes3D
 
