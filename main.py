@@ -2224,6 +2224,8 @@ def main():
             plt.tight_layout()
             st.pyplot(fig, use_container_width=False)
 
+            import plotly.express as px
+
         # ===================================================
         # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
         # ===================================================
