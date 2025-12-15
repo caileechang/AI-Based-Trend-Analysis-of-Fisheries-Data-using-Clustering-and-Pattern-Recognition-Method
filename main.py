@@ -698,22 +698,25 @@ def main():
                 # ============================
                 elif len(uploaded_files) == 2 and all(f.name.endswith(".csv") for f in uploaded_files):
 
+                    # ---- initialise once ----
+                    if "upload_toast_shown" not in st.session_state:
+                        st.session_state.upload_toast_shown = False
+
                     user_land, user_vess = None, None
                     unresolved = []
 
+                    # ---- auto-detect from filename ----
                     for f in uploaded_files:
                         detected = detect_dataset_type(f.name)
 
                         if detected == "Fish Landing":
                             user_land = pd.read_csv(f)
-                            st.toast(f"✔ {f.name} detected as Fish Landing")
                         elif detected == "Fish Vessels":
                             user_vess = pd.read_csv(f)
-                            st.toast(f"✔ {f.name} detected as Fish Vessels")
                         else:
                             unresolved.append(f)
 
-                    # If detection failed for any file, ask user manually
+                    # ---- fallback: manual assignment ONLY if detection fails ----
                     if unresolved:
                         st.warning("Some files could not be auto-identified. Please assign manually.")
 
@@ -731,12 +734,19 @@ def main():
                             else:
                                 user_vess = pd.read_csv(f)
 
-                    # Final validation
+                    # ---- STRICT VALIDATION: BOTH REQUIRED ----
                     if user_land is None or user_vess is None:
-                        st.error("Both Fish Landing and Fish Vessels datasets are required.")
+                        st.error(
+                            "❌ Analysis requires BOTH datasets:\n"
+                            "- Fish Landing CSV\n"
+                            "- Fish Vessels CSV"
+                        )
                         st.stop()
 
-                    st.toast("CSV files loaded successfully (auto-detected)")
+                    # ---- ONE-TIME SUCCESS TOAST ----
+                    if not st.session_state.upload_toast_shown:
+                        st.toast("Both Fish Landing & Fish Vessels CSV files uploaded successfully", icon="✅")
+                        st.session_state.upload_toast_shown = True
 
 
         
