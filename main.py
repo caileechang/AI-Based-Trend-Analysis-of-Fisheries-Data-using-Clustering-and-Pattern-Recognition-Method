@@ -570,6 +570,7 @@ def hierarchical_clustering(merged_df):
     )
 
 
+
 def main():
     
    
@@ -913,12 +914,26 @@ def main():
         # A) Summary Cards + Lollipop 
 
 
-        # Get latest year
-        latest_year = int(yearly_summary["Year"].max())
-        prev_year = latest_year - 1
+       
+        # Get available years
+        available_years = sorted(yearly_summary["Year"].unique())
 
-        filtered_latest = yearly_summary[yearly_summary["Year"] == latest_year].copy()
+        # Default to latest year in dataset
+        selected_year = st.selectbox(
+            "Select year to analyse:",
+            available_years,
+            index=len(available_years) - 1
+        )
 
+        # Use USER selection (not latest_year)
+        filtered_latest = yearly_summary[
+            yearly_summary["Year"] == selected_year
+        ].copy()
+
+        # Previous year relative to selected year
+        prev_year = selected_year - 1
+
+        
         # Sort by landing
         sorted_desc = filtered_latest.sort_values(
             "Total Fish Landing (Tonnes)", ascending=False
