@@ -774,8 +774,8 @@ def main():
                 
 
         
-                if user_land is not None and user_vess is not None:
-                    #st.subheader("New dataset uploaded")
+        if user_land is not None and user_vess is not None:
+            #st.subheader("New dataset uploaded")
                     #st.dataframe(user_land, use_container_width=True, height=400)
                     msg2=st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
                    
@@ -914,26 +914,24 @@ def main():
         # A) Summary Cards + Lollipop 
 
 
-       
-        # Get available years
+        # Get latest year
+        latest_year = int(yearly_summary["Year"].max())
         available_years = sorted(yearly_summary["Year"].unique())
 
-        # Default to latest year in dataset
         selected_year = st.selectbox(
             "Select year to analyse:",
             available_years,
             index=len(available_years) - 1
         )
 
-        # Use USER selection (not latest_year)
         filtered_latest = yearly_summary[
             yearly_summary["Year"] == selected_year
-        ].copy()
+        ]
 
-        # Previous year relative to selected year
-        prev_year = selected_year - 1
+        prev_year = latest_year - 1
 
-        
+        filtered_latest = yearly_summary[yearly_summary["Year"] == latest_year].copy()
+
         # Sort by landing
         sorted_desc = filtered_latest.sort_values(
             "Total Fish Landing (Tonnes)", ascending=False
