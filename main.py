@@ -706,10 +706,10 @@ def main():
 
                         if detected == "Fish Landing":
                             user_land = pd.read_csv(f)
-                            st.success(f"✔ {f.name} detected as Fish Landing")
+                            st.toast(f"✔ {f.name} detected as Fish Landing")
                         elif detected == "Fish Vessels":
                             user_vess = pd.read_csv(f)
-                            st.success(f"✔ {f.name} detected as Fish Vessels")
+                            st.toast(f"✔ {f.name} detected as Fish Vessels")
                         else:
                             unresolved.append(f)
 
@@ -736,7 +736,7 @@ def main():
                         st.error("Both Fish Landing and Fish Vessels datasets are required.")
                         st.stop()
 
-                    st.success("CSV files loaded successfully (auto-detected)")
+                    st.toast("CSV files loaded successfully (auto-detected)")
 
 
         
