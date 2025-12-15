@@ -296,14 +296,15 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
 
     return best_k, best_sil, best_inertia
 
+from scipy.cluster.hierarchy import linkage
 
 def compute_apn_like(Z_full, X_full, best_k):
     """
     APN-like stability metric for hierarchical clustering.
     Lower value = more stable clustering.
     """
-    from scipy.cluster.hierarchy import fcluster
     import numpy as np
+    from scipy.cluster.hierarchy import fcluster, linkage
 
     # Full clustering labels
     labels_full = fcluster(Z_full, best_k, criterion="maxclust")
@@ -321,12 +322,12 @@ def compute_apn_like(Z_full, X_full, best_k):
         # Re-cluster
         labels_reduced = fcluster(Z_reduced, best_k, criterion="maxclust")
 
-        # Compute proportion of changed assignments
+        # Proportion of changed assignments
         diff = labels_full != labels_reduced
         apn_values.append(np.mean(diff))
 
-    # Average over features
     return np.mean(apn_values)
+
 
 
 
