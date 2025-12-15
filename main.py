@@ -605,7 +605,7 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Final table
     # ----------------------------
-    st.markdown("### Cluster Assignments (TRUE Hierarchical Clusters)")
+   
     st.dataframe(
         grouped[["State",
                  "Total Fish Landing (Tonnes)",
