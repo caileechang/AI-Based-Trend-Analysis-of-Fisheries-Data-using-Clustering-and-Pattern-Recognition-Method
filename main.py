@@ -297,6 +297,36 @@ def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
     return best_k, best_sil, best_inertia
 
 
+def compute_apn_like(Z_full, X_full, best_k):
+    """
+    APN-like stability metric for hierarchical clustering.
+    Lower value = more stable clustering.
+    """
+    from scipy.cluster.hierarchy import fcluster
+    import numpy as np
+
+    # Full clustering labels
+    labels_full = fcluster(Z_full, best_k, criterion="maxclust")
+
+    n_features = X_full.shape[1]
+    apn_values = []
+
+    for i in range(n_features):
+        # Remove one feature
+        X_reduced = np.delete(X_full, i, axis=1)
+
+        # Re-linkage
+        Z_reduced = linkage(X_reduced, method="ward")
+
+        # Re-cluster
+        labels_reduced = fcluster(Z_reduced, best_k, criterion="maxclust")
+
+        # Compute proportion of changed assignments
+        diff = labels_full != labels_reduced
+        apn_values.append(np.mean(diff))
+
+    # Average over features
+    return np.mean(apn_values)
 
 
 
@@ -406,6 +436,12 @@ def hierarchical_clustering(merged_df):
     best_k = max(valid_scores, key=valid_scores.get)
 
     # ----------------------------
+    # APN-like Stability Metric
+    # ----------------------------
+    apn_score = compute_apn_like(Z, scaled, best_k)
+
+
+    # ----------------------------
     # Visualisation Layout
     # ----------------------------
     col1, col2 = st.columns([1, 1])
@@ -447,6 +483,14 @@ def hierarchical_clustering(merged_df):
     # Best-k Display
     # ----------------------------
     st.success(f"Optimal number of clusters (based on Silhouette): **k = {best_k}**")
+
+    st.info(
+    f"📊 Cluster Validation Summary\n\n"
+    f"- Silhouette Score: **{valid_scores[best_k]:.4f}**\n"
+    f"- APN (stability): **{apn_score:.4f}**\n\n"
+    "Lower APN indicates more stable clusters."
+)
+
 
 
 
