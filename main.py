@@ -826,12 +826,9 @@ def main():
                 st.error(f"Error reading uploaded file: {e}")
 
         if user_land is not None and user_vess is not None:
-            #st.subheader("New dataset uploaded")
+            
                     #st.dataframe(user_land, use_container_width=True, height=400)
-                    # =====================================================
                     # VALIDATE UPLOADED DATASET SCHEMA (CRITICAL)
-                    # =====================================================
-
                     # --- Required columns ---
                     required_land_cols = {
                         "state",
@@ -841,7 +838,6 @@ def main():
                         "fishlandingtonnes"
                     }
 
-
                     required_vess_cols = {
                         "state",
                         "year",
@@ -850,20 +846,30 @@ def main():
                         "nonpowered"
                     }
 
+                    pretty_col_names = {
+                        "state": "State",
+                        "year": "Year",
+                        "month": "Month",
+                        "typeoffish": "Type of Fish",
+                        "fishlandingtonnes": "Fish Landing (Tonnes)",
+                        "inboardpowered": "Inboard Powered",
+                        "outboardpowered": "Outboard Powered",
+                        "nonpowered": "Non-Powered"
+                    }
 
                     # Normalize headers 
                     land_cols = {normalize_col(c) for c in user_land.columns}
                     vess_cols = {normalize_col(c) for c in user_vess.columns}
 
-
                     missing_land = required_land_cols - land_cols
                     missing_vess = required_vess_cols - vess_cols
 
                     if missing_land:
+                        missing_land_pretty = [pretty_col_names[c] for c in missing_land]
                         st.error(
-                            "❌ Invalid **Fish Landing** dataset.\n\n"
+                            "❌ Invalid Fish Landing dataset.\n\n"
                             "Missing required column(s):\n"
-                            f"{', '.join(sorted(missing_land))}"
+                            f"{', '.join(missing_land_pretty)}"
                         )
                         st.info(
                             "Fish Landing dataset MUST contain:\n"
@@ -872,10 +878,12 @@ def main():
                         st.stop()
 
                     if missing_vess:
+                        missing_vess_pretty = [pretty_col_names[c] for c in missing_vess]
+
                         st.error(
-                            "❌ Invalid **Fish Vessels** dataset.\n\n"
+                            "❌ Invalid Fish Vessels dataset.\n\n"
                             "Missing required column(s):\n"
-                            f"{', '.join(sorted(missing_vess))}"
+                            f"{', '.join(missing_vess_pretty)}"
                         )
                         st.info(
                             "Fish Vessels dataset MUST contain:\n"
@@ -910,11 +918,13 @@ def main():
                    
         
                     # --- Clean uploaded data to match base format ---
-                    user_land.columns = user_land.columns.str.strip().str.title()
+                    #user_land.columns = user_land.columns.str.strip().str.title()
                     user_land['Month'] = user_land['Month'].astype(str).str.strip().str.title()
                     user_land['State'] = user_land['State'].astype(str).str.upper().str.strip()
-                    user_land['Type Of Fish'] = user_land['Type Of Fish'].astype(str).str.title().str.strip()
-                    user_land.rename(columns={'Type Of Fish': 'Type of Fish'}, inplace=True)
+                    user_land['Type of Fish'] = user_land['Type of Fish'].astype(str).str.title().str.strip()
+
+                    #user_land['Type Of Fish'] = user_land['Type Of Fish'].astype(str).str.title().str.strip()
+                    #user_land.rename(columns={'Type Of Fish': 'Type of Fish'}, inplace=True)
 
                      # Convert month names to numbers
                     month_map = {
@@ -937,7 +947,7 @@ def main():
                     msg1=st.toast(" Uploaded data successfully merged with existing dataset.")
                     
                     # --- Clean uploaded vessel data to match base format ---
-                    user_vess.columns = user_vess.columns.str.strip().str.title()
+                    #user_vess.columns = user_vess.columns.str.strip().str.title()
                     user_vess['State'] = user_vess['State'].astype(str).str.upper().str.strip()
                     
                     for col in ['Inboard Powered', 'Outboard Powered', 'Non-Powered']:
