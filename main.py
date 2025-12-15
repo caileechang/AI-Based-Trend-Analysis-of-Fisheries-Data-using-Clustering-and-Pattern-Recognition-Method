@@ -646,12 +646,9 @@ def main():
         st.session_state.base_land, st.session_state.base_vess = load_data()
         st.session_state.data_updated = False  # no uploaded data yet
     
-    if "data_updated" in st.session_state and st.session_state.data_updated:
-        df_land = st.session_state.base_land
-        df_vess = st.session_state.base_vess
-    else:
-        df_land = st.session_state.base_land
-        df_vess = st.session_state.base_vess
+    df_land = st.session_state.base_land.copy()
+    df_vess = st.session_state.base_vess.copy()
+
 
     
     # Upload additional yearly CSV
@@ -675,47 +672,47 @@ def main():
             # ============================
             # CASE 1: Excel (.xlsx)
             # ============================
-            if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
-                excel = pd.ExcelFile(uploaded_files[0])
+                if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
+                    excel = pd.ExcelFile(uploaded_files[0])
 
-                if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
-                    user_land = pd.read_excel(excel, "Fish Landing")
-                    user_vess = pd.read_excel(excel, "Fish Vessels")
-                    st.success("Excel loaded successfully")
-                else:
-                    st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
-                    st.stop()
-
-            # ============================
-            # CASE 2: CSV (2 files)
-            # ============================
-            elif len(uploaded_files) == 2 and all(f.name.endswith(".csv") for f in uploaded_files):
-
-                st.info("Assign each CSV file")
-
-                assignments = {}
-                for f in uploaded_files:
-                    assignments[f.name] = st.selectbox(
-                        f"Dataset type for {f.name}",
-                        ["Fish Landing", "Fish Vessels"],
-                        key=f.name
-                    )
-
-                if len(set(assignments.values())) != 2:
-                    st.error("Each dataset type must be assigned once")
-                    st.stop()
-
-                for f in uploaded_files:
-                    if assignments[f.name] == "Fish Landing":
-                        user_land = pd.read_csv(f)
+                    if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
+                        user_land = pd.read_excel(excel, "Fish Landing")
+                        user_vess = pd.read_excel(excel, "Fish Vessels")
+                        st.success("Excel loaded successfully")
                     else:
-                        user_vess = pd.read_csv(f)
+                        st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
+                        st.stop()
 
-                st.success("CSV files loaded successfully")
+                # ============================
+                # CASE 2: CSV (2 files)
+                # ============================
+                elif len(uploaded_files) == 2 and all(f.name.endswith(".csv") for f in uploaded_files):
 
-            else:
-                st.error("Upload ONE Excel or TWO CSV files only")
-                st.stop()
+                    st.info("Assign each CSV file")
+
+                    assignments = {}
+                    for f in uploaded_files:
+                        assignments[f.name] = st.selectbox(
+                            f"Dataset type for {f.name}",
+                            ["Fish Landing", "Fish Vessels"],
+                            key=f.name
+                        )
+
+                    if len(set(assignments.values())) != 2:
+                        st.error("Each dataset type must be assigned once")
+                        st.stop()
+
+                    for f in uploaded_files:
+                        if assignments[f.name] == "Fish Landing":
+                            user_land = pd.read_csv(f)
+                        else:
+                            user_vess = pd.read_csv(f)
+
+                    st.success("CSV files loaded successfully")
+
+                else:
+                    st.error("Upload ONE Excel or TWO CSV files only")
+                    st.stop()
 
         
 
