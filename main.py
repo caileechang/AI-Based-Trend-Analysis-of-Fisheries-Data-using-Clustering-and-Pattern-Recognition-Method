@@ -492,6 +492,7 @@ def hierarchical_clustering(merged_df):
     "Lower APN indicates more stable clusters."
 )
 
+    st.write("APN score:", apn_score)
 
 
 
