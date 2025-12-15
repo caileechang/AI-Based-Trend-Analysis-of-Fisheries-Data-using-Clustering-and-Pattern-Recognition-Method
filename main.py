@@ -684,18 +684,24 @@ def main():
             # CASE 1: Excel (.xlsx)
             # ============================
             if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
+                uploaded_name = uploaded_files[0].name
+
+            # Initialize tracker once
+            if "last_excel_uploaded" not in st.session_state:
+                st.session_state.last_excel_uploaded = None
+
+            # Only process & toast if this is a NEW upload
+            if st.session_state.last_excel_uploaded != uploaded_name:
+
                 excel = pd.ExcelFile(uploaded_files[0])
 
                 if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
                     user_land = pd.read_excel(excel, "Fish Landing")
                     user_vess = pd.read_excel(excel, "Fish Vessels")
-                    # ---- SHOW TOAST ONLY ONCE PER FILE ----
-                    toast_key = f"excel_toast_{uploaded_files[0].name}"
 
-                    if toast_key not in st.session_state:
-                        st.toast("Excel loaded successfully", icon="✅")
-                        st.session_state[toast_key] = True
-                    
+                    st.toast("Excel loaded successfully", icon="✅")
+                    st.session_state.last_excel_uploaded = uploaded_name
+
                 else:
                     st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
                     st.stop()
