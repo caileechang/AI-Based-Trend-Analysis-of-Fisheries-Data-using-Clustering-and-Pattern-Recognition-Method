@@ -735,12 +735,8 @@ def main():
             if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
                 uploaded_name = uploaded_files[0].name
 
-            # Initialize tracker once
-            if "last_excel_uploaded" not in st.session_state:
-                st.session_state.last_excel_uploaded = None
+            
 
-            # Only process & toast if this is a NEW upload
-            if st.session_state.last_excel_uploaded != uploaded_name:
 
                 excel = pd.ExcelFile(uploaded_files[0])
 
@@ -749,7 +745,7 @@ def main():
                     user_vess = pd.read_excel(excel, "Fish Vessels")
 
                     st.toast("Excel loaded successfully", icon="✅")
-                    st.session_state.last_excel_uploaded = uploaded_name
+                   
 
                 else:
                     st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
@@ -2112,181 +2108,157 @@ def main():
     
 
     elif plot_option == "3D KMeans Clustering":
-
-        # ===================================================
-        # IMPORTS (EXPLICIT – DO NOT REMOVE)
-        # ===================================================
+        import matplotlib.pyplot as plt
+        import seaborn as sns
         import numpy as np
         import pandas as pd
-        import matplotlib.pyplot as plt
         import plotly.express as px
-        import streamlit as st
-
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.cluster import KMeans
-        from sklearn.metrics import silhouette_score
+        
         from mpl_toolkits.mplot3d import Axes3D
 
         st.subheader("Automatic 3D K-Means Clustering")
 
-        # ===================================================
-        # SAFETY CHECK 1: merged_df EXISTS
-        # ===================================================
-        if "merged_df" not in locals() or merged_df is None or merged_df.empty:
-            st.error("Merged dataset is not available. Please load or upload data first.")
-            st.stop()
-
-        # ===================================================
-        # SAFETY CHECK 2: REQUIRED COLUMNS
-        # ===================================================
-        required_cols = [
-            "Total Fish Landing (Tonnes)",
-            "Total number of fishing vessels",
-            "Year"
-        ]
-
-        missing_cols = [c for c in required_cols if c not in merged_df.columns]
-        if missing_cols:
-            st.error(f"Missing required columns: {missing_cols}")
-            st.stop()
-
-        # ===================================================
+        # ---------------------------------------------------
         # STEP 1: PREPARE DATA
-        # ===================================================
-        df = merged_df.copy()
+        # ---------------------------------------------------
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
+        scaled = StandardScaler().fit_transform(features)
 
-        features = df[
-            ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
-        ]
-
-        scaler = StandardScaler()
-        scaled = scaler.fit_transform(features)
-
-        # ===================================================
-        # STEP 2: AUTOMATIC k SELECTION (SILHOUETTE)
-        # ===================================================
+        # ---------------------------------------------------
+        # STEP 2: AUTOMATICALLY FIND BEST k (Silhouette)
+        # ---------------------------------------------------
         sil_scores = {}
-        max_k = min(10, len(df) - 1)
-
-        if max_k < 2:
-            st.error("Not enough data points for clustering.")
-            st.stop()
-
-        for k in range(2, max_k + 1):
-            kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+        for k in range(2, 11):
+            kmeans = KMeans(n_clusters=k, random_state=42)
             labels = kmeans.fit_predict(scaled)
             sil_scores[k] = silhouette_score(scaled, labels)
 
         best_k = max(sil_scores, key=sil_scores.get)
 
-        # ===================================================
-        # STEP 3: FINAL KMEANS
-        # ===================================================
-        final_model = KMeans(n_clusters=best_k, random_state=42, n_init=10)
-        df["Cluster"] = final_model.fit_predict(scaled)
+        # ---------------------------------------------------
+        # STEP 3: FIT FINAL MODEL
+        # ---------------------------------------------------
+        final_model = KMeans(n_clusters=best_k, random_state=42)
+        merged_df['Cluster'] = final_model.fit_predict(scaled)
 
-        # ===================================================
-        # USER OPTIONS
-        # ===================================================
-        if best_k is not None:
-            st.markdown(f"**Optimal number of clusters:** {best_k}")
-
-        st.markdown("Clusters are selected automatically using the highest silhouette score.")
-
+        # ---------------------------------------------------
+        # STEP 4: USER CHOICES
+        # ---------------------------------------------------
         vis_mode = st.radio(
             "Select visualization type:",
             ["Static", "Interactive"],
             horizontal=True
         )
+        
+
+        st.markdown(f"**Optimal number of clusters:** {best_k}")
+        st.markdown("Clusters selected automatically using the highest Silhouette score.")
 
         # ===================================================
-        # STATIC 3D MATPLOTLIB
+        # STATIC VERSION 
         # ===================================================
         if vis_mode == "Static":
-
             st.sidebar.markdown("### Adjust 3D View")
             elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
             azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
+           
 
-            plt.close("all")
-            fig = plt.figure(figsize=(5.5, 4.5), dpi=150)
-            ax = fig.add_subplot(111, projection="3d")
+            plt.close('all')
 
-            scatter = ax.scatter(
-                df["Total number of fishing vessels"],
-                df["Total Fish Landing (Tonnes)"],
-                df["Year"],
-                c=df["Cluster"],
-                cmap=plt.cm.coolwarm,
+            fig = plt.figure(figsize=(5, 4), dpi=150)
+            ax = fig.add_subplot(111, projection='3d')
+
+            # PREMIUM COLOR PALETTE
+            cmap = plt.cm.coolwarm
+
+            # Scatter plot with nicer styling
+            ax.scatter(
+                merged_df['Total number of fishing vessels'],
+                merged_df['Total Fish Landing (Tonnes)'],
+                merged_df['Year'],
+                c=merged_df['Cluster'],
+                cmap=cmap,
                 s=40,
-                alpha=0.9,
+                alpha=0.88,
                 edgecolor="white",
                 linewidth=0.4,
                 depthshade=True
             )
 
+            # =====================================================
+            # MODERN GRID & BACKGROUND WITHOUT USING _axinfo
+            # =====================================================
+
+            # Light grey background
             ax.set_facecolor("#F5F5F5")
+
+            # Grid style
             ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.3)
 
-            ax.set_xlabel("Fishing Vessels", fontsize=8, labelpad=6)
-            ax.set_ylabel("Fish Landing (Tonnes)", fontsize=8, labelpad=6)
-            ax.set_zlabel("Year", fontsize=8, labelpad=6)
+            # Tick style
+            ax.tick_params(colors="#444", labelsize=7)
 
+            # Label style
+            ax.set_xlabel("Vessels", fontsize=8, labelpad=6, color="#333")
+            ax.set_ylabel("Landings", fontsize=8, labelpad=6, color="#333")
+            ax.set_zlabel("Year", fontsize=8, labelpad=6, color="#333")
+
+            # Title
             ax.set_title(
-                f"Static 3D KMeans Clustering (k={best_k})",
+                f"Static 3D KMeans (k={best_k})",
                 fontsize=10,
                 weight="bold",
-                pad=12
+                pad=12,
+                color="#222"
             )
 
+            # Camera angles
             ax.view_init(elev=elev, azim=azim)
 
             plt.tight_layout()
-            st.pyplot(fig)
+            st.pyplot(fig, use_container_width=False)
+
+            
 
         # ===================================================
-        # INTERACTIVE 3D PLOTLY
+        # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
         # ===================================================
         else:
-
             fig = px.scatter_3d(
-                df,
-                x="Total number of fishing vessels",
-                y="Total Fish Landing (Tonnes)",
-                z="Year",
-                color="Cluster",
-                symbol="Cluster",
-                hover_data=[
-                    "State",
-                    "Year",
-                    "Total Fish Landing (Tonnes)",
-                    "Total number of fishing vessels"
-                ],
+                merged_df,
+                x='Total number of fishing vessels',
+                y='Total Fish Landing (Tonnes)',
+                z='Year',
+                color='Cluster',
+                color_continuous_scale='Viridis',
+                symbol='Cluster',
+                hover_data=['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels'],
                 title=f"Interactive 3D KMeans Clustering (k={best_k})",
-                height=600,
-                color_continuous_scale="Viridis"
+                height=600
             )
 
             fig.update_traces(
                 marker=dict(
                     size=5,
-                    line=dict(width=0.6, color="black")
+                    line=dict(width=0.7, color='black')
                 )
             )
 
             fig.update_layout(
                 scene=dict(
-                    xaxis_title="Fishing Vessels",
-                    yaxis_title="Fish Landing (Tonnes)",
-                    zaxis_title="Year"
+                    xaxis_title="Vessels",
+                    yaxis_title="Landings",
+                    zaxis_title="Year",
+                    xaxis=dict(backgroundcolor='#1f1f1f'),
+                    yaxis=dict(backgroundcolor='#1f1f1f'),
+                    zaxis=dict(backgroundcolor='#1f1f1f'),
                 ),
-                paper_bgcolor="#111111",
-                font_color="white",
+                paper_bgcolor='#111111',
+                font_color='white',
                 margin=dict(l=0, r=0, b=0, t=50)
             )
 
             st.plotly_chart(fig, use_container_width=True)
-
    
 
    
