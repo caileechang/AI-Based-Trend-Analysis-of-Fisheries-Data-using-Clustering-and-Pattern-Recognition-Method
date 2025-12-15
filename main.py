@@ -708,14 +708,11 @@ def main():
             return "Fish Vessels"
         return None
     
+    import re
+
     def normalize_col(col):
-        return (
-            col.strip()
-            .lower()
-            .replace(" ", "")
-            .replace("_", "")
-            .replace("-", "")
-        )
+        return re.sub(r'[^a-z0-9]', '', col.lower())
+
 
 
 
