@@ -650,6 +650,16 @@ def main():
     df_vess = st.session_state.base_vess.copy()
 
 
+    def detect_dataset_type(filename):
+        name = filename.lower().replace(" ", "").replace("_", "")
+        if "landing" in name:
+            return "Fish Landing"
+        if "vessel" in name or "vessels" in name:
+            return "Fish Vessels"
+        return None
+
+
+
     
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
@@ -688,31 +698,46 @@ def main():
                 # ============================
                 elif len(uploaded_files) == 2 and all(f.name.endswith(".csv") for f in uploaded_files):
 
-                    st.info("Assign each CSV file")
+                    user_land, user_vess = None, None
+                    unresolved = []
 
-                    assignments = {}
                     for f in uploaded_files:
-                        assignments[f.name] = st.selectbox(
-                            f"Dataset type for {f.name}",
-                            ["Fish Landing", "Fish Vessels"],
-                            key=f.name
-                        )
+                        detected = detect_dataset_type(f.name)
 
-                    if len(set(assignments.values())) != 2:
-                        st.error("Each dataset type must be assigned once")
+                        if detected == "Fish Landing":
+                            user_land = pd.read_csv(f)
+                            st.success(f"✔ {f.name} detected as Fish Landing")
+                        elif detected == "Fish Vessels":
+                            user_vess = pd.read_csv(f)
+                            st.success(f"✔ {f.name} detected as Fish Vessels")
+                        else:
+                            unresolved.append(f)
+
+                    # If detection failed for any file, ask user manually
+                    if unresolved:
+                        st.warning("Some files could not be auto-identified. Please assign manually.")
+
+                        assignments = {}
+                        for f in unresolved:
+                            assignments[f.name] = st.selectbox(
+                                f"Dataset type for {f.name}",
+                                ["Fish Landing", "Fish Vessels"],
+                                key=f.name
+                            )
+
+                        for f in unresolved:
+                            if assignments[f.name] == "Fish Landing":
+                                user_land = pd.read_csv(f)
+                            else:
+                                user_vess = pd.read_csv(f)
+
+                    # Final validation
+                    if user_land is None or user_vess is None:
+                        st.error("Both Fish Landing and Fish Vessels datasets are required.")
                         st.stop()
 
-                    for f in uploaded_files:
-                        if assignments[f.name] == "Fish Landing":
-                            user_land = pd.read_csv(f)
-                        else:
-                            user_vess = pd.read_csv(f)
+                    st.success("CSV files loaded successfully (auto-detected)")
 
-                    st.success("CSV files loaded successfully")
-
-                else:
-                    st.error("Upload ONE Excel or TWO CSV files only")
-                    st.stop()
 
         
 
