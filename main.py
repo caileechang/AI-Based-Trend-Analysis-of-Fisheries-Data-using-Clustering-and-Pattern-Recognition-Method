@@ -2188,7 +2188,9 @@ def main():
         # ===================================================
         # USER OPTIONS
         # ===================================================
-        st.markdown(f"**Optimal number of clusters:** `{best_k}`")
+        if best_k is not None:
+            st.markdown(f"**Optimal number of clusters:** {best_k}")
+
         st.markdown("Clusters are selected automatically using the highest silhouette score.")
 
         vis_mode = st.radio(
