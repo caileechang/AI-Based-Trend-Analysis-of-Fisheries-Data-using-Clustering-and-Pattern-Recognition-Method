@@ -485,14 +485,17 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     st.success(f"Optimal number of clusters (based on Silhouette): **k = {best_k}**")
 
-    st.expander(
-    f"📊 Cluster Validation Summary\n\n"
-    f"- Silhouette Score: **{valid_scores[best_k]:.4f}**\n"
-    f"- APN (stability): **{apn_score:.4f}**\n\n"
-    "Lower APN indicates more stable clusters."
-)
+    with st.expander("📊 Cluster Validation Summary", expanded=False):
+        st.markdown(
+            f"""
+            - **Silhouette Score:** {valid_scores[best_k]:.4f}
+            - **APN (stability):** {apn_score:.4f}
 
-    st.write("APN score:", apn_score)
+            *Lower APN indicates more stable clusters.*
+            """
+        )
+
+    
 
 
 
