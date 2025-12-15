@@ -773,7 +773,7 @@ def main():
                 
 
         
-                if user_land is not None:
+                if user_land is not None and user_vess is not None:
                     #st.subheader("New dataset uploaded")
                     #st.dataframe(user_land, use_container_width=True, height=400)
                     msg2=st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
