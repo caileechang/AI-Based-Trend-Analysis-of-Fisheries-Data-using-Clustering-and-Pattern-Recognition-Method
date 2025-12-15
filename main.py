@@ -2998,12 +2998,12 @@ def main():
 
                     
     elif plot_option == "Hierarchical Clustering":
-                        
+           
+        with st.container():
             st.subheader("Hierarchical Clustering of Malaysian States")
-            
-                # Call the hierarchical clustering function
             hierarchical_clustering(merged_df)
-            
+
+           
     
 
     
