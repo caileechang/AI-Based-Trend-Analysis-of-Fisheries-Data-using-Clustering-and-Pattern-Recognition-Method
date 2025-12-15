@@ -759,6 +759,9 @@ def main():
                 )
                 st.stop()
 
+        except Exception as e:
+                st.error(f"Error reading uploaded file: {e}")
+
 
                     
 
@@ -830,8 +833,7 @@ def main():
                     st.sidebar.success("New dataset merged. Visualizations will refresh automatically.")
 
         
-        except Exception as e:
-                st.error(f"Error reading uploaded file: {e}")
+        
 
     merged_df = prepare_yearly(df_land, df_vess)
     
