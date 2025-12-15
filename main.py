@@ -735,17 +735,12 @@ def main():
             if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
                 uploaded_name = uploaded_files[0].name
 
-            
-
-
                 excel = pd.ExcelFile(uploaded_files[0])
 
                 if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
                     user_land = pd.read_excel(excel, "Fish Landing")
                     user_vess = pd.read_excel(excel, "Fish Vessels")
-
                     st.toast("Excel loaded successfully", icon="✅")
-                   
 
                 else:
                     st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
@@ -834,6 +829,58 @@ def main():
         if user_land is not None and user_vess is not None:
             #st.subheader("New dataset uploaded")
                     #st.dataframe(user_land, use_container_width=True, height=400)
+                    # =====================================================
+                    # VALIDATE UPLOADED DATASET SCHEMA (CRITICAL)
+                    # =====================================================
+
+                    # --- Required columns ---
+                    required_land_cols = {
+                        "State",
+                        "Year",
+                        "Month",
+                        "Type of Fish",
+                        "Fish Landing (Tonnes)"
+                    }
+
+                    required_vess_cols = {
+                        "State",
+                        "Year",
+                        "Inboard Powered",
+                        "Outboard Powered",
+                        "Non-Powered"
+                    }
+
+                    # --- Normalize headers for checking ONLY ---
+                    land_cols = set(user_land.columns.str.strip().str.title())
+                    vess_cols = set(user_vess.columns.str.strip().str.title())
+
+                    missing_land = required_land_cols - land_cols
+                    missing_vess = required_vess_cols - vess_cols
+
+                    if missing_land:
+                        st.error(
+                            "❌ Invalid **Fish Landing** dataset.\n\n"
+                            "Missing required column(s):\n"
+                            f"{', '.join(sorted(missing_land))}"
+                        )
+                        st.info(
+                            "Fish Landing dataset MUST contain:\n"
+                            "- State\n- Year\n- Month\n- Type of Fish\n- Fish Landing (Tonnes)"
+                        )
+                        st.stop()
+
+                    if missing_vess:
+                        st.error(
+                            "❌ Invalid **Fish Vessels** dataset.\n\n"
+                            "Missing required column(s):\n"
+                            f"{', '.join(sorted(missing_vess))}"
+                        )
+                        st.info(
+                            "Fish Vessels dataset MUST contain:\n"
+                            "- State\n- Year\n- Inboard Powered\n- Outboard Powered\n- Non-Powered"
+                        )
+                        st.stop()
+
                     msg2=st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
                    
         
@@ -906,7 +953,6 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-       
         "HDBSCAN Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps"
