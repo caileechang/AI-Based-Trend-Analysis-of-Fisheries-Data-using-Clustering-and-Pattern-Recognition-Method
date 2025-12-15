@@ -689,7 +689,13 @@ def main():
                 if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
                     user_land = pd.read_excel(excel, "Fish Landing")
                     user_vess = pd.read_excel(excel, "Fish Vessels")
-                    st.toast("Excel loaded successfully")
+                    # ---- SHOW TOAST ONLY ONCE PER FILE ----
+                    toast_key = f"excel_toast_{uploaded_files[0].name}"
+
+                    if toast_key not in st.session_state:
+                        st.toast("Excel loaded successfully", icon="✅")
+                        st.session_state[toast_key] = True
+                    
                 else:
                     st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
                     st.stop()
