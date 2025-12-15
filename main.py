@@ -672,64 +672,49 @@ def main():
 
     if uploaded_files:
         try:
-            # =====================================================
-            # CASE 1: Excel (.xlsx) → ONE file, TWO sheets
-            # =====================================================
-            if len(uploaded_files) == 1 and uploaded_files[0].name.lower().endswith(".xlsx"):
-                uploaded_file = uploaded_files[0]
+            # ============================
+            # CASE 1: Excel (.xlsx)
+            # ============================
+            if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
+                excel = pd.ExcelFile(uploaded_files[0])
 
-                excel_data = pd.ExcelFile(uploaded_file)
-                sheet_names = [s.lower() for s in excel_data.sheet_names]
-
-                if "fish landing" in sheet_names and "fish vessels" in sheet_names:
-                    user_land = pd.read_excel(excel_data, sheet_name="Fish Landing")
-                    user_vess = pd.read_excel(excel_data, sheet_name="Fish Vessels")
-                    st.success("Excel file loaded successfully (Fish Landing + Fish Vessels).")
+                if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
+                    user_land = pd.read_excel(excel, "Fish Landing")
+                    user_vess = pd.read_excel(excel, "Fish Vessels")
+                    st.success("Excel loaded successfully")
                 else:
-                    st.error(
-                        "Excel must contain sheets named 'Fish Landing' and 'Fish Vessels'."
-                    )
+                    st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
                     st.stop()
 
-            # =====================================================
-            # CASE 2: CSV → TWO separate files
-            # =====================================================
-            elif all(f.name.lower().endswith(".csv") for f in uploaded_files):
+            # ============================
+            # CASE 2: CSV (2 files)
+            # ============================
+            elif len(uploaded_files) == 2 and all(f.name.endswith(".csv") for f in uploaded_files):
 
-                if len(uploaded_files) != 2:
-                    st.error("Please upload exactly TWO CSV files.")
-                    st.stop()
+                st.info("Assign each CSV file")
 
-                st.info("Please assign each CSV file to its dataset type.")
-
-                # Let user choose which file is which
-                file_labels = {}
-
+                assignments = {}
                 for f in uploaded_files:
-                    label = st.selectbox(
-                        f"Select dataset type for `{f.name}`",
+                    assignments[f.name] = st.selectbox(
+                        f"Dataset type for {f.name}",
                         ["Fish Landing", "Fish Vessels"],
                         key=f.name
                     )
-                    file_labels[label] = f
 
-                # Prevent duplicate assignment
-                if len(file_labels) != 2:
-                    st.error("Each dataset type must be assigned exactly once.")
+                if len(set(assignments.values())) != 2:
+                    st.error("Each dataset type must be assigned once")
                     st.stop()
 
-                # Read CSVs
-                user_land = pd.read_csv(file_labels["Fish Landing"])
-                user_vess = pd.read_csv(file_labels["Fish Vessels"])
+                for f in uploaded_files:
+                    if assignments[f.name] == "Fish Landing":
+                        user_land = pd.read_csv(f)
+                    else:
+                        user_vess = pd.read_csv(f)
 
-                st.success("CSV files loaded successfully (Landing + Vessels).")
+                st.success("CSV files loaded successfully")
 
-
-            # =====================================================
-            # INVALID MIX
-            # =====================================================
             else:
-                st.error("Do not mix Excel and CSV files. Upload either ONE Excel or TWO CSVs.")
+                st.error("Upload ONE Excel or TWO CSV files only")
                 st.stop()
 
         
