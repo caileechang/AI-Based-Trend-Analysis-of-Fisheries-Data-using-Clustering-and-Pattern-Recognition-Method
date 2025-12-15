@@ -707,6 +707,16 @@ def main():
         if "vessel" in name or "vessels" in name:
             return "Fish Vessels"
         return None
+    
+    def normalize_col(col):
+        return (
+            col.strip()
+            .lower()
+            .replace(" ", "")
+            .replace("_", "")
+            .replace("-", "")
+        )
+
 
 
 
@@ -815,17 +825,6 @@ def main():
         except Exception as e:
                 st.error(f"Error reading uploaded file: {e}")
 
-
-                    
-
-
-        
-
-    
-        
-                
-
-        
         if user_land is not None and user_vess is not None:
             #st.subheader("New dataset uploaded")
                     #st.dataframe(user_land, use_container_width=True, height=400)
@@ -835,24 +834,27 @@ def main():
 
                     # --- Required columns ---
                     required_land_cols = {
-                        "State",
-                        "Year",
-                        "Month",
-                        "Type of Fish",
-                        "Fish Landing (Tonnes)"
+                        "state",
+                        "year",
+                        "month",
+                        "typeoffish",
+                        "fishlandingtonnes"
                     }
+
 
                     required_vess_cols = {
-                        "State",
-                        "Year",
-                        "Inboard Powered",
-                        "Outboard Powered",
-                        "Non-Powered"
+                        "state",
+                        "year",
+                        "inboardpowered",
+                        "outboardpowered",
+                        "nonpowered"
                     }
 
-                    # --- Normalize headers for checking ONLY ---
-                    land_cols = set(user_land.columns.str.strip().str.title())
-                    vess_cols = set(user_vess.columns.str.strip().str.title())
+
+                    # Normalize headers 
+                    land_cols = {normalize_col(c) for c in user_land.columns}
+                    vess_cols = {normalize_col(c) for c in user_vess.columns}
+
 
                     missing_land = required_land_cols - land_cols
                     missing_vess = required_vess_cols - vess_cols
@@ -880,6 +882,29 @@ def main():
                             "- State\n- Year\n- Inboard Powered\n- Outboard Powered\n- Non-Powered"
                         )
                         st.stop()
+
+                    # =====================================================
+                    # STANDARDISE COLUMN NAMES (AFTER VALIDATION)
+                    # =====================================================
+                    user_land.columns = [normalize_col(c) for c in user_land.columns]
+                    user_vess.columns = [normalize_col(c) for c in user_vess.columns]
+
+                    user_land.rename(columns={
+                        "state": "State",
+                        "year": "Year",
+                        "month": "Month",
+                        "typeoffish": "Type of Fish",
+                        "fishlandingtonnes": "Fish Landing (Tonnes)"
+                    }, inplace=True)
+
+                    user_vess.rename(columns={
+                        "state": "State",
+                        "year": "Year",
+                        "inboardpowered": "Inboard Powered",
+                        "outboardpowered": "Outboard Powered",
+                        "nonpowered": "Non-Powered"
+                    }, inplace=True)
+
 
                     msg2=st.info(f"Detected uploaded years: {sorted(user_land['Year'].dropna().unique().astype(int).tolist())}")
                    
