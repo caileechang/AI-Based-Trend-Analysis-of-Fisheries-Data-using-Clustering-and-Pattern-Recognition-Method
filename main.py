@@ -682,71 +682,85 @@ def main():
             # ============================
             # CASE 1: Excel (.xlsx)
             # ============================
-                if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
-                    excel = pd.ExcelFile(uploaded_files[0])
+            if len(uploaded_files) == 1 and uploaded_files[0].name.endswith(".xlsx"):
+                excel = pd.ExcelFile(uploaded_files[0])
 
-                    if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
-                        user_land = pd.read_excel(excel, "Fish Landing")
-                        user_vess = pd.read_excel(excel, "Fish Vessels")
-                        st.success("Excel loaded successfully")
+                if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
+                    user_land = pd.read_excel(excel, "Fish Landing")
+                    user_vess = pd.read_excel(excel, "Fish Vessels")
+                    st.success("Excel loaded successfully")
+                else:
+                    st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
+                    st.stop()
+
+            # ============================
+            # CASE 2: CSV (2 files ONLY)
+            # ============================
+            elif len(uploaded_files) == 2 and all(f.name.endswith(".csv") for f in uploaded_files):
+
+                if "upload_toast_shown" not in st.session_state:
+                    st.session_state.upload_toast_shown = False
+
+                user_land, user_vess = None, None
+                unresolved = []
+
+                for f in uploaded_files:
+                    detected = detect_dataset_type(f.name)
+
+                    if detected == "Fish Landing":
+                        user_land = pd.read_csv(f)
+                    elif detected == "Fish Vessels":
+                        user_vess = pd.read_csv(f)
                     else:
-                        st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
-                        st.stop()
+                        unresolved.append(f)
 
-                # ============================
-                # CASE 2: CSV (2 files)
-                # ============================
-                elif len(uploaded_files) == 2 and all(f.name.endswith(".csv") for f in uploaded_files):
+                if unresolved:
+                    st.warning("Some files could not be auto-identified. Please assign manually.")
 
-                    # ---- initialise once ----
-                    if "upload_toast_shown" not in st.session_state:
-                        st.session_state.upload_toast_shown = False
-
-                    user_land, user_vess = None, None
-                    unresolved = []
-
-                    # ---- auto-detect from filename ----
-                    for f in uploaded_files:
-                        detected = detect_dataset_type(f.name)
-
-                        if detected == "Fish Landing":
-                            user_land = pd.read_csv(f)
-                        elif detected == "Fish Vessels":
-                            user_vess = pd.read_csv(f)
-                        else:
-                            unresolved.append(f)
-
-                    # ---- fallback: manual assignment ONLY if detection fails ----
-                    if unresolved:
-                        st.warning("Some files could not be auto-identified. Please assign manually.")
-
-                        assignments = {}
-                        for f in unresolved:
-                            assignments[f.name] = st.selectbox(
-                                f"Dataset type for {f.name}",
-                                ["Fish Landing", "Fish Vessels"],
-                                key=f.name
-                            )
-
-                        for f in unresolved:
-                            if assignments[f.name] == "Fish Landing":
-                                user_land = pd.read_csv(f)
-                            else:
-                                user_vess = pd.read_csv(f)
-
-                    # ---- STRICT VALIDATION: BOTH REQUIRED ----
-                    if user_land is None or user_vess is None:
-                        st.error(
-                            "❌ Analysis requires BOTH datasets:\n"
-                            "- Fish Landing CSV\n"
-                            "- Fish Vessels CSV"
+                    assignments = {}
+                    for f in unresolved:
+                        assignments[f.name] = st.selectbox(
+                            f"Dataset type for {f.name}",
+                            ["Fish Landing", "Fish Vessels"],
+                            key=f.name
                         )
-                        st.stop()
 
-                    # ---- ONE-TIME SUCCESS TOAST ----
-                    if not st.session_state.upload_toast_shown:
-                        st.toast("Both Fish Landing & Fish Vessels CSV files uploaded successfully", icon="✅")
-                        st.session_state.upload_toast_shown = True
+                    for f in unresolved:
+                        if assignments[f.name] == "Fish Landing":
+                            user_land = pd.read_csv(f)
+                        else:
+                            user_vess = pd.read_csv(f)
+
+                # 🔒 STRICT: BOTH REQUIRED
+                if user_land is None or user_vess is None:
+                    st.error(
+                        "❌ Analysis requires BOTH datasets:\n"
+                        "- Fish Landing CSV\n"
+                        "- Fish Vessels CSV"
+                    )
+                    st.stop()
+
+                if not st.session_state.upload_toast_shown:
+                    st.toast(
+                        "Both Fish Landing & Fish Vessels CSV files uploaded successfully",
+                        icon="✅"
+                    )
+                    st.session_state.upload_toast_shown = True
+
+            # ============================
+            # 🚨 BLOCK ALL OTHER CASES
+            # ============================
+            else:
+                st.error(
+                    "❌ Invalid upload.\n\n"
+                    "Please upload:\n"
+                    "- ONE Excel (.xlsx) with both sheets, OR\n"
+                    "- EXACTLY TWO CSV files (Fish Landing + Fish Vessels)."
+                )
+                st.stop()
+
+
+                    
 
 
         
