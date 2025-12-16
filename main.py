@@ -2142,16 +2142,6 @@ def main():
             """)
 
 
-        
-
-        
-
-
-
-    
-
-
-
     elif plot_option == "2D KMeans Scatter":
         import numpy as np
         import matplotlib.pyplot as plt
@@ -2784,7 +2774,7 @@ def main():
 
         outliers = df[df["Anomaly"] == True][[
             "State", "Landing", "Vessels", "Outlier_Norm", "Explanation"
-        ]]
+        ]].rename(columns={"Outlier_Norm": "Outlier Score (0-1)"})
 
         if outliers.empty:
             st.success("No significant anomalies detected.")
