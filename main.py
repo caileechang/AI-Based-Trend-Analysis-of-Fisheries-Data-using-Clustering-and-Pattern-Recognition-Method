@@ -1552,11 +1552,36 @@ def main():
                 "Freshwater": "Freshwater (Tonnes)",
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
+            # ===============================
+            # CLEAN YEAR & MONTH (CRITICAL)
+            # ===============================
+            monthly["Year"] = pd.to_numeric(monthly["Year"], errors="coerce")
+            monthly["Month"] = pd.to_numeric(monthly["Month"], errors="coerce")
+
+            # Keep only valid months
+            monthly = monthly[
+                (monthly["Month"] >= 1) &
+                (monthly["Month"] <= 12)
+            ]
+
+            # Drop rows where Year or Month is still NaN
+            monthly = monthly.dropna(subset=["Year", "Month"])
+
+            monthly["MonthYear"] = pd.to_datetime(
+                monthly["Year"].astype(int).astype(str)
+                + "-"
+                + monthly["Month"].astype(int).astype(str)
+                + "-01",
+                errors="coerce"
+            )
+
+            # Drop any remaining invalid datetime rows
+            monthly = monthly.dropna(subset=["MonthYear"])
 
             # Create proper datetime column for indexing
-            monthly["MonthYear"] = pd.to_datetime(
-                monthly["Year"].astype(str) + "-" + monthly["Month"].astype(str) + "-01"
-            )
+            #monthly["MonthYear"] = pd.to_datetime(
+            #    monthly["Year"].astype(str) + "-" + monthly["Month"].astype(str) + "-01"
+            #)
 
             # ======================================
             # USER SELECT: YEAR
