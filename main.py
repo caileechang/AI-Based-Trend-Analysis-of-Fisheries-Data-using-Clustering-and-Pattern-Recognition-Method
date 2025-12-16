@@ -2514,12 +2514,14 @@ def main():
                     "threshold": t,
                     "count": (df["Outlier_Norm"] >= t).sum()
                 })
-                
+
+            
+            sens_df = pd.DataFrame(sens)
+            sens_df["delta"] = sens_df["count"].diff().abs()
+
             st.markdown("### 🔬 Sensitivity Analysis")
             st.dataframe(sens_df)
 
-            sens_df = pd.DataFrame(sens)
-            sens_df["delta"] = sens_df["count"].diff().abs()
             
             # Dynamic threshold selection (most conservative stable)
             stable = sens_df[sens_df["delta"] == 0]
