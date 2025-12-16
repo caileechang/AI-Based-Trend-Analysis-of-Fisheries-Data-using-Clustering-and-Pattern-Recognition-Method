@@ -62,6 +62,9 @@ def prepare_yearly(df_land, df_vess):
     # CLEAN df_land (FISH LANDING)
    
     land = df_land.copy()
+    # KEEP ONLY YEARLY ROWS
+    land = land[land["Month"].isna()]
+
     land['State'] = (
         land['State']
             .astype(str)
@@ -695,7 +698,7 @@ def main():
 
     def normalize_col(col):
         return re.sub(r'[^a-z0-9]', '', col.lower())
-
+   
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     # uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
@@ -913,6 +916,11 @@ def main():
                     user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
                     user_land['Fish Landing (Tonnes)'] = pd.to_numeric(user_land['Fish Landing (Tonnes)'], errors='coerce')
                     user_land.dropna(subset=['Year', 'Fish Landing (Tonnes)', 'State', 'Type of Fish'], inplace=True)
+
+                    user_land["__source"] = "uploaded"
+                    df_land["__source"] = "base"
+
+
         # ===== PREVENT RE-MERGING SAME UPLOAD ON RERUN =====
                     upload_key = tuple(sorted([f.name for f in uploaded_files]))
 
@@ -921,15 +929,11 @@ def main():
                         df_land = pd.concat([df_land, user_land], ignore_index=True)
 
                         #  NaN-safe deduplication (ONLY ONCE)
-                        df_land['Month_dedup'] = df_land['Month'].fillna(-1)
-                        df_land = (
-                            df_land
-                            .drop_duplicates(
-                                subset=['State', 'Year', 'Month_dedup', 'Type of Fish'],
-                                keep='last'
-                            )
-                            .drop(columns='Month_dedup')
+                        df_land = df_land.drop_duplicates(
+                            subset=['State', 'Year', 'Month', 'Type of Fish'],
+                            keep='last'
                         )
+
 
                         df_vess = (
                             pd.concat([df_vess, user_vess], ignore_index=True)
