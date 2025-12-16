@@ -919,6 +919,15 @@ def main():
                     user_land["__source"] = "uploaded"
                     df_land["__source"] = "base"
 
+                    def normalize_month(df):
+                        df = df.copy()
+                        df["Month"] = pd.to_numeric(df["Month"], errors="coerce")
+                        return df
+
+                    df_land = normalize_month(df_land)
+                    user_land = normalize_month(user_land)
+
+
 
         # ===== PREVENT RE-MERGING SAME UPLOAD ON RERUN =====
                     upload_key = tuple(sorted([f.name for f in uploaded_files]))
@@ -926,7 +935,7 @@ def main():
                     if st.session_state.get("last_merged_upload") != upload_key:
 
                         #df_land = pd.concat([df_land, user_land], ignore_index=True)
-                        # 🔥 REMOVE BASE DATA THAT CONFLICTS WITH UPLOAD (MONTH-AWARE)
+                        #  REMOVE BASE DATA THAT CONFLICTS WITH UPLOAD (MONTH-AWARE)
                         df_land["Month_dedup"] = df_land["Month"].fillna(-1)
                         user_land["Month_dedup"] = user_land["Month"].fillna(-1)
 
