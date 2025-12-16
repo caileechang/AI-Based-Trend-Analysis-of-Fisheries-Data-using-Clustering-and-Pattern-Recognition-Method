@@ -1556,7 +1556,7 @@ def main():
 
 
             # ===============================
-            # CLEAN YEAR & MONTH (CRITICAL)
+            # CLEAN YEAR & MONTH 
             # ===============================
             monthly["Year"] = pd.to_numeric(monthly["Year"], errors="coerce")
             monthly["Month"] = pd.to_numeric(monthly["Month"], errors="coerce")
@@ -1614,7 +1614,13 @@ def main():
                 month_display
             )
 
-            selected_month = {v: k for k, v in month_name_map.items()}[selected_month_name]
+            #selected_month = {v: k for k, v in month_name_map.items()}[selected_month_name]
+            reverse_month_map = {v: k for k, v in month_name_map.items()}
+            selected_month = reverse_month_map.get(selected_month_name)
+
+            if selected_month is None:
+                st.warning("Selected month is not available in the dataset.")
+                st.stop()
 
             # Selected month-year
             selected_date = pd.to_datetime(f"{selected_year}-{selected_month}-01")
