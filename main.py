@@ -2494,32 +2494,43 @@ def main():
         else:
             df["Outlier_Norm"] = 0
 
-        st.markdown("### 📊 Validation of Outlier Threshold")
+        # --------------------------------
+        # Sensitivity-based thresholding
+        # --------------------------------
+        if df["Outlier_Norm"].nunique() <= 1:
+            st.info(
+                "No significant outliers detected for this year. "
+                "All states exhibit similar landing–vessel density patterns."
+            )
+            df["Anomaly"] = False
+            chosen_threshold = None
 
-        threshold = df["Outlier_Norm"].quantile(0.90)
+        else:
+            candidate_thresholds = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
 
-        fig, ax = plt.subplots(figsize=(7, 4))
-        sns.histplot(df["Outlier_Norm"], bins=20, kde=True, ax=ax)
+            sens = []
+            for t in candidate_thresholds:
+                sens.append({
+                    "threshold": t,
+                    "count": (df["Outlier_Norm"] >= t).sum()
+                })
 
-        ax.axvline(
-            threshold,
-            color="red",
-            linestyle="--",
-            linewidth=2,
-            label=f"Derived threshold = {threshold:.2f}"
-        )
+            sens_df = pd.DataFrame(sens)
+            sens_df["delta"] = sens_df["count"].diff().abs()
 
-        ax.set_xlabel("Normalized Outlier Score")
-        ax.set_ylabel("Count")
-        ax.set_title("Distribution of Normalized HDBSCAN Outlier Scores")
-        ax.legend()
+            st.markdown("### 🔬 Sensitivity Analysis")
+            st.dataframe(sens_df)
 
-        st.pyplot(fig)
+            # Dynamic threshold selection (most conservative stable)
+            stable = sens_df[sens_df["delta"] == 0]
 
-        # -------------------------------
-        # Apply derived threshold
-        # -------------------------------
-        df["Anomaly"] = df["Outlier_Norm"] >= threshold
+            if not stable.empty:
+                chosen_threshold = stable.iloc[-1]["threshold"]
+            else:
+                chosen_threshold = df["Outlier_Norm"].quantile(0.90)
+
+            df["Anomaly"] = df["Outlier_Norm"] >= chosen_threshold
+
 
         avg_land = df["Landing"].mean()
         avg_ves = df["Vessels"].mean()
