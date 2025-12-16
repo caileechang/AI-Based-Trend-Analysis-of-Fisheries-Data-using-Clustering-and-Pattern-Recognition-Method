@@ -2484,10 +2484,6 @@ def main():
             gen_min_span_tree=True
         ).fit(X)
 
-      
-
-
-
         df["Cluster"] = clusterer.labels_
         df["Outlier_Score"] = clusterer.outlier_scores_
 
@@ -2498,13 +2494,35 @@ def main():
         else:
             df["Outlier_Norm"] = 0
 
-        df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+        st.markdown("### 📊 Validation of Outlier Threshold")
+
+        threshold = df["Outlier_Norm"].quantile(0.90)
+
+        fig, ax = plt.subplots(figsize=(7, 4))
+        sns.histplot(df["Outlier_Norm"], bins=20, kde=True, ax=ax)
+
+        ax.axvline(
+            threshold,
+            color="red",
+            linestyle="--",
+            linewidth=2,
+            label=f"Derived threshold = {threshold:.2f}"
+        )
+
+        ax.set_xlabel("Normalized Outlier Score")
+        ax.set_ylabel("Count")
+        ax.set_title("Distribution of Normalized HDBSCAN Outlier Scores")
+        ax.legend()
+
+        st.pyplot(fig)
+
+        # -------------------------------
+        # Apply derived threshold
+        # -------------------------------
+        df["Anomaly"] = df["Outlier_Norm"] >= threshold
 
         avg_land = df["Landing"].mean()
         avg_ves = df["Vessels"].mean()
-
-
-      
 
         def explain(row):
             L = row["Landing"]
