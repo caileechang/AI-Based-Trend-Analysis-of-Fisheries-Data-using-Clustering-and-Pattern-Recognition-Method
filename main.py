@@ -2777,14 +2777,14 @@ def main():
         st_folium(m, height=550, width=800)
 
      
-        # ===============================
-        # SAFE INITIALIZATION (REQUIRED)
-        # ===============================
-        if "global_outliers" not in st.session_state:
-            if merged_df is None or merged_df.empty:
-                st.session_state.global_outliers = pd.DataFrame()
-            else:
-                st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+    # ===============================
+    # SAFE INITIALIZATION (REQUIRED)
+    # ===============================
+    if "global_outliers" not in st.session_state:
+        if merged_df is None or merged_df.empty:
+            st.session_state.global_outliers = pd.DataFrame()
+        else:
+            st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
 
     elif plot_option =="HDBSCAN":
 
