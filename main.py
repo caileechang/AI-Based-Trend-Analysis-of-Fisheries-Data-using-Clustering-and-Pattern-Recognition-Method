@@ -73,12 +73,6 @@ def prepare_yearly(df_land, df_vess):
 
     # REMOVE MALAYSIA-level rows BEFORE fuzzy match
     land = land[~land['State'].str.startswith("MALAYSIA")]
-
-    # IMPORTANT: allow rows without Month to be counted in YEARLY
-    land["Month"] = pd.to_numeric(land["Month"], errors="coerce")
-    
-
-
     # Fuzzy matching for df_land
     def match_state_land(name):
         matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.75)
@@ -88,12 +82,20 @@ def prepare_yearly(df_land, df_vess):
     land = land.dropna(subset=['State'])
     land = land[land['State'].isin(valid_states)]
 
+    # IMPORTANT: allow rows without Month to be counted in YEARLY
+    land["Month"] = pd.to_numeric(land["Month"], errors="coerce")
+
    # Split data
     yearly_rows  = land[land["Month"].isna()]          # uploaded yearly totals (blank Month)
     monthly_rows = land[land["Month"].between(1, 12)]  # true monthly rows only
 
     # If yearly totals exist, use them; otherwise sum monthly
-    source = yearly_rows if not yearly_rows.empty else monthly_rows
+    # Decide source of yearly totals
+    if not yearly_rows.empty:
+        source = yearly_rows
+    else:
+        source = monthly_rows
+
     yearly_totals = (
         land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
             .sum()
