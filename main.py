@@ -680,11 +680,7 @@ def main():
     df_land = st.session_state.base_land.copy()
     df_vess = st.session_state.base_vess.copy()
 
-    # ======================================
-    # BASE DATASETS (DO NOT CLEAN MONTH)
-    # ======================================
-    df_base_land = df_land.copy()
-    df_base_vess = df_vess.copy()
+   
 
 
     def detect_dataset_type(filename):
@@ -1254,7 +1250,7 @@ def main():
         if period_choice == "Yearly":
 
             yearly = (
-                df_base_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
                 .sum()
                 .reset_index()
                 .pivot(index="Year", columns="Type of Fish",
@@ -1961,7 +1957,7 @@ def main():
 
         try:
             yearly_comp = (
-                df_base_land.groupby(['Year', 'Type of Fish'])['Fish Landing (Tonnes)']
+                df_land.groupby(['Year', 'Type of Fish'])['Fish Landing (Tonnes)']
                 .sum()
                 .reset_index()
                 .pivot_table(
