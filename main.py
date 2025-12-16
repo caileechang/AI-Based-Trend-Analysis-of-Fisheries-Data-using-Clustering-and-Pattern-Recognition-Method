@@ -943,10 +943,17 @@ def main():
 
                         #  NaN-safe deduplication (ONLY ONCE)
                         # ✅ NaN-safe deduplication
-                        df_land = df_land.drop_duplicates(
-                            subset=['State', 'Year', 'Month', 'Type of Fish'],
-                            keep='last'
+                        df_land['Month_dedup'] = df_land['Month'].fillna(-1)
+
+                        df_land = (
+                            df_land
+                            .drop_duplicates(
+                                subset=['State', 'Year', 'Month_dedup', 'Type of Fish'],
+                                keep='last'
+                            )
+                            .drop(columns='Month_dedup')
                         )
+
 
 
 
