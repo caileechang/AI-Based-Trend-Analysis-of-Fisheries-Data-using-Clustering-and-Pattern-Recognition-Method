@@ -19,12 +19,8 @@ import plotly.graph_objects as go
 import hdbscan
 
 
-
-
-
-# Import your clustering modules
-#from clustering_method import hierarchical_clustering
-#@st.cache_data
+# from clustering_method import hierarchical_clustering
+# @st.cache_data
 def load_data():
     url = 'https://www.dropbox.com/scl/fi/4cl5zaor1l32ikyudvf2e/Fisheries-Dataset-vessels-fish-landing.xlsx?rlkey=q2ewpeuzj288ewd17rcqxeuie&st=6h4zijb8&dl=1'
     df_land = pd.read_excel(url, sheet_name='Fish Landing')
@@ -53,7 +49,6 @@ def load_data():
     return df_land, df_vess
     
 def prepare_yearly(df_land, df_vess):
-
 
     valid_states = [
         "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
@@ -327,9 +322,6 @@ def compute_apn_like(Z_full, X_full, best_k):
 
     return np.mean(apn_values)
 
-
-
-
 def hierarchical_clustering(merged_df):
 
     import streamlit as st
@@ -340,8 +332,6 @@ def hierarchical_clustering(merged_df):
     from sklearn.metrics import silhouette_score
     import matplotlib.pyplot as plt
     import numpy as np
-
-
     # ----------------------------
     # Clean valid states
     # ----------------------------
@@ -447,7 +437,7 @@ def hierarchical_clustering(merged_df):
     col1, col2 = st.columns([1, 1])
 
     # ----------------------------
-    # 1️⃣ Silhouette Line Chart
+    # Silhouette Line Chart
     # ----------------------------
     with col1:
         fig, ax = plt.subplots(figsize=(5, 3))
@@ -465,7 +455,7 @@ def hierarchical_clustering(merged_df):
         st.pyplot(fig)
 
     # ----------------------------
-    # 2️⃣ Silhouette Table
+    # Silhouette Table
     # ----------------------------
     with col2:
         df_sil = (
@@ -495,9 +485,6 @@ def hierarchical_clustering(merged_df):
         )
 
     
-
-
-
     # ----------------------------
     # Final cluster assignment
     # ----------------------------
@@ -621,11 +608,6 @@ def hierarchical_clustering(merged_df):
 
 def main():
     
-   
-    
-     # ======================================
-    # GLOBAL PREMIUM CSS (NEUMORPHISM + ANIMATION)
-    # ======================================
     st.markdown("""
     <style>
 
@@ -698,6 +680,12 @@ def main():
     df_land = st.session_state.base_land.copy()
     df_vess = st.session_state.base_vess.copy()
 
+    # ======================================
+    # BASE DATASETS (DO NOT CLEAN MONTH)
+    # ======================================
+    df_base_land = df_land.copy()
+    df_base_vess = df_vess.copy()
+
 
     def detect_dataset_type(filename):
         name = filename.lower().replace(" ", "").replace("_", "")
@@ -712,17 +700,10 @@ def main():
     def normalize_col(col):
         return re.sub(r'[^a-z0-9]', '', col.lower())
 
-
-
-
-
-    
     # Upload additional yearly CSV
     st.sidebar.markdown("### Upload Your Yearly Dataset")
     # uploaded_file = st.sidebar.file_uploader("Upload Excel file only (.xlsx)", type=["xlsx"])
    # uploaded_file = st.sidebar.file_uploader("Upload dataset (.xlsx or .csv)", type=["xlsx", "csv"])
-
- 
 
     uploaded_files = st.sidebar.file_uploader(
         "Upload Excel (1 file) or CSV (2 files)",
@@ -971,7 +952,7 @@ def main():
         
         
 
-    merged_df = prepare_yearly(df_land, df_vess)
+    merged_df = prepare_yearly(df_base_land, df_vess)
     
 
     merged_monthly = prepare_monthly(df_land, df_vess)
@@ -1273,7 +1254,7 @@ def main():
         if period_choice == "Yearly":
 
             yearly = (
-                df_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
+                df_base_land.groupby(["Year", "Type of Fish"])["Fish Landing (Tonnes)"]
                 .sum()
                 .reset_index()
                 .pivot(index="Year", columns="Type of Fish",
@@ -1980,7 +1961,7 @@ def main():
 
         try:
             yearly_comp = (
-                df_land.groupby(['Year', 'Type of Fish'])['Fish Landing (Tonnes)']
+                df_base_land.groupby(['Year', 'Type of Fish'])['Fish Landing (Tonnes)']
                 .sum()
                 .reset_index()
                 .pivot_table(
