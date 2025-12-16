@@ -85,31 +85,12 @@ def prepare_yearly(df_land, df_vess):
     # IMPORTANT: allow rows without Month to be counted in YEARLY
     land["Month"] = pd.to_numeric(land["Month"], errors="coerce")
 
-   # Split data
-    yearly_rows  = land[land["Month"].isna()]          # uploaded yearly totals (blank Month)
-    monthly_rows = land[land["Month"].between(1, 12)]  # true monthly rows only
-
-
-    # Build yearly totals per state
-    yearly_totals = []
-
-    for (year, state), g in land.groupby(["Year", "State"]):
-
-        yearly_part = g[g["Month"].isna()]
-        monthly_part = g[g["Month"].between(1, 12)]
-
-        if not yearly_part.empty:
-            use = yearly_part
-        else:
-            use = monthly_part
-
-        yearly_totals.append(
-            use.groupby(["Year", "State", "Type of Fish"])["Fish Landing (Tonnes)"]
+    # YEARLY aggregation: IGNORE Month completely
+    yearly_totals = (
+        land.groupby(["Year", "State", "Type of Fish"], as_index=False)
+            ["Fish Landing (Tonnes)"]
             .sum()
-            .reset_index()
-        )
-
-    yearly_totals = pd.concat(yearly_totals, ignore_index=True)
+    )
 
     yearly_pivot = yearly_totals.pivot_table(
         index=['Year', 'State'],
