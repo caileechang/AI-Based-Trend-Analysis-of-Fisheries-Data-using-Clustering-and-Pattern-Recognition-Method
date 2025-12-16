@@ -2776,7 +2776,8 @@ def main():
 
         st_folium(m, height=550, width=800)
 
-     
+    import plotly.express as px
+    
     # ===============================
     # SAFE INITIALIZATION (REQUIRED)
     # ===============================
