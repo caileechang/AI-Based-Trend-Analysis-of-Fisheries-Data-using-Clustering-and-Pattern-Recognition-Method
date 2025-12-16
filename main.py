@@ -608,40 +608,40 @@ def hierarchical_clustering(merged_df):
     )
 
 def auto_tune_hdbscan(df, min_cluster_range, min_samples_range):
-            X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+    X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
-            best_score = -1
-            best_params = None
+    best_score = float("-inf")
+    best_params = None
 
-            for mcs in min_cluster_range:
-                for ms in min_samples_range:
-                    if ms > mcs:
-                        continue  # logical constraint
+    for mcs in min_cluster_range:
+        for ms in min_samples_range:
+            if ms > mcs:
+                continue
 
-                    clusterer = hdbscan.HDBSCAN(
-                        min_cluster_size=mcs,
-                        min_samples=ms
-                    ).fit(X)
+            clusterer = hdbscan.HDBSCAN(
+                min_cluster_size=mcs,
+                min_samples=ms,
+                gen_min_span_tree=True
+            ).fit(X)
 
-                    labels = clusterer.labels_
+            labels = clusterer.labels_
 
-                    # Skip trivial solutions
-                    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-                    if n_clusters < 2:
-                        continue
+            n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+            if n_clusters < 2:
+                continue
 
-                    score = clusterer.relative_validity_
+            score = clusterer.relative_validity_
 
-                    # Noise penalty
-                    noise_ratio = np.mean(labels == -1)
-                    if noise_ratio > 0.5:
-                        continue
+            noise_ratio = np.mean(labels == -1)
+            if noise_ratio > 0.5:
+                continue
 
-                    if score > best_score:
-                        best_score = score
-                        best_params = (mcs, ms)
+            if score > best_score:
+                best_score = score
+                best_params = (mcs, ms)
 
-            return best_params, best_score
+    return best_params, best_score
+
 
 def main():
     
@@ -2479,27 +2479,32 @@ def main():
         params = st.session_state.hdbscan_params
 
         clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=mcs,
-            min_samples=ms,
+            min_cluster_size=params["min_cluster_size"],
+            min_samples=params["min_samples"],
             gen_min_span_tree=True
         ).fit(X)
 
-        if not hasattr(clusterer, "relative_validity_"):
-            continue
-
-        score = clusterer.relative_validity_
+      
 
 
 
         df["Cluster"] = clusterer.labels_
         df["Outlier_Score"] = clusterer.outlier_scores_
-        df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
-        df["Anomaly"] = df["Outlier_Norm"] >= 0.65   # anomaly threshold
 
-        #  Explanation rules
-     
+        max_score = df["Outlier_Score"].max()
+
+        if max_score > 0:
+            df["Outlier_Norm"] = df["Outlier_Score"] / max_score
+        else:
+            df["Outlier_Norm"] = 0
+
+        df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+
         avg_land = df["Landing"].mean()
         avg_ves = df["Vessels"].mean()
+
+
+      
 
         def explain(row):
             L = row["Landing"]
@@ -2515,7 +2520,9 @@ def main():
                 return "⚓ Large operations → Unusually intensive fishing scale"
             return "Unusual pattern compared to national averages"
 
-        df["Explanation"] = df.apply(explain, axis=1)
+        #df["Explanation"] = df.apply(explain, axis=1)
+        df["Explanation"] = ""
+        df.loc[df["Anomaly"], "Explanation"] = df[df["Anomaly"]].apply(explain, axis=1)
 
         # Outlier Table
     
