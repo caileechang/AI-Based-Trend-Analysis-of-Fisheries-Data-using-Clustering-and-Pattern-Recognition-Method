@@ -2641,15 +2641,16 @@ def main():
             </p>
 
             
-            <table style='color:white; font-size:14px; margin-top:10px;'>
-                <tr><td>🟣 <b>0.0</b></td><td>Very weak membership</td></tr>
-                <tr><td>🔵 <b>0.2</b></td><td>Weak membership</td></tr>
-                <tr><td>🟦 <b>0.4</b></td><td>Medium membership</td></tr>
-                <tr><td>🟩 <b>0.6</b></td><td>Strong membership</td></tr>
-                <tr><td>🟢 <b>0.8</b></td><td>Very strong membership</td></tr>
-                <tr><td>🟡 <b>1.0</b></td><td>Perfect membership</td></tr>
-                <tr><td>⭕ <b>Outlier</b></td><td>Explicit anomaly</td></tr>
+           <table style='color:white; font-size:14px; margin-top:10px;'>
+                <tr><td>🟡 <b>1.0</b></td><td>Very typical pattern (normal)</td></tr>
+                <tr><td>🟢 <b>0.8</b></td><td>Typical pattern</td></tr>
+                <tr><td>🟩 <b>0.6</b></td><td>Mostly normal</td></tr>
+                <tr><td>🟦 <b>0.4</b></td><td>Slightly unusual</td></tr>
+                <tr><td>🔵 <b>0.2</b></td><td>Unusual behaviour</td></tr>
+                <tr><td>🟣 <b>0.0</b></td><td>Very unusual behaviour</td></tr>
+                <tr><td>⭕ <b>Outlier</b></td><td>Clear anomaly (needs attention)</td></tr>
             </table>
+
 
             </div>
             """, unsafe_allow_html=True)
