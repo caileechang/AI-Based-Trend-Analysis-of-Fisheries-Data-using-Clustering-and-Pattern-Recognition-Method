@@ -913,18 +913,37 @@ def main():
                     user_land['Year'] = pd.to_numeric(user_land['Year'], errors='coerce')
                     user_land['Fish Landing (Tonnes)'] = pd.to_numeric(user_land['Fish Landing (Tonnes)'], errors='coerce')
                     user_land.dropna(subset=['Year', 'Fish Landing (Tonnes)', 'State', 'Type of Fish'], inplace=True)
-        
+        # ===== PREVENT RE-MERGING SAME UPLOAD ON RERUN =====
+                    upload_key = tuple(sorted([f.name for f in uploaded_files]))
+
+                    if st.session_state.get("last_merged_upload") != upload_key:
+
+                        df_land = pd.concat([df_land, user_land], ignore_index=True)
+
+                        #  NaN-safe deduplication (ONLY ONCE)
+                        df_land['Month_dedup'] = df_land['Month'].fillna(-1)
+                        df_land = (
+                            df_land
+                            .drop_duplicates(
+                                subset=['State', 'Year', 'Month_dedup', 'Type of Fish'],
+                                keep='last'
+                            )
+                            .drop(columns='Month_dedup')
+                        )
+
+                        df_vess = (
+                            pd.concat([df_vess, user_vess], ignore_index=True)
+                            .drop_duplicates(subset=['State', 'Year'], keep='last')
+                        )
+
+                        st.session_state.base_land = df_land.copy()
+                        st.session_state.base_vess = df_vess.copy()
+                        st.session_state.last_merged_upload = upload_key
+
                     # --- Merge uploaded data with base historical data (SAME structure) ---
                     #df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month', 'Type of Fish'])
-                    df_land = (
-                        pd.concat([df_land, user_land], ignore_index=True)
-                        .sort_values("Month", na_position="last")
-                        .drop_duplicates(
-                            subset=['State', 'Year', 'Month', 'Type of Fish'],
-                            keep='last'
-                        )
-                    )
-
+                    
+                    
 
                     msg1=st.toast(" Uploaded data successfully merged with existing dataset.")
                     
@@ -945,13 +964,15 @@ def main():
                     user_vess = user_vess.dropna(subset=['Year'])
                     user_vess['Year'] = user_vess['Year'].astype(int)
 
-                    df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
+                    #df_vess = pd.concat([df_vess, user_vess], ignore_index=True).drop_duplicates(subset=['State', 'Year'])
 
                                         # Update session state immediately and keep merged data
-                    st.session_state.base_land = df_land.copy()
-                    st.session_state.base_vess = df_vess.copy()
+                   # st.session_state.base_land = df_land.copy()
+                    #st.session_state.base_vess = df_vess.copy()
                     st.session_state.data_updated = True  # mark that new data exists
-                    st.cache_data.clear()
+                    #st.cache_data.clear()
+                    
+
                     st.sidebar.success("New dataset merged. Visualizations will refresh automatically.")
 
         
