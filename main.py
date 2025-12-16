@@ -2517,10 +2517,7 @@ def main():
 
             sens_df = pd.DataFrame(sens)
             sens_df["delta"] = sens_df["count"].diff().abs()
-
-            st.markdown("### 🔬 Sensitivity Analysis")
-            st.dataframe(sens_df)
-
+            
             # Dynamic threshold selection (most conservative stable)
             stable = sens_df[sens_df["delta"] == 0]
 
