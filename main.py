@@ -1536,8 +1536,6 @@ def main():
 
 
         if period_choice == "Monthly":
-            import pandas as pd
-        
             # Prepare monthly data
             monthly = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
@@ -1554,29 +1552,10 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
-
-            # ===============================
-            # CLEAN YEAR & MONTH 
-            # ===============================
-            monthly["Year"] = pd.to_numeric(monthly["Year"], errors="coerce")
-            monthly["Month"] = pd.to_numeric(monthly["Month"], errors="coerce")
-
-            # Keep only valid months
-            monthly = monthly[
-                (monthly["Month"] >= 1) &
-                (monthly["Month"] <= 12)
-            ]
-
-
             # Create proper datetime column for indexing
             monthly["MonthYear"] = pd.to_datetime(
-            monthly["Year"].astype(str) + "-" +
-            monthly["Month"].astype(str) + "-01",
-            errors="coerce"
+                monthly["Year"].astype(str) + "-" + monthly["Month"].astype(str) + "-01"
             )
-
-            # Drop rows where date conversion failed
-            monthly = monthly.dropna(subset=["MonthYear"])
 
             # ======================================
             # USER SELECT: YEAR
@@ -1602,25 +1581,14 @@ def main():
                 9: "September", 10: "October", 11: "November", 12: "December"
             }
 
-            #month_display = [month_name_map[m] for m in months_in_year]
-            month_display = [
-                month_name_map[m]
-                for m in months_in_year
-                if m in month_name_map
-            ]
+            month_display = [month_name_map[m] for m in months_in_year]
 
             selected_month_name = st.selectbox(
                 "Select Month:",
                 month_display
             )
 
-            #selected_month = {v: k for k, v in month_name_map.items()}[selected_month_name]
-            reverse_month_map = {v: k for k, v in month_name_map.items()}
-            selected_month = reverse_month_map.get(selected_month_name)
-
-            if selected_month is None:
-                st.warning("Selected month is not available in the dataset.")
-                st.stop()
+            selected_month = {v: k for k, v in month_name_map.items()}[selected_month_name]
 
             # Selected month-year
             selected_date = pd.to_datetime(f"{selected_year}-{selected_month}-01")
