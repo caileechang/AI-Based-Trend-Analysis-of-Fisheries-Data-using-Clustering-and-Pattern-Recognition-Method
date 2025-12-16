@@ -948,7 +948,7 @@ def main():
         
         
 
-    merged_df = prepare_yearly(df_base_land, df_vess)
+    merged_df = prepare_yearly(df_land, df_vess)
     
 
     merged_monthly = prepare_monthly(df_land, df_vess)
