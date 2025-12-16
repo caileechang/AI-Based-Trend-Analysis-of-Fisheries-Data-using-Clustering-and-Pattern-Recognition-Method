@@ -1538,9 +1538,6 @@ def main():
         if period_choice == "Monthly":
             import pandas as pd
         
-            # MONTHLY VIEW
-         
-
             # Prepare monthly data
             monthly = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
@@ -1557,10 +1554,29 @@ def main():
                 "Marine": "Marine (Tonnes)"
             }, inplace=True)
 
+
+            # ===============================
+            # CLEAN YEAR & MONTH (CRITICAL)
+            # ===============================
+            monthly["Year"] = pd.to_numeric(monthly["Year"], errors="coerce")
+            monthly["Month"] = pd.to_numeric(monthly["Month"], errors="coerce")
+
+            # Keep only valid months
+            monthly = monthly[
+                (monthly["Month"] >= 1) &
+                (monthly["Month"] <= 12)
+            ]
+
+
             # Create proper datetime column for indexing
             monthly["MonthYear"] = pd.to_datetime(
-                monthly["Year"].astype(str) + "-" + monthly["Month"].astype(str) + "-01"
+            monthly["Year"].astype(str) + "-" +
+            monthly["Month"].astype(str) + "-01",
+            errors="coerce"
             )
+
+            # Drop rows where date conversion failed
+            monthly = monthly.dropna(subset=["MonthYear"])
 
             # ======================================
             # USER SELECT: YEAR
@@ -1586,7 +1602,12 @@ def main():
                 9: "September", 10: "October", 11: "November", 12: "December"
             }
 
-            month_display = [month_name_map[m] for m in months_in_year]
+            #month_display = [month_name_map[m] for m in months_in_year]
+            month_display = [
+                month_name_map[m]
+                for m in months_in_year
+                if m in month_name_map
+            ]
 
             selected_month_name = st.selectbox(
                 "Select Month:",
