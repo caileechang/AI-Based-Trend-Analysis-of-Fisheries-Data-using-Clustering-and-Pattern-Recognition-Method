@@ -915,7 +915,7 @@ def main():
                     user_land.dropna(subset=['Year', 'Fish Landing (Tonnes)', 'State', 'Type of Fish'], inplace=True)
         
                     # --- Merge uploaded data with base historical data (SAME structure) ---
-                    df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month', 'Type of Fish','Fish Landing (Tonnes)'])
+                    df_land = pd.concat([df_land, user_land], ignore_index=True).drop_duplicates(subset=['State', 'Year', 'Month', 'Type of Fish'])
 
 
                     msg1=st.toast(" Uploaded data successfully merged with existing dataset.")
