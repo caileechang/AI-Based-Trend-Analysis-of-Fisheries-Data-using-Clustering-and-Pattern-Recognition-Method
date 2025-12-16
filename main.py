@@ -2830,7 +2830,7 @@ def main():
 
         import plotly.express as px
 
-        st.markdown("## 🔴 Global HDBSCAN Outlier Detection (2000–Present)")
+        st.markdown("## HDBSCAN Outlier Detection")
 
         df = st.session_state.global_outliers.copy()
 
@@ -2844,7 +2844,7 @@ def main():
             y="Vessels",
             color="Anomaly",
             hover_data=["State", "Year"],
-            title="Global Outliers Across All Years"
+            title="Outliers Across All Years"
         )
 
         st.plotly_chart(fig, use_container_width=True)
