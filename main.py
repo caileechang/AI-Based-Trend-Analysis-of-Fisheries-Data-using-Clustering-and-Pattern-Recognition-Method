@@ -213,7 +213,7 @@ def prepare_yearly(df_land, df_vess):
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
-merged_df = prepare_yearly(df_land, df_vess)
+
 
 # =====================================================
 # GLOBAL HDBSCAN (RUN ONCE, RE-RUN IF DATA CHANGES)
