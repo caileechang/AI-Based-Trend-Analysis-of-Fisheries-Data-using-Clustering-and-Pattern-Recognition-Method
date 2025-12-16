@@ -62,8 +62,7 @@ def prepare_yearly(df_land, df_vess):
     # CLEAN df_land (FISH LANDING)
    
     land = df_land.copy()
-    # KEEP ONLY YEARLY ROWS
-    land = land[land["Month"].isna()]
+    
 
     land['State'] = (
         land['State']
