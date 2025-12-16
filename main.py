@@ -2778,8 +2778,12 @@ def main():
 
     import plotly.express as px
     
+
     if "global_outliers" not in st.session_state:
-        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        if merged_df is not None and not merged_df.empty:
+            st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        else:
+            st.session_state.global_outliers = pd.DataFrame()
 
 
     elif plot_option =="HDBSCAN":
@@ -2812,17 +2816,11 @@ def main():
         # ==========================
         st.markdown("### 🚨 Detected Outliers")
         st.dataframe(
-            df_year[df_year["Anomaly"]]
-            .sort_values("Outlier_Norm", ascending=False)[
-                [
-                    "State",
-                    "Total Fish Landing (Tonnes)",
-                    "Total number of fishing vessels",
-                    "Outlier_Norm"
-                ]
-            ],
+            df[df["Anomaly"]]
+            .sort_values("Outlier_Norm", ascending=False),
             use_container_width=True
         )
+      
 
     
 
