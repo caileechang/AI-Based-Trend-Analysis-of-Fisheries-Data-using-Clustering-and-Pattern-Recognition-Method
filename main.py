@@ -175,49 +175,83 @@ def prepare_yearly(df_land, df_vess):
 
 def run_global_hdbscan_outlier_detection(merged_df):
     """
-    Run ONE global HDBSCAN over ALL years.
-    Returns dataframe with outlier scores & anomaly labels.
+    Run ONE global HDBSCAN over ALL years
+    using auto-tuned parameters and dynamic thresholding.
     """
 
     df = merged_df.copy()
-
-    # Safety check
     if df.empty:
         return df
 
-    # Features
-    features = [
+    # -------------------------
+    # Prepare features
+    # -------------------------
+    df = df[[
+        "State",
+        "Year",
         "Total Fish Landing (Tonnes)",
         "Total number of fishing vessels"
-    ]
+    ]].dropna()
 
-    # Drop invalid rows
-    df = df.dropna(subset=features)
+    df.rename(columns={
+        "Total Fish Landing (Tonnes)": "Landing",
+        "Total number of fishing vessels": "Vessels"
+    }, inplace=True)
 
-    # Scale
-    X = StandardScaler().fit_transform(df[features])
+    X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
-    # HDBSCAN
+    # -------------------------
+    # AUTO-TUNED PARAMETERS
+    # -------------------------
+    params = st.session_state.get("hdbscan_params", {
+        "min_cluster_size": 3,
+        "min_samples": 3
+    })
+
     clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=3,
-        min_samples=3,
+        min_cluster_size=params["min_cluster_size"],
+        min_samples=params["min_samples"],
         gen_min_span_tree=True
     ).fit(X)
 
     df["Cluster"] = clusterer.labels_
     df["Outlier_Score"] = clusterer.outlier_scores_
 
-    # Normalise outlier score (GLOBAL)
+    # -------------------------
+    # Normalise outlier score
+    # -------------------------
     max_score = df["Outlier_Score"].max()
-    if max_score > 0:
-        df["Outlier_Norm"] = df["Outlier_Score"] / max_score
-    else:
-        df["Outlier_Norm"] = 0.0
+    df["Outlier_Norm"] = df["Outlier_Score"] / max_score if max_score > 0 else 0.0
 
-    # Conservative threshold
-    df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+    # -------------------------
+    # GLOBAL sensitivity-based threshold
+    # -------------------------
+    if df["Outlier_Norm"].nunique() <= 1:
+        df["Anomaly"] = False
+    else:
+        candidate_thresholds = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
+
+        sens = []
+        for t in candidate_thresholds:
+            sens.append({
+                "threshold": t,
+                "count": (df["Outlier_Norm"] >= t).sum()
+            })
+
+        sens_df = pd.DataFrame(sens)
+        sens_df["delta"] = sens_df["count"].diff().abs()
+
+        stable = sens_df[sens_df["delta"] == 0]
+
+        if not stable.empty:
+            chosen_threshold = stable.iloc[-1]["threshold"]
+        else:
+            chosen_threshold = df["Outlier_Norm"].quantile(0.90)
+
+        df["Anomaly"] = df["Outlier_Norm"] >= chosen_threshold
 
     return df
+
 
 
 def prepare_monthly(df_land, df_vess):
@@ -2779,14 +2813,22 @@ def main():
     import plotly.express as px
     
 
-    if "global_outliers" not in st.session_state:
+    # Recompute global outliers if data changes
+    if (
+        "global_outliers" not in st.session_state
+        or st.session_state.get("global_outliers_source") != len(merged_df)
+    ):
         if merged_df is not None and not merged_df.empty:
             st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+            st.session_state.global_outliers_source = len(merged_df)
         else:
             st.session_state.global_outliers = pd.DataFrame()
 
 
-    elif plot_option =="HDBSCAN":
+
+    elif plot_option == "HDBSCAN":
+
+        import plotly.express as px
 
         st.markdown("## 🔴 Global HDBSCAN Outlier Detection (2000–Present)")
 
@@ -2796,14 +2838,10 @@ def main():
             st.warning("No data available for outlier detection.")
             st.stop()
 
-        # ==========================
-        # SCATTER PLOT
-        # ==========================
-        # Scatter plot (ALL YEARS)
         fig = px.scatter(
             df,
-            x="Total Fish Landing (Tonnes)",
-            y="Total number of fishing vessels",
+            x="Landing",
+            y="Vessels",
             color="Anomaly",
             hover_data=["State", "Year"],
             title="Global Outliers Across All Years"
@@ -2811,15 +2849,14 @@ def main():
 
         st.plotly_chart(fig, use_container_width=True)
 
-        # ==========================
-        # OUTLIER TABLE
-        # ==========================
         st.markdown("### 🚨 Detected Outliers")
+
         st.dataframe(
             df[df["Anomaly"]]
             .sort_values("Outlier_Norm", ascending=False),
             use_container_width=True
         )
+
       
 
     
