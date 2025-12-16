@@ -2514,6 +2514,9 @@ def main():
                     "threshold": t,
                     "count": (df["Outlier_Norm"] >= t).sum()
                 })
+                
+            st.markdown("### 🔬 Sensitivity Analysis")
+            st.dataframe(sens_df)
 
             sens_df = pd.DataFrame(sens)
             sens_df["delta"] = sens_df["count"].diff().abs()
