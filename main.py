@@ -97,7 +97,7 @@ def prepare_yearly(df_land, df_vess):
         source = monthly_rows
 
     yearly_totals = (
-        land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
+        source.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
             .sum()
             .reset_index()
     )
