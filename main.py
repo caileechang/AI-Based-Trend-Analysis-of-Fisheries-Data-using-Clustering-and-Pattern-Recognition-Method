@@ -2479,10 +2479,16 @@ def main():
         params = st.session_state.hdbscan_params
 
         clusterer = hdbscan.HDBSCAN(
-            min_cluster_size=params["min_cluster_size"],
-            min_samples=params["min_samples"],
-            prediction_data=True
+            min_cluster_size=mcs,
+            min_samples=ms,
+            gen_min_span_tree=True
         ).fit(X)
+
+        if not hasattr(clusterer, "relative_validity_"):
+            continue
+
+        score = clusterer.relative_validity_
+
 
 
         df["Cluster"] = clusterer.labels_
