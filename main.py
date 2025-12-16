@@ -2484,6 +2484,36 @@ def main():
             gen_min_span_tree=True
         ).fit(X)
 
+        dbcv_score = clusterer.relative_validity_
+        labels = clusterer.labels_
+        n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+
+        if n_clusters < 2:
+            dbcv_score = None
+
+        st.markdown("### 📊 Clustering Quality (DBCV)")
+
+        if dbcv_score is None:
+            st.warning(
+                "DBCV cannot be computed reliably because fewer than two clusters "
+                "were identified. This indicates weak cluster structure for this year."
+            )
+        else:
+            st.metric(
+                label="Density-Based Clustering Validation (DBCV)",
+                value=f"{dbcv_score:.3f}"
+            )
+
+            if dbcv_score > 0.3:
+                st.success("Strong density-based cluster separation detected.")
+            elif dbcv_score > 0:
+                st.info("Moderate clustering structure detected.")
+            else:
+                st.error("Poor clustering structure detected.")
+
+
+
+
         df["Cluster"] = clusterer.labels_
         df["Outlier_Score"] = clusterer.outlier_scores_
 
@@ -2493,10 +2523,7 @@ def main():
             df["Outlier_Norm"] = df["Outlier_Score"] / max_score
         else:
             df["Outlier_Norm"] = 0
-
-        # --------------------------------
-        # Sensitivity-based thresholding
-        # --------------------------------
+        # Sensitivity-based thresholding 
         if df["Outlier_Norm"].nunique() <= 1:
             st.info(
                 "No significant outliers detected for this year. "
@@ -2504,25 +2531,19 @@ def main():
             )
             df["Anomaly"] = False
             chosen_threshold = None
-
         else:
             candidate_thresholds = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
-
             sens = []
             for t in candidate_thresholds:
                 sens.append({
                     "threshold": t,
                     "count": (df["Outlier_Norm"] >= t).sum()
                 })
-
-            
             sens_df = pd.DataFrame(sens)
             sens_df["delta"] = sens_df["count"].diff().abs()
 
             st.markdown("### 🔬 Sensitivity Analysis")
             st.dataframe(sens_df)
-
-            
             # Dynamic threshold selection (most conservative stable)
             stable = sens_df[sens_df["delta"] == 0]
 
