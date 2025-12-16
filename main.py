@@ -1129,11 +1129,12 @@ def main():
 
     merged_df = prepare_yearly(df_land, df_vess)
     
+    if "global_outliers" not in st.session_state:
+        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
 
     merged_monthly = prepare_monthly(df_land, df_vess)
 
-    if "global_outliers" not in st.session_state:
-        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+    
 
 
     st.sidebar.header("Select Visualization")
