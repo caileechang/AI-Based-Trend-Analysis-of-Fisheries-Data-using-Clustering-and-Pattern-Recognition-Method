@@ -1536,6 +1536,7 @@ def main():
 
 
         if period_choice == "Monthly":
+            import pandas as pd
             # Prepare monthly data
             monthly = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
