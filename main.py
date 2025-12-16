@@ -2778,14 +2778,13 @@ def main():
 
     import plotly.express as px
     
-    # ===============================
-    # SAFE INITIALIZATION (REQUIRED)
-    # ===============================
     if "global_outliers" not in st.session_state:
-        if merged_df is None or merged_df.empty:
-            st.session_state.global_outliers = pd.DataFrame()
-        else:
+        if merged_df is not None and not merged_df.empty:
             st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        else:
+            st.session_state.global_outliers = pd.DataFrame()
+
+
 
     elif plot_option =="HDBSCAN":
 
@@ -2796,28 +2795,6 @@ def main():
         if df.empty:
             st.warning("No data available for outlier detection.")
             st.stop()
-
-        # ==========================
-        # YEAR FILTER (VIEW ONLY)
-        # ==========================
-        years = sorted(df["Year"].unique())
-        selected_year = st.selectbox(
-            "Select year to inspect:",
-            years,
-            index=len(years) - 1
-        )
-
-        df_year = df[df["Year"] == selected_year]
-
-        # ==========================
-        # SUMMARY METRICS
-        # ==========================
-        total_states = df_year["State"].nunique()
-        outliers = df_year["Anomaly"].sum()
-
-        c1, c2 = st.columns(2)
-        c1.metric("Total States", total_states)
-        c2.metric("Outlier States", int(outliers))
 
         # ==========================
         # SCATTER PLOT
