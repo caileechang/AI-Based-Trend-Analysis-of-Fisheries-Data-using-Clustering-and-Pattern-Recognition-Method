@@ -2851,11 +2851,25 @@ def main():
 
         st.markdown("### 🚨 Detected Outliers")
 
-        st.dataframe(
+        display_df = (
             df[df["Anomaly"]]
-            .sort_values("Outlier_Norm", ascending=False),
-            use_container_width=True
+            .sort_values("Outlier_Norm", ascending=False)[
+                [
+                    "State",
+                    "Year",
+                    "Landing",
+                    "Vessels",
+                    "Outlier_Norm"
+                ]
+            ]
+            .rename(columns={
+                "Landing": "Total Fish Landing (Tonnes)",
+                "Vessels": "Total Fishing Vessels",
+                "Outlier_Norm": "Outlier Score (0–1)"
+            })
         )
+
+        st.dataframe(display_df, use_container_width=True)
 
       
 
