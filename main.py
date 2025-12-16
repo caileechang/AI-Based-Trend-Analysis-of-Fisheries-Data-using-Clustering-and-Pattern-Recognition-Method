@@ -52,51 +52,7 @@ def load_data():
 
     return df_land, df_vess
 
-def run_global_hdbscan_outlier_detection(merged_df):
-    """
-    Run ONE global HDBSCAN over ALL years.
-    Returns dataframe with outlier scores & anomaly labels.
-    """
 
-    df = merged_df.copy()
-
-    # Safety check
-    if df.empty:
-        return df
-
-    # Features
-    features = [
-        "Total Fish Landing (Tonnes)",
-        "Total number of fishing vessels"
-    ]
-
-    # Drop invalid rows
-    df = df.dropna(subset=features)
-
-    # Scale
-    X = StandardScaler().fit_transform(df[features])
-
-    # HDBSCAN
-    clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=3,
-        min_samples=3,
-        gen_min_span_tree=True
-    ).fit(X)
-
-    df["Cluster"] = clusterer.labels_
-    df["Outlier_Score"] = clusterer.outlier_scores_
-
-    # Normalise outlier score (GLOBAL)
-    max_score = df["Outlier_Score"].max()
-    if max_score > 0:
-        df["Outlier_Norm"] = df["Outlier_Score"] / max_score
-    else:
-        df["Outlier_Norm"] = 0.0
-
-    # Conservative threshold
-    df["Anomaly"] = df["Outlier_Norm"] >= 0.65
-
-    return df
 
     
 def prepare_yearly(df_land, df_vess):
@@ -215,6 +171,54 @@ def prepare_yearly(df_land, df_vess):
 
 
 
+
+
+def run_global_hdbscan_outlier_detection(merged_df):
+    """
+    Run ONE global HDBSCAN over ALL years.
+    Returns dataframe with outlier scores & anomaly labels.
+    """
+
+    df = merged_df.copy()
+
+    # Safety check
+    if df.empty:
+        return df
+
+    # Features
+    features = [
+        "Total Fish Landing (Tonnes)",
+        "Total number of fishing vessels"
+    ]
+
+    # Drop invalid rows
+    df = df.dropna(subset=features)
+
+    # Scale
+    X = StandardScaler().fit_transform(df[features])
+
+    # HDBSCAN
+    clusterer = hdbscan.HDBSCAN(
+        min_cluster_size=3,
+        min_samples=3,
+        gen_min_span_tree=True
+    ).fit(X)
+
+    df["Cluster"] = clusterer.labels_
+    df["Outlier_Score"] = clusterer.outlier_scores_
+
+    # Normalise outlier score (GLOBAL)
+    max_score = df["Outlier_Score"].max()
+    if max_score > 0:
+        df["Outlier_Norm"] = df["Outlier_Score"] / max_score
+    else:
+        df["Outlier_Norm"] = 0.0
+
+    # Conservative threshold
+    df["Anomaly"] = df["Outlier_Norm"] >= 0.65
+
+    return df
+
 # =====================================================
 # GLOBAL HDBSCAN (RUN ONCE, RE-RUN IF DATA CHANGES)
 # =====================================================
@@ -224,7 +228,6 @@ if (
 ):
     st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
     st.session_state.data_updated = False
-
 
 def prepare_monthly(df_land, df_vess):
     valid_states = [
