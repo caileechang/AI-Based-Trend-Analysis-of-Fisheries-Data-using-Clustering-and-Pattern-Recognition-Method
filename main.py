@@ -2070,7 +2070,7 @@ def main():
             st.error(f"❌ Error in yearly computation: {e}")
 
         # ============================================================
-        # 3️⃣  SUMMARY TABLE
+        #   SUMMARY TABLE
         # ============================================================
         st.markdown("### 🧾 Summary of Optimal K Results") 
 
@@ -2078,14 +2078,14 @@ def main():
 
         if best_k_monthly is not None:
             summary.append([
-                "Monthly (Freshwater + Marine)",
+                "Monthly",
                 best_k_monthly,
                 f"{best_sil_monthly:.3f}" if best_sil_monthly else "N/A"
             ])
 
         if best_k_yearly is not None:
             summary.append([
-                "Yearly (Freshwater + Marine)",
+                "Yearly ",
                 best_k_yearly,
                 f"{best_sil_yearly:.3f}" if best_sil_yearly else "N/A"
             ])
