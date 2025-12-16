@@ -2688,6 +2688,67 @@ def main():
 
   
 
+        from sklearn.preprocessing import StandardScaler
+        import hdbscan
+        import numpy as np
+
+        def auto_tune_hdbscan(df, min_cluster_range, min_samples_range):
+            X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+
+            best_score = -1
+            best_params = None
+
+            for mcs in min_cluster_range:
+                for ms in min_samples_range:
+                    if ms > mcs:
+                        continue  # logical constraint
+
+                    clusterer = hdbscan.HDBSCAN(
+                        min_cluster_size=mcs,
+                        min_samples=ms
+                    ).fit(X)
+
+                    labels = clusterer.labels_
+
+                    # Skip trivial solutions
+                    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+                    if n_clusters < 2:
+                        continue
+
+                    score = clusterer.relative_validity_
+
+                    # Noise penalty
+                    noise_ratio = np.mean(labels == -1)
+                    if noise_ratio > 0.5:
+                        continue
+
+                    if score > best_score:
+                        best_score = score
+                        best_params = (mcs, ms)
+
+            return best_params, best_score
+
+        # Prepare base dataframe for tuning
+        df_tune = merged_df[[
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]].dropna().rename(columns={
+            "Total Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        })
+
+        (best_mcs, best_ms), best_dbcv = auto_tune_hdbscan(
+            df_tune,
+            min_cluster_range=range(3, 8),
+            min_samples_range=range(2, 6)
+        )
+
+        st.info(
+            f"Auto-tuned HDBSCAN parameters → "
+            f"min_cluster_size={best_mcs}, min_samples={best_ms} "
+            f"(DBCV={best_dbcv:.3f})"
+        )
+
 
 
     elif plot_option == "HDBSCAN Outlier Detection":
@@ -2698,11 +2759,8 @@ def main():
         st.markdown("<p style='color:#ccc'>Detect unusual landing–vessel relationships at the state level.</p>",
                     unsafe_allow_html=True)
       
+        #  Select Year
        
-
-        # --------------------------------------------
-        # 1. Select Year
-        # --------------------------------------------
         years = sorted(merged_df["Year"].unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
@@ -2711,9 +2769,8 @@ def main():
             st.error("No data for selected year.")
             st.stop()
 
-        # --------------------------------------------
-        # 2. Prepare features
-        # --------------------------------------------
+        #  Prepare features
+      
         df = df[[
             "State",
             "Year",
@@ -2726,28 +2783,25 @@ def main():
             "Total number of fishing vessels": "Vessels"
         }, inplace=True)
 
-        # --------------------------------------------
-        # 3. Scaling
-        # --------------------------------------------
+        # Scaling
+  
         X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
-        # --------------------------------------------
-        # 4. Run HDBSCAN
-        # --------------------------------------------
+        #  Run HDBSCAN
         clusterer = hdbscan.HDBSCAN(
-            min_samples=3,
-            min_cluster_size=3,
+            min_samples=best_ms,
+            min_cluster_size=best_mcs,
             prediction_data=True
         ).fit(X)
+
 
         df["Cluster"] = clusterer.labels_
         df["Outlier_Score"] = clusterer.outlier_scores_
         df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
         df["Anomaly"] = df["Outlier_Norm"] >= 0.65   # anomaly threshold
 
-        # --------------------------------------------
-        # 5. Explanation rules
-        # --------------------------------------------
+        #  Explanation rules
+     
         avg_land = df["Landing"].mean()
         avg_ves = df["Vessels"].mean()
 
@@ -2767,9 +2821,8 @@ def main():
 
         df["Explanation"] = df.apply(explain, axis=1)
 
-        # --------------------------------------------
-        # 6. Outlier Table
-        # --------------------------------------------
+        # Outlier Table
+    
         st.markdown("### 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"] == True][[
@@ -2781,11 +2834,9 @@ def main():
         else:
             st.dataframe(outliers, use_container_width=True)
 
-        # --------------------------------------------
-        # 7. Scatter Plot Visualization (with Aligned Legend)
-        # --------------------------------------------
-
-        # 🔹 Create a shared header row so both columns align perfectly
+ 
+        #  Scatter Plot Visualization 
+        # Create a shared header row so both columns align perfectly
         header_left, header_right = st.columns([3, 1])
 
         with header_left:
@@ -2798,15 +2849,10 @@ def main():
             </h4>
             """, unsafe_allow_html=True)
 
-
-        # 🔹 Now create the real content columns
         col_plot, col_legend = st.columns([3, 1], gap="large")
 
         with col_plot:
-
             fig, ax = plt.subplots(figsize=(15, 12))
-           
-
             sns.scatterplot(
                 data=df,
                 x="Vessels",
@@ -2848,10 +2894,7 @@ def main():
 
             st.pyplot(fig)
 
-
         with col_legend:
-
-          
             st.markdown("""
             <div style="
                 background-color:#111;
@@ -2879,16 +2922,11 @@ def main():
                 <tr><td>⭕ <b>Outlier</b></td><td>Explicit anomaly</td></tr>
             </table>
 
-           
-
             </div>
             """, unsafe_allow_html=True)
 
-
-
-        # --------------------------------------------
-        # 8. MAP VISUALIZATION
-        # --------------------------------------------
+        # MAP VISUALIZATION
+      
         st.markdown("### 🗺️ Map of Anomalous States")
 
         import folium
