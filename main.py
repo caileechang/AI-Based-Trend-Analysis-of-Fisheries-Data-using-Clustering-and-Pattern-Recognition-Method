@@ -2778,14 +2778,9 @@ def main():
 
     import plotly.express as px
     
-    # ===============================
-    # SAFE INITIALIZATION (REQUIRED)
-    # ===============================
     if "global_outliers" not in st.session_state:
-        if merged_df is None or merged_df.empty:
-            st.session_state.global_outliers = pd.DataFrame()
-        else:
-            st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+
 
     elif plot_option =="HDBSCAN":
 
