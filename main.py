@@ -2795,16 +2795,14 @@ def main():
         # ==========================
         # SCATTER PLOT
         # ==========================
+        # Scatter plot (ALL YEARS)
         fig = px.scatter(
-            df_year,
-            x="Total number of fishing vessels",
-            y="Total Fish Landing (Tonnes)",
+            df,
+            x="Total Fish Landing (Tonnes)",
+            y="Total number of fishing vessels",
             color="Anomaly",
-            color_discrete_map={True: "red", False: "cyan"},
-            size="Outlier_Norm",
-            hover_data=["State"],
-            title=f"HDBSCAN Outliers — {selected_year}",
-            template="plotly_dark"
+            hover_data=["State", "Year"],
+            title="Global Outliers Across All Years"
         )
 
         st.plotly_chart(fig, use_container_width=True)
