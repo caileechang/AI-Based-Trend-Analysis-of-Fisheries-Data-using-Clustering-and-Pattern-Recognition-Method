@@ -74,6 +74,11 @@ def prepare_yearly(df_land, df_vess):
     # REMOVE MALAYSIA-level rows BEFORE fuzzy match
     land = land[~land['State'].str.startswith("MALAYSIA")]
 
+    # IMPORTANT: allow rows without Month to be counted in YEARLY
+    land["Month"] = pd.to_numeric(land["Month"], errors="coerce")
+    land["Month"] = land["Month"].fillna(0)
+
+
     # Fuzzy matching for df_land
     def match_state_land(name):
         matches = get_close_matches(name.upper(), valid_states, n=1, cutoff=0.75)
@@ -980,13 +985,15 @@ def main():
         
 
         # --- ALWAYS use cleaned yearly summary from prepare_yearly ---
-        if uploaded_files:
-            yearly_summary = prepare_yearly(df_land, df_vess)
-        else:
-            yearly_summary = st.session_state.get(
-                "yearly_summary", prepare_yearly(df_land, df_vess)
-            )
+    #    if uploaded_files:
+    #        yearly_summary = prepare_yearly(df_land, df_vess)
+      #  else:
+         #   yearly_summary = st.session_state.get(
+         #       "yearly_summary", prepare_yearly(df_land, df_vess)
+          #  )
 
+        #st.session_state.yearly_summary = yearly_summary
+        yearly_summary = prepare_yearly(df_land, df_vess)
         st.session_state.yearly_summary = yearly_summary
 
         # A) Summary Cards + Lollipop 
