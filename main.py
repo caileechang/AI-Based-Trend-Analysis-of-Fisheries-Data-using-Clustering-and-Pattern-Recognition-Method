@@ -76,7 +76,7 @@ def prepare_yearly(df_land, df_vess):
 
     # IMPORTANT: allow rows without Month to be counted in YEARLY
     land["Month"] = pd.to_numeric(land["Month"], errors="coerce")
-    land["Month"] = land["Month"].fillna(0)
+    
 
 
     # Fuzzy matching for df_land
@@ -88,9 +88,12 @@ def prepare_yearly(df_land, df_vess):
     land = land.dropna(subset=['State'])
     land = land[land['State'].isin(valid_states)]
 
-   
-    # GROUP df_land → yearly freshwater/marine totals
-   
+   # Split data
+    yearly_rows  = land[land["Month"].isna()]          # uploaded yearly totals (blank Month)
+    monthly_rows = land[land["Month"].between(1, 12)]  # true monthly rows only
+
+    # If yearly totals exist, use them; otherwise sum monthly
+    source = yearly_rows if not yearly_rows.empty else monthly_rows
     yearly_totals = (
         land.groupby(['Year', 'State', 'Type of Fish'])['Fish Landing (Tonnes)']
             .sum()
