@@ -219,15 +219,6 @@ def run_global_hdbscan_outlier_detection(merged_df):
 
     return df
 
-# =====================================================
-# GLOBAL HDBSCAN (RUN ONCE, RE-RUN IF DATA CHANGES)
-# =====================================================
-if (
-    "global_outliers" not in st.session_state
-    or st.session_state.get("data_updated", False)
-):
-    st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
-    st.session_state.data_updated = False
 
 def prepare_monthly(df_land, df_vess):
     valid_states = [
@@ -2785,6 +2776,15 @@ def main():
 
         st_folium(m, height=550, width=800)
 
+        # =====================================================
+        # GLOBAL HDBSCAN (RUN ONCE, RE-RUN IF DATA CHANGES)
+        # =====================================================
+        if (
+            "global_outliers" not in st.session_state
+            or st.session_state.get("data_updated", False)
+        ):
+            st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+            st.session_state.data_updated = False
 
     elif plot_option =="HDBSCAN":
 
