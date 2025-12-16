@@ -925,13 +925,35 @@ def main():
 
                     if st.session_state.get("last_merged_upload") != upload_key:
 
+                        #df_land = pd.concat([df_land, user_land], ignore_index=True)
+                        # REMOVE existing base data for the same Year + State + Type of Fish
+                        keys = user_land[['Year', 'State', 'Type of Fish']].drop_duplicates()
+
+                        df_land = df_land.merge(
+                            keys,
+                            on=['Year', 'State', 'Type of Fish'],
+                            how='left',
+                            indicator=True
+                        )
+
+                        df_land = df_land[df_land['_merge'] == 'left_only'].drop(columns='_merge')
+
+                        # ✅ Now safely append uploaded data
                         df_land = pd.concat([df_land, user_land], ignore_index=True)
 
                         #  NaN-safe deduplication (ONLY ONCE)
-                        df_land = df_land.drop_duplicates(
-                            subset=['State', 'Year', 'Month', 'Type of Fish'],
-                            keep='last'
+                        # ✅ NaN-safe deduplication
+                        df_land['Month_dedup'] = df_land['Month'].fillna(-1)
+
+                        df_land = (
+                            df_land
+                            .drop_duplicates(
+                                subset=['State', 'Year', 'Month_dedup', 'Type of Fish'],
+                                keep='last'
+                            )
+                            .drop(columns='Month_dedup')
                         )
+
 
 
                         df_vess = (
