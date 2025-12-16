@@ -992,7 +992,7 @@ def main():
     
    
 
-    elif plot_option == "Yearly Fish Landing Summary":
+    if plot_option == "Yearly Fish Landing Summary":
            
         import seaborn as sns
         import matplotlib.pyplot as plt
