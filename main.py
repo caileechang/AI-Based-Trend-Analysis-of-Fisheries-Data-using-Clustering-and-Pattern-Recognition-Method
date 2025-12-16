@@ -2484,33 +2484,7 @@ def main():
             gen_min_span_tree=True
         ).fit(X)
 
-        dbcv_score = clusterer.relative_validity_
-        labels = clusterer.labels_
-        n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-
-        if n_clusters < 2:
-            dbcv_score = None
-
-        st.markdown("### 📊 Clustering Quality (DBCV)")
-
-        if dbcv_score is None:
-            st.warning(
-                "DBCV cannot be computed reliably because fewer than two clusters "
-                "were identified. This indicates weak cluster structure for this year."
-            )
-        else:
-            st.metric(
-                label="Density-Based Clustering Validation (DBCV)",
-                value=f"{dbcv_score:.3f}"
-            )
-
-            if dbcv_score > 0.3:
-                st.success("Strong density-based cluster separation detected.")
-            elif dbcv_score > 0:
-                st.info("Moderate clustering structure detected.")
-            else:
-                st.error("Poor clustering structure detected.")
-
+       
 
 
 
