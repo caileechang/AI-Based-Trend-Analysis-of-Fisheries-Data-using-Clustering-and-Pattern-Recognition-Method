@@ -19,6 +19,10 @@ import plotly.graph_objects as go
 import hdbscan
 
 
+# Developer mode flag
+DEV_MODE = False  # Set to True to enable developer-only features
+
+
 # from clustering_method import hierarchical_clustering
 # @st.cache_data
 def load_data():
@@ -2516,8 +2520,10 @@ def main():
             sens_df = pd.DataFrame(sens)
             sens_df["delta"] = sens_df["count"].diff().abs()
 
-            st.markdown("### 🔬 Sensitivity Analysis")
-            st.dataframe(sens_df)
+            # Developer-only visibility
+            if DEV_MODE:
+                st.markdown("### 🔬 Sensitivity Analysis (Developer Only)")
+                st.dataframe(sens_df)
             # Dynamic threshold selection (most conservative stable)
             stable = sens_df[sens_df["delta"] == 0]
 
