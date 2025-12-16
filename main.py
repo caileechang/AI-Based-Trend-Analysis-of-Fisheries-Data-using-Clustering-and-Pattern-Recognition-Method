@@ -323,6 +323,41 @@ def compute_apn_like(Z_full, X_full, best_k):
         apn_values.append(np.mean(diff))
 
     return np.mean(apn_values)
+def auto_tune_hdbscan(df, min_cluster_range, min_samples_range):
+            X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+
+            best_score = -1
+            best_params = None
+
+            for mcs in min_cluster_range:
+                for ms in min_samples_range:
+                    if ms > mcs:
+                        continue  # logical constraint
+
+                    clusterer = hdbscan.HDBSCAN(
+                        min_cluster_size=mcs,
+                        min_samples=ms
+                    ).fit(X)
+
+                    labels = clusterer.labels_
+
+                    # Skip trivial solutions
+                    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+                    if n_clusters < 2:
+                        continue
+
+                    score = clusterer.relative_validity_
+
+                    # Noise penalty
+                    noise_ratio = np.mean(labels == -1)
+                    if noise_ratio > 0.5:
+                        continue
+
+                    if score > best_score:
+                        best_score = score
+                        best_params = (mcs, ms)
+
+            return best_params, best_score
 
 def hierarchical_clustering(merged_df):
 
@@ -2688,45 +2723,9 @@ def main():
 
   
 
-        from sklearn.preprocessing import StandardScaler
-        import hdbscan
-        import numpy as np
+        
 
-        def auto_tune_hdbscan(df, min_cluster_range, min_samples_range):
-            X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
-
-            best_score = -1
-            best_params = None
-
-            for mcs in min_cluster_range:
-                for ms in min_samples_range:
-                    if ms > mcs:
-                        continue  # logical constraint
-
-                    clusterer = hdbscan.HDBSCAN(
-                        min_cluster_size=mcs,
-                        min_samples=ms
-                    ).fit(X)
-
-                    labels = clusterer.labels_
-
-                    # Skip trivial solutions
-                    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-                    if n_clusters < 2:
-                        continue
-
-                    score = clusterer.relative_validity_
-
-                    # Noise penalty
-                    noise_ratio = np.mean(labels == -1)
-                    if noise_ratio > 0.5:
-                        continue
-
-                    if score > best_score:
-                        best_score = score
-                        best_params = (mcs, ms)
-
-            return best_params, best_score
+        
 
         # Prepare base dataframe for tuning
         df_tune = merged_df[[
