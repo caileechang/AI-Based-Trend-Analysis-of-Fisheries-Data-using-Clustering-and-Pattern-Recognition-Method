@@ -2471,6 +2471,7 @@ def main():
         import numpy as np
         import pandas as pd
         import plotly.express as px
+        from sklearn.metrics import silhouette_score
         
         from mpl_toolkits.mplot3d import Axes3D
 
@@ -2783,6 +2784,7 @@ def main():
         import matplotlib.pyplot as plt
         import seaborn as sns
         from scipy.spatial import ConvexHull
+        from sklearn.metrics import silhouette_score
 
         st.subheader("Automatic DBSCAN Clustering & Outlier Detection")
      
