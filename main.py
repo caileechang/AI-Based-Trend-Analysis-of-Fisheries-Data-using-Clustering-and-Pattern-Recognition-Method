@@ -2703,6 +2703,7 @@ def main():
         st.session_state.data_updated = False
     
     elif plot_option == "HDBSCAN Outlier Detection":
+        import plotly.express as px
 
         df = st.session_state.global_outliers.copy()
 
