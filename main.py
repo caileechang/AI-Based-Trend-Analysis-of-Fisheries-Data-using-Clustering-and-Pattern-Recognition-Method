@@ -516,8 +516,8 @@ def compute_apn_like(Z_full, X_full, best_k):
 
 def hierarchical_clustering(merged_df):
 
-    import streamlit as st
-    import pandas as pd
+    
+    
     import seaborn as sns
     from scipy.cluster.hierarchy import linkage, fcluster
     from sklearn.preprocessing import StandardScaler
@@ -1845,7 +1845,7 @@ def main():
             # Cluster interpretation summary
 
             st.markdown("## 🔍 Cluster Interpretation Summary")
-            import pandas as pd
+           
 
             df_year = df_plot.copy()
             avg_fw = df_year["Freshwater (Tonnes)"].mean()
@@ -1893,7 +1893,7 @@ def main():
 
 
         if period_choice == "Monthly":
-            import pandas as pd
+           
             # Prepare monthly data
             monthly = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
@@ -2253,7 +2253,7 @@ def main():
 
     elif plot_option == "Optimal K for Monthly & Yearly":
 
-        import pandas as pd
+        
 
         st.subheader("Determination of Optimal K")
 
@@ -3024,7 +3024,7 @@ def main():
     elif plot_option == "Model Stability Test (DBSCAN vs HDBSCAN)":
        
         import numpy as np
-        import pandas as pd
+        
         import matplotlib.pyplot as plt
         
         from itertools import combinations
