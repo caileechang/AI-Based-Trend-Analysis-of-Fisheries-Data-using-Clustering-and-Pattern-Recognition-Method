@@ -2926,18 +2926,42 @@ def main():
             pts = scaled[labels == label]
 
             if label == -1:
-                ax.scatter(pts[:, 1], pts[:, 0], s=50, c="lightgray", edgecolor="k",
-                        alpha=0.6, label="Noise")
+                #  JITTER ONLY FOR NOISE (visual clarity)
+                jitter = np.random.normal(0, 0.02, pts.shape)
+                pts_jittered = pts + jitter
+
+                ax.scatter(
+                    pts_jittered[:, 1],   # vessels (scaled + jitter)
+                    pts_jittered[:, 0],   # landings (scaled + jitter)
+                    s=50,
+                    c="lightgray",
+                    edgecolor="k",
+                    alpha=0.6,
+                    label="Noise"
+                )
+
             else:
                 color = palette[label % len(palette)]
-                ax.scatter(pts[:, 1], pts[:, 0], s=60, c=[color], edgecolor="k",
-                        alpha=0.85, label=f"Cluster {label} ({len(pts)})")
+                ax.scatter(
+                    pts[:, 1],   # vessels (scaled)
+                    pts[:, 0],   # landings (scaled)
+                    s=60,
+                    c=[color],
+                    edgecolor="k",
+                    alpha=0.85,
+                    label=f"Cluster {label} ({len(pts)})"
+                )
 
-                # Convex Hull
+                # Convex Hull (NO jitter here – keep geometry exact)
                 if len(pts) >= 3:
                     hull = ConvexHull(pts)
                     hv = list(hull.vertices) + [hull.vertices[0]]
-                    ax.plot(pts[hv, 1], pts[hv, 0], color=color, linewidth=2)
+                    ax.plot(
+                        pts[hv, 1],
+                        pts[hv, 0],
+                        color=color,
+                        linewidth=2
+                    )
 
         ax.set_title(f"DBSCAN (eps={eps_auto:.3f}, min_samples={min_samples_auto})")
         ax.set_xlabel("Vessels (scaled)")
