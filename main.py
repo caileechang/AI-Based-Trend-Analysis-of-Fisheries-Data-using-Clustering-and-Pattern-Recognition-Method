@@ -3284,6 +3284,26 @@ def main():
         )
 
         anomalies = df_plot[df_plot["Anomaly"]]
+        # ==========================================================
+        # EXPLAIN WHY EACH MONTHLY ANOMALY WAS FLAGGED
+        # ==========================================================
+        avg_land = df_plot["Landing"].mean()
+        avg_ves  = df_plot["Vessels"].mean()
+
+        def explain_monthly(row):
+            if row["Landing"] > avg_land and row["Vessels"] < avg_ves:
+                return "⚠️ High landing with relatively few vessels"
+            if row["Landing"] < avg_land and row["Vessels"] > avg_ves:
+                return "🐟 Low catch efficiency (many vessels, low landing)"
+            if row["Landing"] < avg_land and row["Vessels"] < avg_ves:
+                return "🛶 Low activity relative to other states"
+            if row["Landing"] > avg_land and row["Vessels"] > avg_ves:
+                return "🚢 High activity outlier (scale-driven)"
+            return "Atypical monthly pattern"
+
+        anomalies = anomalies.copy()
+        anomalies["Why Flagged"] = anomalies.apply(explain_monthly, axis=1)
+
 
         fig.add_scatter(
             x=anomalies["Landing"],
@@ -3318,7 +3338,7 @@ def main():
                 "Month",
                 "State",
                 "Landing",
-                "Vessels"
+                "Vessels","Why Flagged"
             ]].sort_values(["Year", "Month"]),
             use_container_width=True
         )
