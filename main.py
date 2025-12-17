@@ -2553,7 +2553,7 @@ def main():
         # --- Step 6: Display summary ---
             st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
         
-        st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
+            st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
     
         # --- Step 7: Show 2D scatter ---
         fig2, ax = plt.subplots(figsize=(10, 6))
