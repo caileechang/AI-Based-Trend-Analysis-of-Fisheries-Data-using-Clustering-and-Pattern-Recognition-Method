@@ -2786,71 +2786,7 @@ def main():
 
 
 
-    elif plot_option == "HDBSCAN Outlier Detection":
-
-        import streamlit as st
-        import plotly.express as px
-
-        st.subheader("🔎 Global HDBSCAN Outlier Detection (2000–Present)")
-        st.markdown(
-            "<p style='color:#ccc'>Clusters are formed using all years combined. "
-            "Anomalies are detected using auto-tuned HDBSCAN parameters "
-            "and dynamic thresholding.</p>",
-            unsafe_allow_html=True
-        )
-
-        # ✅ SAFE ACCESS (NO pd HERE)
-        df = st.session_state.global_outliers.copy()
-
-        if df is None or df.empty:
-            st.warning("No global HDBSCAN results available.")
-            st.stop()
-
-        # ===============================
-        # SCATTER: CLUSTERS + ANOMALIES
-        # ===============================
-        fig = px.scatter(
-            df,
-            x="Landing",
-            y="Vessels",
-            color=df["Cluster"].astype(str),
-            symbol="Anomaly",
-            symbol_map={True: "x", False: "circle"},
-            opacity=0.75,
-            hover_data=["State", "Year", "Outlier_Norm"],
-            title="Global HDBSCAN Clusters with Anomalies"
-        )
-
-        fig.update_traces(marker=dict(size=9))
-        fig.update_layout(
-            template="plotly_dark",
-            xaxis_title="Total Fish Landing (Tonnes)",
-            yaxis_title="Total Fishing Vessels"
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-        # ===============================
-        # ANOMALY TABLE
-        # ===============================
-        st.markdown("### 🚨 Detected Anomalies")
-
-        anomalies = (
-            df[df["Anomaly"]]
-            .sort_values("Outlier_Norm", ascending=False)
-            .reset_index(drop=True)
-        )
-
-        st.dataframe(
-            anomalies[
-                ["State", "Year", "Landing", "Vessels", "Cluster", "Outlier_Norm"]
-            ],
-            use_container_width=True,
-            height=350
-        )
-
-
-
+    
     elif plot_option == "HDBSCAN Monthly Outlier Detection":
 
         import plotly.express as px
