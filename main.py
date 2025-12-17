@@ -2767,6 +2767,21 @@ def main():
             "Fish Landing (Tonnes)": "Landing",
             "Total number of fishing vessels": "Vessels"
         }, inplace=True)
+
+        # -------------------------------------------------
+        # 🚨 CRITICAL: Clean invalid rows BEFORE scaling
+        # -------------------------------------------------
+        df = df.replace([np.inf, -np.inf], np.nan)
+        df = df.dropna(subset=["Landing", "Vessels"])
+
+        # Remove zero or negative vessels (invalid density)
+        df = df[df["Vessels"] > 0]
+
+        # Safety check
+        if df.shape[0] < 5:
+            st.warning("Not enough valid data for HDBSCAN after cleaning.")
+            st.stop()
+
         import calendar
         
         df["Month_Name"] = df["Month"].apply(lambda m: calendar.month_name[int(m)])
