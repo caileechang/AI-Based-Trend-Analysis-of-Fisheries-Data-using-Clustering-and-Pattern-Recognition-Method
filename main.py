@@ -2561,7 +2561,7 @@ def main():
         }
 
 
-    elif plot_option == "HDBSCAN Outlier Detection":
+    elif plot_option == "HDBSCAN Outlier Detection1":
         import matplotlib.pyplot as plt
         import seaborn as sns
 
