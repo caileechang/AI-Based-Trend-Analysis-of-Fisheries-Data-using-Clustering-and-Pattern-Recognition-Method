@@ -2457,7 +2457,7 @@ def main():
         
     elif plot_option == "2D KMeans Scatter":
 
-        import numpy as np
+        
         import matplotlib.pyplot as plt
         import seaborn as sns
         from sklearn.cluster import KMeans
