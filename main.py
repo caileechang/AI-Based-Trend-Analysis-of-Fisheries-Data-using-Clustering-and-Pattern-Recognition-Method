@@ -176,7 +176,7 @@ def dynamic_hdbscan_threshold(df, score_col="Outlier_Norm"):
     Returns a float threshold.
     """
 
-    import pandas as pd
+    
 
     # No meaningful separation
     if df[score_col].nunique() <= 1:
@@ -211,7 +211,7 @@ def run_global_hdbscan_outlier_detection(merged_df):
     using auto-tuned parameters and dynamic thresholding.
     """
 
-    import pandas as pd
+    
     import hdbscan
     from sklearn.preprocessing import StandardScaler
 
@@ -838,7 +838,7 @@ def run_monthly_hdbscan_outlier_detection(merged_monthly):
     using AUTO-TUNED parameters (no fixed values).
     """
 
-    import pandas as pd
+    
     import hdbscan
     from sklearn.preprocessing import StandardScaler
 
