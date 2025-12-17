@@ -22,6 +22,8 @@ import hdbscan
 # Developer mode flag
 DEV_MODE = False  # Set to True to enable developer-only features
 
+if "DEV_KEY" in st.secrets and st.secrets["DEV_KEY"] == "cai_lee_dev":
+    DEV_MODE = True
 
 # from clustering_method import hierarchical_clustering
 # @st.cache_data
@@ -2742,7 +2744,7 @@ def main():
 
             st.plotly_chart(fig, use_container_width=True)
    
-        from hdbscan.validity import validity_index
+        
 
     elif plot_option == "Automatic HDBSCAN":
         import numpy as np
@@ -2804,21 +2806,7 @@ def main():
         df["HDBSCAN_Label"] = labels
         df["Outlier_Score"] = clusterer.outlier_scores_
 
-        # -----------------------------
-        # 4.1 DBCV VALIDATION (DEV MODE)
-        # -----------------------------
         
-        valid_clusters = set(labels) - {-1}
-
-        if len(valid_clusters) >= 2:
-            try:
-                dbcv = validity_index(X_scaled, labels, metric="euclidean")
-                st.success(f"📐 DBCV Score (density-based): `{dbcv:.3f}`")
-            except Exception:
-                st.warning("DBCV could not be computed due to unstable density separation.")
-        else:
-            st.info("DBCV not computed: fewer than 2 stable clusters detected.")
-
         # -----------------------------
         # 5. SILHOUETTE (clusters only)
         # -----------------------------
