@@ -2798,7 +2798,9 @@ def main():
             unsafe_allow_html=True
         )
 
-        df = st.session_state.get("global_outliers", pd.DataFrame()).copy()
+        
+        df = st.session_state.global_outliers.copy()
+
 
         if df is None or df.empty:
             st.warning("No data available for global HDBSCAN analysis.")
