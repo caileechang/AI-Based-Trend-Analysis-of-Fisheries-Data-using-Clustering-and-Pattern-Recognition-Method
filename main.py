@@ -2094,7 +2094,7 @@ def main():
             import plotly.graph_objects as go
             import plotly.express as px
             import numpy as np
-            import pandas as pd
+            
 
 
             # Prepare monthly dataframe for selected year
@@ -2524,7 +2524,7 @@ def main():
         import matplotlib.pyplot as plt
         import seaborn as sns
         import numpy as np
-        import pandas as pd
+        
         import plotly.express as px
         from sklearn.metrics import silhouette_score
         
@@ -3086,8 +3086,7 @@ def main():
     elif plot_option == "HDBSCAN Monthly Outlier Detection":
 
         import plotly.express as px
-        import pandas as pd
-
+       
         # Use your existing prepared monthly data
         merged_monthly = prepare_monthly(df_land, df_vess)
 
@@ -3880,7 +3879,7 @@ def main():
     elif plot_option == "Geospatial Maps":
         import folium
         import numpy as np
-        import pandas as pd
+       
         import seaborn as sns
         import matplotlib.pyplot as plt
         from folium.plugins import HeatMap, MiniMap, Fullscreen
