@@ -2762,8 +2762,13 @@ def main():
 
         #df = merged_df[merged_df["State"].isin(valid_states)].copy()
         df = merged_monthly[merged_monthly["State"].isin(valid_states)].copy()
-        
+        # 🔑 ADD THIS (missing step)
+        df.rename(columns={
+            "Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
         import calendar
+        
         df["Month_Name"] = df["Month"].apply(lambda m: calendar.month_name[int(m)])
 
         if df.empty:
@@ -2773,8 +2778,11 @@ def main():
         # -----------------------------
         # 2. PREPARE FEATURES
         # -----------------------------
+        X = df[[
+            "Landing",
+            "Vessels"
+        ]].values
         
-        X = df[["Landing", "Vessels"]].values
 
 
         X_scaled = StandardScaler().fit_transform(X)
