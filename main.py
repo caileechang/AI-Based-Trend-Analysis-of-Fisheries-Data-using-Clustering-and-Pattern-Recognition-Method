@@ -2788,7 +2788,157 @@ def main():
         from sklearn.preprocessing import StandardScaler
 
     
-    
+    elif plot_option == "Automatic HDBSCAN":
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import hdbscan
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.metrics import silhouette_score
+        from scipy.spatial import ConvexHull
+
+        st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
+
+        # -----------------------------
+        # 1. FILTER VALID STATES
+        # -----------------------------
+        valid_states = [
+            "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+            "SABAH", "SARAWAK", "W.P. LABUAN"
+        ]
+
+        df = merged_df[merged_df["State"].isin(valid_states)].copy()
+
+        if df.empty:
+            st.warning("No valid data after filtering states.")
+            st.stop()
+
+        # -----------------------------
+        # 2. PREPARE FEATURES
+        # -----------------------------
+        X = df[[
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]].values
+
+        X_scaled = StandardScaler().fit_transform(X)
+
+        n_samples = X_scaled.shape[0]
+
+        # -----------------------------
+        # 3. AUTO HDBSCAN PARAMETERS
+        # -----------------------------
+        min_cluster_size = max(3, int(np.sqrt(n_samples)))
+        min_samples = max(2, int(np.log(n_samples)))
+
+        st.markdown(f"**Auto min_cluster_size:** `{min_cluster_size}`")
+        st.markdown(f"**Auto min_samples:** `{min_samples}`")
+
+        # -----------------------------
+        # 4. RUN HDBSCAN
+        # -----------------------------
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            prediction_data=True
+        )
+
+        labels = clusterer.fit_predict(X_scaled)
+        df["HDBSCAN_Label"] = labels
+        df["Outlier_Score"] = clusterer.outlier_scores_
+
+        # -----------------------------
+        # 5. SILHOUETTE (clusters only)
+        # -----------------------------
+        mask = labels != -1
+        if len(set(labels[mask])) > 1:
+            sil = silhouette_score(X_scaled[mask], labels[mask])
+            st.info(f"Silhouette Score (clusters only): `{sil:.3f}`")
+        else:
+            st.warning("Silhouette unavailable — only one cluster detected.")
+
+        # -----------------------------
+        # 6. CLUSTER VISUALISATION
+        # -----------------------------
+        fig, ax = plt.subplots(figsize=(10, 6))
+        unique_labels = sorted(set(labels))
+        palette = sns.color_palette("tab10", len(unique_labels))
+
+        for label in unique_labels:
+            pts = X_scaled[labels == label]
+
+            if label == -1:
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    s=45, c="lightgray", edgecolor="k",
+                    alpha=0.6, label="Outliers"
+                )
+            else:
+                color = palette[label % len(palette)]
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    s=65, c=[color], edgecolor="k",
+                    alpha=0.85, label=f"Cluster {label} ({len(pts)})"
+                )
+
+                # Convex hull
+                if len(pts) >= 3:
+                    hull = ConvexHull(pts)
+                    hv = list(hull.vertices) + [hull.vertices[0]]
+                    ax.plot(
+                        pts[hv, 1], pts[hv, 0],
+                        color=color, linewidth=2
+                    )
+
+        ax.set_title("HDBSCAN Clusters & Outliers (Automatic)")
+        ax.set_xlabel("Vessels (scaled)")
+        ax.set_ylabel("Landings (scaled)")
+        ax.grid(alpha=0.3)
+        ax.legend()
+        st.pyplot(fig)
+
+        # -----------------------------
+        # 7. CLUSTER SUMMARY
+        # -----------------------------
+        cluster_summary = (
+            df[df["HDBSCAN_Label"] != -1]
+            .groupby("HDBSCAN_Label")[[
+                "Total Fish Landing (Tonnes)",
+                "Total number of fishing vessels"
+            ]]
+            .mean()
+            .reset_index()
+        )
+
+        st.markdown("### 📊 Cluster Summary")
+        st.dataframe(cluster_summary)
+
+        # -----------------------------
+        # 8. OUTLIER ANALYSIS
+        # -----------------------------
+        outliers = df[df["HDBSCAN_Label"] == -1]
+        st.success(f"Detected {len(outliers)} outliers.")
+
+        if not outliers.empty:
+            avg_land = df["Total Fish Landing (Tonnes)"].mean()
+            avg_ves = df["Total number of fishing vessels"].mean()
+
+            def explain(r):
+                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "⚠️ High landing but low vessels"
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
+                    return "🐟 Low catch per vessel"
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "🛶 Low activity region"
+                return "Atypical pattern"
+
+            outliers["Why Flagged"] = outliers.apply(explain, axis=1)
+
+            st.markdown("### 🚨 Outlier Details")
+            st.dataframe(outliers)
+
     elif plot_option == "HDBSCAN Monthly Outlier Detection":
 
         import plotly.express as px
