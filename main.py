@@ -2986,7 +2986,7 @@ def main():
 
 
 
-    elif plot_option == "HDBSCAN":
+    elif plot_option == "HDBSCAN test":
 
         import plotly.express as px
 
@@ -3032,6 +3032,140 @@ def main():
         )
 
         st.dataframe(display_df, use_container_width=True)
+
+    elif plot_option == "HDBSCAN":
+
+        import pandas as pd
+        import hdbscan
+        from sklearn.preprocessing import StandardScaler
+        import plotly.express as px
+
+        st.subheader("HDBSCAN — Monthly Clustering & Outlier Detection")
+        st.markdown(
+            "<p style='color:#ccc'>Clusters fishing patterns and detects anomalies for each month.</p>",
+            unsafe_allow_html=True
+        )
+
+        years = sorted(merged_monthly["Year"].unique())
+        sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
+
+        df_year = merged_monthly[merged_monthly["Year"] == sel_year].copy()
+        if df_year.empty:
+            st.error("No data available for this year.")
+            st.stop()
+
+        all_results = []
+
+        # ---------------------------------
+        # Run HDBSCAN for EACH MONTH
+        # ---------------------------------
+        for month in sorted(df_year["Month"].unique()):
+            df = df_year[df_year["Month"] == month].copy()
+            if len(df) < 5:
+                continue
+
+            required_cols = [
+                "State", "Year", "Month",
+                "Fish Landing (Tonnes)",
+                "Total number of fishing vessels"
+            ]
+            if any(c not in df.columns for c in required_cols):
+                continue
+
+            df = df[required_cols].dropna()
+
+            df.rename(columns={
+                "Fish Landing (Tonnes)": "Landing",
+                "Total number of fishing vessels": "Vessels"
+            }, inplace=True)
+
+            if len(df) < 5:
+                continue
+
+            X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+
+            clusterer = hdbscan.HDBSCAN(
+                min_cluster_size=3,
+                min_samples=3,
+                prediction_data=True
+            ).fit(X)
+
+            df["Cluster"] = clusterer.labels_
+            df["Outlier_Score"] = clusterer.outlier_scores_
+
+            if df["Outlier_Score"].max() == 0:
+                continue
+
+            df["Outlier_Norm"] = (
+                df["Outlier_Score"] / df["Outlier_Score"].max()
+            )
+
+            # -----------------------------
+            # Anomaly rule
+            # -----------------------------
+            df["Anomaly"] = (
+                (df["Cluster"] == -1) |
+                (df["Outlier_Norm"] >= 0.65)
+            )
+
+            # -----------------------------
+            # Explanation
+            # -----------------------------
+            avg_land = df["Landing"].mean()
+            avg_ves = df["Vessels"].mean()
+
+            def explain(row):
+                L, V = row["Landing"], row["Vessels"]
+                if L > avg_land and V < avg_ves:
+                    return "⚡ High landing with few vessels"
+                if L < avg_land and V > avg_ves:
+                    return "🐟 Low catch per vessel"
+                if L < avg_land and V < avg_ves:
+                    return "🛶 Low activity"
+                if L > avg_land and V > avg_ves:
+                    return "⚓ Intensive fishing"
+                return "Unusual pattern"
+
+            df["Explanation"] = ""
+            df.loc[df["Anomaly"], "Explanation"] = df[df["Anomaly"]].apply(explain, axis=1)
+
+            all_results.append(df)
+
+        if not all_results:
+            st.success("No anomalies detected for this year.")
+            st.stop()
+
+        final_df = pd.concat(all_results, ignore_index=True)
+
+        # ---------------------------------
+        # TABLE
+        # ---------------------------------
+        st.markdown("### 🔍 Detected Anomalies")
+        st.dataframe(
+            final_df[final_df["Anomaly"]][[
+                "Year", "Month", "State", "Cluster",
+                "Landing", "Vessels",
+                "Outlier_Norm", "Explanation"
+            ]],
+            use_container_width=True
+        )
+
+        # ---------------------------------
+        # VISUALISATION (CLUSTERS + OUTLIERS)
+        # ---------------------------------
+        fig = px.scatter(
+            final_df,
+            x="Vessels",
+            y="Landing",
+            color=final_df["Cluster"].astype(str),
+            symbol="Anomaly",
+            facet_col="Month",
+            title=f"HDBSCAN Monthly Clusters & Outliers ({sel_year})",
+            labels={"color": "Cluster ID"}
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
 
       
 
