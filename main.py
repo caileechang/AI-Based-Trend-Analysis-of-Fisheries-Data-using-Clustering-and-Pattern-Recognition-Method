@@ -2879,10 +2879,10 @@ def main():
             lpv  = row["Landing per Vessel"]
 
             if land >= avg_land and lpv >= median_lpv:
-                return "🚢 High Production & Efficient Fleet"
+                return "🚢 High Fish Production & Efficient Fish Vessels"
 
             if land < avg_land and lpv >= median_lpv:
-                return "⚡ Efficient Small-Scale Fleet"
+                return "⚡ Efficient Small-Scale Vessels"
 
             if land >= avg_land and lpv < median_lpv:
                 return "⚠️ Overcapacity Region"
