@@ -2894,45 +2894,66 @@ def main():
         df = st.session_state.global_outliers.copy()
 
         if df.empty:
-            st.warning("No outliers detected.")
+            st.warning("No data available for global outlier detection.")
             st.stop()
 
-        df["Size"] = df["Anomaly"].map({True: 18, False: 6})
-
+        # =====================================================
+        # CLEAN VISUAL: BACKGROUND + HIGHLIGHT ANOMALIES
+        # =====================================================
         fig = px.scatter(
             df,
             x="Landing",
             y="Vessels",
-            color="Anomaly",
-            color_discrete_map={
-                True: "#FF3B3B",
-                False: "#4A90E2"
-            },
-            size="Size",
             hover_data=["State", "Year"],
-            title="Automatic HDBSCAN Outlier Detection (All Years)"
+            title="Global HDBSCAN Outlier Detection (2000 – Latest)",
+            opacity=0.25
         )
 
-        fig.for_each_trace(
-            lambda t: t.update(opacity=0.35)
-            if t.name == "False"
-            else t.update(opacity=0.95, marker=dict(line=dict(width=1, color="black")))
+        anomalies = df[df["Anomaly"]]
+
+        fig.add_scatter(
+            x=anomalies["Landing"],
+            y=anomalies["Vessels"],
+            mode="markers",
+            marker=dict(
+                size=14,
+                color="#E74C3C",
+                line=dict(width=1, color="black")
+            ),
+            name="Anomaly",
+            hovertext=(
+                anomalies["State"]
+                + " ("
+                + anomalies["Year"].astype(str)
+                + ")"
+            )
         )
 
         fig.update_layout(
-            legend_title_text="Outlier Status",
-            template="plotly_white"
+            template="plotly_white",
+            xaxis_title="Fish Landing (Tonnes)",
+            yaxis_title="Number of Fishing Vessels",
+            legend_title_text="Legend"
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
+        # =====================================================
+        # OUTLIER TABLE
+        # =====================================================
         st.markdown("### 🚨 Detected Outliers")
+
         st.dataframe(
-            df[df["Anomaly"]]
+            anomalies[[
+                "Year",
+                "State",
+                "Landing",
+                "Vessels",
+                "Outlier_Norm"
+            ]]
             .sort_values("Outlier_Norm", ascending=False),
             use_container_width=True
         )
-
 
 
 
