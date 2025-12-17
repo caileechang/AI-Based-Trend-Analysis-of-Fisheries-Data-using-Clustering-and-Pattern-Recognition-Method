@@ -2679,6 +2679,7 @@ def main():
         import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
+        import plotly.express as px
         from sklearn.metrics import silhouette_score
         from scipy.spatial import ConvexHull
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
@@ -2746,42 +2747,58 @@ def main():
         # -----------------------------
         # 6. CLUSTER VISUALISATION
         # -----------------------------
-        fig, ax = plt.subplots(figsize=(10, 6))
-        unique_labels = sorted(set(labels))
-        palette = sns.color_palette("tab10", len(unique_labels))
+        
+        
 
-        for label in unique_labels:
-            pts = X_scaled[labels == label]
+        # Prepare plotting dataframe
+        plot_df = df.copy()
+        plot_df["Type"] = np.where(
+            plot_df["HDBSCAN_Label"] == -1, "Outlier", "Cluster"
+        )
 
-            if label == -1:
-                ax.scatter(
-                    pts[:, 1], pts[:, 0],
-                    s=45, c="lightgray", edgecolor="k",
-                    alpha=0.6, label="Outliers"
-                )
-            else:
-                color = palette[label % len(palette)]
-                ax.scatter(
-                    pts[:, 1], pts[:, 0],
-                    s=65, c=[color], edgecolor="k",
-                    alpha=0.85, label=f"Cluster {label} ({len(pts)})"
-                )
+        # Normalize outlier score for size
+        if plot_df["Outlier_Score"].max() > 0:
+            plot_df["Outlier_Size"] = 8 + 25 * (
+                plot_df["Outlier_Score"] / plot_df["Outlier_Score"].max()
+            )
+        else:
+            plot_df["Outlier_Size"] = 8
 
-                # Convex hull
-                if len(pts) >= 3:
-                    hull = ConvexHull(pts)
-                    hv = list(hull.vertices) + [hull.vertices[0]]
-                    ax.plot(
-                        pts[hv, 1], pts[hv, 0],
-                        color=color, linewidth=2
-                    )
+        fig = px.scatter(
+            plot_df,
+            x="Total number of fishing vessels",
+            y="Total Fish Landing (Tonnes)",
+            color="HDBSCAN_Label",
+            symbol="Type",
+            size="Outlier_Size",
+            hover_data={
+                "State": True,
+                "Total Fish Landing (Tonnes)": ":,.0f",
+                "Total number of fishing vessels": ":,.0f",
+                "Outlier_Score": ":.3f",
+                "Why Flagged": True
+            },
+            title="Interactive HDBSCAN Clusters & Outliers",
+            color_continuous_scale="Viridis"
+        )
 
-        ax.set_title("HDBSCAN Clusters & Outliers (Automatic)")
-        ax.set_xlabel("Vessels (scaled)")
-        ax.set_ylabel("Landings (scaled)")
-        ax.grid(alpha=0.3)
-        ax.legend()
-        st.pyplot(fig)
+        fig.update_traces(
+            marker=dict(
+                line=dict(width=1, color="black"),
+                opacity=0.85
+            ),
+            selector=dict(mode="markers")
+        )
+
+        fig.update_layout(
+            height=600,
+            legend_title_text="Cluster ID",
+            xaxis_title="Fishing Vessels",
+            yaxis_title="Fish Landings (Tonnes)",
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
 
         # -----------------------------
         # 7. CLUSTER SUMMARY
