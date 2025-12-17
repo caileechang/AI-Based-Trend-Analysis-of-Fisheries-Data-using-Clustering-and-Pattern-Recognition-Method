@@ -2620,13 +2620,7 @@ def main():
    
 
     elif plot_option == "Automatic HDBSCAN":
-        import numpy as np
-        import matplotlib.pyplot as plt
-        import seaborn as sns
-        import hdbscan
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.metrics import silhouette_score
-        from scipy.spatial import ConvexHull
+        
 
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
