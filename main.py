@@ -2549,9 +2549,10 @@ def main():
 
         merged_df['Cluster_Label'] = merged_df['Cluster'].map(cluster_label_map)
 
-
+        if DEV_MODE:
         # --- Step 6: Display summary ---
-        st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
+            st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
+        
         st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
     
         # --- Step 7: Show 2D scatter ---
