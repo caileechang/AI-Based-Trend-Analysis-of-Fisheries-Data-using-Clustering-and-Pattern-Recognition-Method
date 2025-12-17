@@ -1332,24 +1332,30 @@ def main():
     merged_monthly = prepare_monthly(df_land, df_vess)
 
     # --- Sidebar for visualization selection ---
-
     st.sidebar.header("Select Visualization")
-    if DEV_MODE:
-        plot_option.append("Model Stability Test (DBSCAN vs HDBSCAN)")
-    plot_option = st.sidebar.radio("Choose a visualization:", [
-        
+
+    # Base (public) options
+    plot_options = [
         "Yearly Fish Landing Summary",
-        
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
-        "3D KMeans Clustering","Automatic DBSCAN","Automatic HDBSCAN",
-"HDBSCAN Monthly Outlier Detection","Model Stability Test (DBSCAN vs HDBSCAN)",
+        "3D KMeans Clustering",
+        "Automatic DBSCAN",
+        "Automatic HDBSCAN",
+        "HDBSCAN Monthly Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps"
-    ])
+    ]
 
-    
-    
+    # Developer-only option
+    if DEV_MODE:
+        plot_options.append("Model Stability Test (DBSCAN vs HDBSCAN)")
+
+    # Sidebar radio
+    plot_option = st.sidebar.radio(
+        "Choose a visualization:",
+        plot_options
+    )
 
     if plot_option == "Yearly Fish Landing Summary":
            
