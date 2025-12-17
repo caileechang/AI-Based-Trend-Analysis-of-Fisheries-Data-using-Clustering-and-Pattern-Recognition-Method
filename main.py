@@ -1340,7 +1340,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering",
-        "Automatic DBSCAN",
+        
         "Automatic HDBSCAN",
         "HDBSCAN Monthly Outlier Detection",
         "Hierarchical Clustering",
@@ -1350,6 +1350,7 @@ def main():
     # Developer-only option
     if DEV_MODE:
         plot_options.append("Model Stability Test (DBSCAN vs HDBSCAN)")
+        plot_options.append("Automatic DBSCAN")
 
     # Sidebar radio
     plot_option = st.sidebar.radio(
