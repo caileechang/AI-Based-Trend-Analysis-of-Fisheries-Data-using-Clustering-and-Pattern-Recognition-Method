@@ -2482,28 +2482,30 @@ def main():
     
         # ---  Determine the best k (highest silhouette) ---
         best_k = ks[np.argmax(silhouette)]
+
+        if DEV_MODE:
     
-        # --- Plot both metrics side by side ---
+            # --- Plot both metrics side by side ---
+            
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
         
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-    
-            # Elbow plot
-        ax1.plot(ks, inertia, marker='o')
-        ax1.set_title("Elbow Method")
-        ax1.set_xlabel("k")
-        ax1.set_ylabel("Inertia")
-        ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-        ax1.legend()
-        
-            # Silhouette plot
-        ax2.plot(ks, silhouette, marker='o', color='orange')
-        ax2.set_title("Silhouette Score")
-        ax2.set_xlabel("k")
-        ax2.set_ylabel("Score")
-        ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-        ax2.legend()
-        
-        st.pyplot(fig)
+                # Elbow plot
+            ax1.plot(ks, inertia, marker='o')
+            ax1.set_title("Elbow Method")
+            ax1.set_xlabel("k")
+            ax1.set_ylabel("Inertia")
+            ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+            ax1.legend()
+            
+                # Silhouette plot
+            ax2.plot(ks, silhouette, marker='o', color='orange')
+            ax2.set_title("Silhouette Score")
+            ax2.set_xlabel("k")
+            ax2.set_ylabel("Score")
+            ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+            ax2.legend()
+            
+            st.pyplot(fig)
     
         # --- Step 5: Fit the final model using best_k ---
         final_model = KMeans(n_clusters=best_k, random_state=42)
