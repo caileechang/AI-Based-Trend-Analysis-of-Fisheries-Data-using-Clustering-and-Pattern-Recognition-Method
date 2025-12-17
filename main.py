@@ -2613,7 +2613,79 @@ def main():
             st.plotly_chart(fig, use_container_width=True)
    
 
-   
+    elif plot_option == "HDBSCAN Outlier Detection":
+        import plotly.express as px
+        import streamlit as st
+
+        st.subheader("🔍 Global HDBSCAN Clustering & Outlier Detection")
+        st.markdown(
+            "<p style='color:#ccc'>Clusters are formed across all years (2000–present). "
+            "Outliers are detected using cluster stability and dynamic thresholds.</p>",
+            unsafe_allow_html=True
+        )
+
+        # =====================================================
+        # LOAD GLOBAL HDBSCAN RESULT (RUN ONCE)
+        # =====================================================
+        if "global_outliers" not in st.session_state or st.session_state.data_updated:
+            st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+            st.session_state.data_updated = False
+
+        df = st.session_state.global_outliers.copy()
+
+        if df.empty:
+            st.warning("No data available for HDBSCAN analysis.")
+            st.stop()
+
+        # =====================================================
+        # LABELS FOR PLOTTING
+        # =====================================================
+        df["Cluster_Label"] = df["Cluster"].astype(str)
+        df.loc[df["Cluster"] == -1, "Cluster_Label"] = "Noise"
+
+        df["Point_Type"] = "Cluster member"
+        df.loc[df["Anomaly"], "Point_Type"] = "Anomaly"
+
+        # =====================================================
+        # SCATTER PLOT (DBSCAN-STYLE BUT BETTER)
+        # =====================================================
+        fig = px.scatter(
+            df,
+            x="Vessels",
+            y="Landing",
+            color="Cluster_Label",
+            symbol="Point_Type",
+            symbol_map={
+                "Cluster member": "circle",
+                "Anomaly": "x"
+            },
+            size=df["Anomaly"].map({True: 10, False: 6}),
+            hover_data=["State", "Year", "Outlier_Norm"],
+            title="HDBSCAN Clusters with Anomaly Overlay (All Years)"
+        )
+
+        fig.update_layout(
+            template="plotly_dark",
+            legend_title_text="Cluster / Noise",
+            xaxis_title="Total Fishing Vessels (scaled)",
+            yaxis_title="Total Fish Landing (scaled)"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # =====================================================
+        # OUTLIER TABLE
+        # =====================================================
+        st.markdown("### 🚨 Detected Anomalies")
+
+        outliers = (
+            df[df["Anomaly"]]
+            .sort_values("Outlier_Norm", ascending=False)
+            [["State", "Year", "Landing", "Vessels", "Outlier_Norm"]]
+        )
+
+        st.dataframe(outliers, use_container_width=True)
+
 
 
     
