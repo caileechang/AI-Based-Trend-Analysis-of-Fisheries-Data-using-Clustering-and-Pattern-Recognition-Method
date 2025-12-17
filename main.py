@@ -2454,85 +2454,63 @@ def main():
             Using both methods together helps select the most **statistically valid K**.
             """)
 
-        
     elif plot_option == "2D KMeans Scatter":
-
-        
+        import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
-        import numpy as np
-        from sklearn.cluster import KMeans
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.metrics import silhouette_score
-
-        st.subheader("Automatic 2D K-Means Clustering")
-
-        # ==================================================
-        # Step 1: Prepare data
-        # ==================================================
-        features = merged_df[[
-            'Total Fish Landing (Tonnes)',
-            'Total number of fishing vessels'
-        ]]
-
+        st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
+    
+        # --- Step 1: Prepare data ---
+        features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
-
-        # ==================================================
-        # Step 2: Elbow & Silhouette (INTERNAL ONLY)
-        # ==================================================
+        
+    
+        # --- Step 2: Compute inertia (Elbow) and silhouette for k = 2–10 ---
         ks = range(2, 11)
         inertia = []
         silhouette = []
-
+    
         for k in ks:
             kmeans = KMeans(n_clusters=k, random_state=42)
             labels = kmeans.fit_predict(scaled)
             inertia.append(kmeans.inertia_)
-            silhouette.append(silhouette_score(scaled, labels))
-
-        # ==================================================
-        # Step 3: Determine best k (HIDDEN FROM USER)
-        # ==================================================
+            sil = silhouette_score(scaled, labels)
+            silhouette.append(sil)
+    
+        # --- Step 3: Determine the best k (highest silhouette) ---
         best_k = ks[np.argmax(silhouette)]
-
-        # ==================================================
-        # Step 4: Developer-only diagnostic plots
-        # ==================================================
-        if DEV_MODE:
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-
-            ax1.plot(ks, inertia, marker='o')
-            ax1.set_title("Elbow Method")
-            ax1.set_xlabel("k")
-            ax1.set_ylabel("Inertia")
-            ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-            ax1.legend()
-
-            ax2.plot(ks, silhouette, marker='o')
-            ax2.set_title("Silhouette Score")
-            ax2.set_xlabel("k")
-            ax2.set_ylabel("Score")
-            ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-            ax2.legend()
-
-            st.pyplot(fig)
-
-            st.info(f"[DEV MODE] Optimal k selected = {best_k}")
-
-       
-        #  Fit final model (SAFE COPY)
-       
-        df_plot = merged_df.copy()
-
+    
+        # --- Step 4: Plot both metrics side by side ---
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    
+        # Elbow plot
+        ax1.plot(ks, inertia, marker='o')
+        ax1.set_title("Elbow Method")
+        ax1.set_xlabel("k")
+        ax1.set_ylabel("Inertia")
+        ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax1.legend()
+    
+        # Silhouette plot
+        ax2.plot(ks, silhouette, marker='o', color='orange')
+        ax2.set_title("Silhouette Score")
+        ax2.set_xlabel("k")
+        ax2.set_ylabel("Score")
+        ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax2.legend()
+    
+        st.pyplot(fig)
+    
+        # --- Step 5: Fit the final model using best_k ---
         final_model = KMeans(n_clusters=best_k, random_state=42)
-        df_plot['Cluster'] = final_model.fit_predict(scaled)
-
-        # ==================================================
+        merged_df['Cluster'] = final_model.fit_predict(scaled)
+    
+    
         # Step 6: Human-readable cluster labels
         # ==================================================
         cluster_means = (
             df_plot
-            .groupby('Cluster')[[
+            .groupby('Cluster')[[ 
                 'Total Fish Landing (Tonnes)',
                 'Total number of fishing vessels'
             ]]
@@ -2540,29 +2518,20 @@ def main():
         )
         high_cluster = cluster_means['Total Fish Landing (Tonnes)'].idxmax()
 
-        df_plot['Cluster_Label'] = df_plot['Cluster'].apply(
+        merged_df['Cluster_Label'] = df_plot['Cluster'].apply(
             lambda x: "Higher Production & Fleet Capacity"
             if x == high_cluster
             else "Lower Production & Fleet Capacity"
         )
 
-
-        # ==================================================
-        # Step 7: Explanation for users (NO k shown)
-        # ==================================================
-        st.info(
-            "States are grouped automatically based on similarities in "
-            "total fish landing and number of fishing vessels. "
-            "The clustering reveals distinct fishing capacity patterns."
-        )
-
-        # ==================================================
-        # Step 8: 2D Scatter Plot
-        # ==================================================
+        # --- Step 6: Display summary ---
+        st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
+        st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
+    
+        # --- Step 7: Show 2D scatter ---
         fig2, ax = plt.subplots(figsize=(10, 6))
-
         sns.scatterplot(
-            data=df_plot,
+            data=merged_df,
             x='Total number of fishing vessels',
             y='Total Fish Landing (Tonnes)',
             hue='Cluster_Label',
@@ -2570,8 +2539,6 @@ def main():
             s=70,
             ax=ax
         )
-
-
         ax.set_title("Automatic 2D K-Means Clustering")
         ax.set_xlabel("Total Number of Fishing Vessels")
         ax.set_ylabel("Total Fish Landing (Tonnes)")
@@ -2580,10 +2547,10 @@ def main():
         st.pyplot(fig2)
 
         # ==================================================
-        # Step 9: Cluster summary (user-friendly)
+        #Cluster summary
         # ==================================================
         summary = (
-            df_plot
+            merged_df
             .groupby('Cluster_Label')[[ 
                 'Total Fish Landing (Tonnes)',
                 'Total number of fishing vessels'
@@ -2593,18 +2560,10 @@ def main():
             .reset_index()
         )
 
-
         st.markdown("### 📊 Cluster Summary (Average Values)")
         st.dataframe(summary, use_container_width=True)
 
-        # ==================================================
-        # Step 10: Takeaway (exam-safe)
-        # ==================================================
-        st.success(
-            "The analysis groups Malaysian states into distinct fishing systems "
-            "based on production output and fleet capacity, enabling structured "
-            "comparison across regions."
-        )
+    
 
     
 
