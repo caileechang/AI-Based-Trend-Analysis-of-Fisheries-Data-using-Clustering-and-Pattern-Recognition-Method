@@ -1084,12 +1084,10 @@ def main():
 
                         df_land = df_land[df_land['_merge'] == 'left_only'].drop(columns=['_merge', 'Month_dedup'])
 
-                        # ✅ Append uploaded data
+                        # Append uploaded data
                         df_land = pd.concat([df_land, user_land.drop(columns='Month_dedup')], ignore_index=True)
 
-
-                        #  NaN-safe deduplication (ONLY ONCE)
-                        # ✅ NaN-safe deduplication
+                        # NaN-safe deduplication
                         df_land['Month_dedup'] = df_land['Month'].fillna(-1)
 
                         df_land = (
@@ -1100,10 +1098,6 @@ def main():
                             )
                             .drop(columns='Month_dedup')
                         )
-
-
-
-
 
                         df_vess = (
                             pd.concat([df_vess, user_vess], ignore_index=True)
@@ -1168,7 +1162,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering","Automatic DBSCAN",
-        "HDBSCAN Outlier Detection","HDBSCAN",
+        "HDBSCAN Outlier Detection","HDBSCAN","Monthly Clustering & Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps"
     ])
@@ -2986,7 +2980,7 @@ def main():
 
 
 
-    elif plot_option == "HDBSCAN test":
+    elif plot_option == "HDBSCAN":
 
         import plotly.express as px
 
@@ -3033,7 +3027,7 @@ def main():
 
         st.dataframe(display_df, use_container_width=True)
 
-    elif plot_option == "HDBSCAN":
+    elif plot_option == "Monthly Clustering & Outlier Detection":
 
         import pandas as pd
         import hdbscan
