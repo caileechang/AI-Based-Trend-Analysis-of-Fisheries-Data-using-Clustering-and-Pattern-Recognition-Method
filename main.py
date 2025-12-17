@@ -302,6 +302,7 @@ def run_global_hdbscan_outlier_detection(merged_df):
         (df["Cluster"] == -1) |                   # explicit noise
         (df["Outlier_Norm"] >= chosen_threshold)  # extreme members
     )
+
     if DEV_MODE:
         df = hdbscan_stability_validation(
             df,
@@ -2991,6 +2992,10 @@ def main():
                     outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
                     use_container_width=True
                 )
+
+            if DEV_MODE:
+                st.write(df[["State", "Year", "Anomaly", "Stability_Score"]].head())
+
 
 
 
