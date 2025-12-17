@@ -2905,29 +2905,28 @@ def main():
             st.warning("No data available for global HDBSCAN analysis.")
             st.stop()
 
-        # Ensure required columns exist
         required_cols = ["Landing", "Vessels", "Cluster", "Anomaly"]
         if not all(col in df.columns for col in required_cols):
             st.error("HDBSCAN results are incomplete. Missing required columns.")
             st.stop()
 
-        # =====================================================
-        # BASE SCATTER — SHOW HDBSCAN CLUSTERS
-        # =====================================================
+        # ===============================
+        # BASE CLUSTER SCATTER
+        # ===============================
         fig = px.scatter(
             df,
             x="Landing",
             y="Vessels",
-            color="Cluster",                         # ✅ cluster colouring
+            color="Cluster",
             hover_data=["State", "Year"],
             title="Global HDBSCAN: Clusters with Anomaly Overlay (2000 – Latest)",
             opacity=0.35,
             color_discrete_sequence=px.colors.qualitative.Set2
         )
 
-        # =====================================================
-        # OVERLAY ANOMALIES — RED OUTLINE ONLY
-        # =====================================================
+        # ===============================
+        # ANOMALY OVERLAY
+        # ===============================
         anomalies = df[df["Anomaly"]]
 
         fig.add_scatter(
@@ -2935,52 +2934,30 @@ def main():
             y=anomalies["Vessels"],
             mode="markers",
             marker=dict(
-                size=9,                              # ✅ small markers
-                color="rgba(0,0,0,0)",               # ✅ transparent fill
-                line=dict(
-                    width=2,
-                    color="red"                      # ✅ red outline
-                )
+                size=9,
+                color="rgba(0,0,0,0)",
+                line=dict(width=2, color="red")
             ),
             name="Anomaly (HDBSCAN)",
-            hovertext=(
-                anomalies["State"]
-                + " ("
-                + anomalies["Year"].astype(str)
-                + ")"
-            )
+            hovertext=anomalies["State"] + " (" + anomalies["Year"].astype(str) + ")"
         )
 
-        # =====================================================
-        # LAYOUT CLEANUP
-        # =====================================================
         fig.update_layout(
             template="plotly_white",
             xaxis_title="Fish Landing (Tonnes)",
             yaxis_title="Number of Fishing Vessels",
-            legend_title_text="HDBSCAN Cluster",
-            legend=dict(itemsizing="constant")
+            legend_title_text="HDBSCAN Cluster"
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
-        # =====================================================
-        # OUTLIER TABLE
-        # =====================================================
         st.markdown("### 🚨 Detected Outliers")
 
         st.dataframe(
-            anomalies[[
-                "Year",
-                "State",
-                "Landing",
-                "Vessels",
-                "Outlier_Norm"
-            ]]
+            anomalies[["Year", "State", "Landing", "Vessels", "Outlier_Norm"]]
             .sort_values("Outlier_Norm", ascending=False),
             use_container_width=True
         )
-
 
     
                     
