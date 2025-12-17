@@ -2621,7 +2621,7 @@ def main():
 
     elif plot_option == "Automatic HDBSCAN":
         import numpy as np
-
+        import matplotlib.pyplot as plt
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
         # -----------------------------
