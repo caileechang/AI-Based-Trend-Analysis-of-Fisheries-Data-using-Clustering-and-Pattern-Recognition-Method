@@ -644,7 +644,8 @@ def hierarchical_clustering(merged_df):
         ax.set_ylabel("Silhouette Score")
         ax.set_title("Silhouette Scores for k = 2–6")
         ax.legend()
-        st.pyplot(fig)
+        if DEV_MODE:
+            st.pyplot(fig)
 
     # ----------------------------
     # Silhouette Table
@@ -659,7 +660,8 @@ def hierarchical_clustering(merged_df):
             .reset_index(drop=True)
         )
 
-        st.dataframe(df_sil, height=230)
+        if DEV_MODE:
+            st.dataframe(df_sil, height=230)
 
     # ----------------------------
     # Best-k Display
