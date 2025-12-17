@@ -1347,6 +1347,13 @@ def main():
         "Geospatial Maps"
     ])
 
+    
+    # Developer-only pages
+    if DEV_MODE:
+        plot_option.insert(
+            1, "Optimal K for Monthly & Yearly"
+        )
+
     if plot_option == "Yearly Fish Landing Summary":
            
         import seaborn as sns
@@ -2251,7 +2258,9 @@ def main():
 
     elif plot_option == "Optimal K for Monthly & Yearly":
 
-        
+        if not DEV_MODE:
+            st.warning("This page is restricted to developers.")
+            st.stop()
 
         st.subheader("Determination of Optimal K")
 
@@ -2447,8 +2456,7 @@ def main():
             Using both methods together helps select the most **statistically valid K**.
             """)
 
-        DEV_MODE = False   # True = developer sees k, False = user does NOT
-
+        
     elif plot_option == "2D KMeans Scatter":
 
         import numpy as np
