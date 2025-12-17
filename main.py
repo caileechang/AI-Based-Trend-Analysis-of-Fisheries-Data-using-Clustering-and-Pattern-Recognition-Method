@@ -2993,6 +2993,41 @@ def main():
                     use_container_width=True
                 )
 
+             
+            if DEV_MODE:
+                st.subheader("🔬 HDBSCAN Outlier Stability Validation")
+
+                df = st.session_state.global_outliers.copy()
+
+                if "Stability_Score" not in df.columns:
+                    st.warning("Stability score not computed.")
+                    st.stop()
+
+                # Classify stability strength
+                def stability_label(v):
+                    if v >= 0.8:
+                        return "High (Robust)"
+                    elif v >= 0.4:
+                        return "Medium (Borderline)"
+                    else:
+                        return "Low (Unstable)"
+
+                df["Stability_Level"] = df["Stability_Score"].apply(stability_label)
+
+                st.dataframe(
+                    df[
+                        ["State", "Year", "Landing", "Vessels",
+                        "Anomaly", "Stability_Score", "Stability_Level"]
+                    ]
+                    .sort_values("Stability_Score", ascending=False),
+                    use_container_width=True
+                )
+
+                st.info(
+                    "Stability Score = proportion of parameter-perturbed HDBSCAN runs "
+                    "where the point remains anomalous."
+                )
+
    
 
 
@@ -3195,41 +3230,64 @@ def main():
             ])
 
    
-    elif plot_option == "Model Stability Test (DBSCAN vs HDBSCAN)" and DEV_MODE:
-
-        st.subheader("🔬 HDBSCAN Outlier Stability Validation")
-
-        df = st.session_state.global_outliers.copy()
-
-        if "Stability_Score" not in df.columns:
-            st.warning("Stability score not computed.")
+    elif plot_option == "Model Stability Test (DBSCAN vs HDBSCAN)":
+        if not DEV_MODE:
+            st.error("Access denied.")
             st.stop()
 
-        # Classify stability strength
-        def stability_label(v):
-            if v >= 0.8:
-                return "High (Robust)"
-            elif v >= 0.4:
-                return "Medium (Borderline)"
-            else:
-                return "Low (Unstable)"
+        import numpy as np
+        import matplotlib.pyplot as plt
+        from itertools import combinations
 
-        df["Stability_Level"] = df["Stability_Score"].apply(stability_label)
+        st.subheader("🧪 Stability Test: DBSCAN vs HDBSCAN")
 
-        st.dataframe(
-            df[
-                ["State", "Year", "Landing", "Vessels",
-                "Anomaly", "Stability_Score", "Stability_Level"]
+        def jaccard(A, B):
+            if len(A | B) == 0:
+                return 1.0
+            return len(A & B) / len(A | B)
+
+        def stability_test(df, detector, runs=10, drop_frac=0.1):
+            rng = np.random.default_rng(42)
+            anomaly_sets = []
+
+            for _ in range(runs):
+                drop_n = int(len(df) * drop_frac)
+                drop_idx = rng.choice(df.index, drop_n, replace=False)
+                df_sub = df.drop(drop_idx)
+
+                anomaly_sets.append(detector(df_sub))
+
+            scores = [
+                jaccard(A, B)
+                for A, B in combinations(anomaly_sets, 2)
             ]
-            .sort_values("Stability_Score", ascending=False),
-            use_container_width=True
+            return np.mean(scores), scores
+        df_eval = merged_df.copy()
+
+        dbscan_mean, dbscan_scores = stability_test(
+            df_eval,
+            detect_dbscan_anomalies
         )
 
-        st.info(
-            "Stability Score = proportion of parameter-perturbed HDBSCAN runs "
-            "where the point remains anomalous."
+        hdbscan_mean, hdbscan_scores = stability_test(
+            df_eval,
+            detect_hdbscan_anomalies
         )
 
+        st.markdown("### 📊 Stability Results (Jaccard Similarity)")
+        st.write(f"**DBSCAN stability:** {dbscan_mean:.3f}")
+        st.write(f"**HDBSCAN stability:** {hdbscan_mean:.3f}")
+
+        
+
+        fig, ax = plt.subplots()
+        ax.boxplot(
+            [dbscan_scores, hdbscan_scores],
+            labels=["DBSCAN", "HDBSCAN"]
+        )
+        ax.set_ylabel("Jaccard Similarity")
+        ax.set_title("Anomaly Stability Under Data Perturbation")
+        st.pyplot(fig)
 
 
 
