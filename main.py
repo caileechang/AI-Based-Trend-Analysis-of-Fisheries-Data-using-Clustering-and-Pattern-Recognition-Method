@@ -2703,6 +2703,7 @@ def main():
         st.session_state.data_updated = False
     
     elif plot_option == "HDBSCAN Outlier Detection":
+
         import plotly.express as px
 
         df = st.session_state.global_outliers.copy()
@@ -2711,31 +2712,26 @@ def main():
             st.warning("No outliers detected.")
             st.stop()
 
+        df["Size"] = df["Anomaly"].map({True: 18, False: 6})
+
         fig = px.scatter(
             df,
             x="Landing",
             y="Vessels",
             color="Anomaly",
             color_discrete_map={
-                True: "#FF3B3B",     # 🔴 Red = Anomaly
-                False: "#4A90E2"     # 🔵 Blue = Normal
+                True: "#FF3B3B",
+                False: "#4A90E2"
             },
-            size="Anomaly",
-            size_max=16,
+            size="Size",
             hover_data=["State", "Year"],
             title="Automatic HDBSCAN Outlier Detection (All Years)"
         )
 
-        # Improve visibility
-        fig.update_traces(
-            selector=dict(marker_color="#4A90E2"),
-            opacity=0.35
-        )
-
-        fig.update_traces(
-            selector=dict(marker_color="#FF3B3B"),
-            opacity=0.95,
-            marker=dict(line=dict(width=1, color="black"))
+        fig.for_each_trace(
+            lambda t: t.update(opacity=0.35)
+            if t.name == "False"
+            else t.update(opacity=0.95, marker=dict(line=dict(width=1, color="black")))
         )
 
         fig.update_layout(
@@ -2745,13 +2741,13 @@ def main():
 
         st.plotly_chart(fig, use_container_width=True)
 
-
         st.markdown("### 🚨 Detected Outliers")
         st.dataframe(
             df[df["Anomaly"]]
             .sort_values("Outlier_Norm", ascending=False),
             use_container_width=True
         )
+
 
 
 
