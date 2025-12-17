@@ -20,10 +20,7 @@ import hdbscan
 
 
 # Developer mode flag
-DEV_MODE = False  # Set to True to enable developer-only features
-
-if "DEV_KEY" in st.secrets and st.secrets["DEV_KEY"] == "cai_lee_dev":
-    DEV_MODE = True
+DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
 
 # from clustering_method import hierarchical_clustering
 # @st.cache_data
