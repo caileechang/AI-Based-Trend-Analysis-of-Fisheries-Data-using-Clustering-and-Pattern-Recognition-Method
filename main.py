@@ -187,7 +187,7 @@ def hdbscan_stability_validation(df, base_mcs, base_ms, X):
     for mcs, ms in param_grid:
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=mcs,
-            min_samples=ms
+            min_samples=ms,prediction_data=True
         ).fit(X)
 
         anomaly_matrix[f"{mcs}_{ms}"] = (
