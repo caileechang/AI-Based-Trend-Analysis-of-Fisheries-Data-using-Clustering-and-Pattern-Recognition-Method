@@ -2781,9 +2781,9 @@ def main():
         min_cluster_size = max(3, int(np.sqrt(n_samples)))
         min_samples = max(2, int(np.log(n_samples)))
 
-    if DEV_MODE:  
-        st.markdown(f"**Auto min_cluster_size:** `{min_cluster_size}`")
-        st.markdown(f"**Auto min_samples:** `{min_samples}`")
+        if DEV_MODE:  
+            st.markdown(f"**Auto min_cluster_size:** `{min_cluster_size}`")
+            st.markdown(f"**Auto min_samples:** `{min_samples}`")
 
 
         # -----------------------------
@@ -2804,12 +2804,12 @@ def main():
         # 5. SILHOUETTE (clusters only)
         # -----------------------------
         mask = labels != -1
-    if DEV_MODE:
-        if len(set(labels[mask])) > 1:
-                sil = silhouette_score(X_scaled[mask], labels[mask])
-                st.info(f"Silhouette Score (clusters only): `{sil:.3f}`")
-        else:
-                st.warning("Silhouette unavailable — only one cluster detected.")
+        if DEV_MODE:
+            if len(set(labels[mask])) > 1:
+                    sil = silhouette_score(X_scaled[mask], labels[mask])
+                    st.info(f"Silhouette Score (clusters only): `{sil:.3f}`")
+            else:
+                    st.warning("Silhouette unavailable — only one cluster detected.")
 
             
         
