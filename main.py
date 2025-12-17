@@ -1350,11 +1350,7 @@ def main():
     ])
 
     
-    # Developer-only pages
-    if DEV_MODE:
-        plot_option.insert(
-            1, "Optimal K for Monthly & Yearly"
-        )
+    
 
     if plot_option == "Yearly Fish Landing Summary":
            
@@ -2483,26 +2479,26 @@ def main():
         best_k = ks[np.argmax(silhouette)]
     
         # --- Plot both metrics side by side ---
-        if DEV_MODE:
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
     
             # Elbow plot
-            ax1.plot(ks, inertia, marker='o')
-            ax1.set_title("Elbow Method")
-            ax1.set_xlabel("k")
-            ax1.set_ylabel("Inertia")
-            ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-            ax1.legend()
+        ax1.plot(ks, inertia, marker='o')
+        ax1.set_title("Elbow Method")
+        ax1.set_xlabel("k")
+        ax1.set_ylabel("Inertia")
+        ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax1.legend()
         
             # Silhouette plot
-            ax2.plot(ks, silhouette, marker='o', color='orange')
-            ax2.set_title("Silhouette Score")
-            ax2.set_xlabel("k")
-            ax2.set_ylabel("Score")
-            ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-            ax2.legend()
+        ax2.plot(ks, silhouette, marker='o', color='orange')
+        ax2.set_title("Silhouette Score")
+        ax2.set_xlabel("k")
+        ax2.set_ylabel("Score")
+        ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+        ax2.legend()
         
-            st.pyplot(fig)
+        st.pyplot(fig)
     
         # --- Step 5: Fit the final model using best_k ---
         final_model = KMeans(n_clusters=best_k, random_state=42)
@@ -2788,9 +2784,9 @@ def main():
         min_cluster_size = max(3, int(np.sqrt(n_samples)))
         min_samples = max(2, int(np.log(n_samples)))
 
-        if DEV_MODE:
-            st.markdown(f"**Auto min_cluster_size:** `{min_cluster_size}`")
-            st.markdown(f"**Auto min_samples:** `{min_samples}`")
+       
+        st.markdown(f"**Auto min_cluster_size:** `{min_cluster_size}`")
+        st.markdown(f"**Auto min_samples:** `{min_samples}`")
 
 
         # -----------------------------
@@ -2811,13 +2807,13 @@ def main():
         # 5. SILHOUETTE (clusters only)
         # -----------------------------
         mask = labels != -1
-        if DEV_MODE:
-            if len(set(labels[mask])) > 1:
+        if len(set(labels[mask])) > 1:
                 sil = silhouette_score(X_scaled[mask], labels[mask])
                 st.info(f"Silhouette Score (clusters only): `{sil:.3f}`")
-            else:
+        else:
                 st.warning("Silhouette unavailable — only one cluster detected.")
 
+            
         
         # -----------------------------
         # 6. CLUSTER VISUALISATION
@@ -2955,12 +2951,12 @@ def main():
             st.markdown("### 🚨 Outlier Details")
            
 
-            if DEV_MODE:
-                st.dataframe(outliers, use_container_width=True)
-            else:
-                st.dataframe(
-                    outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
-                    use_container_width=True
+
+            st.dataframe(outliers, use_container_width=True)
+            
+            st.dataframe(
+                outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
+                use_container_width=True
                 )
 
 
