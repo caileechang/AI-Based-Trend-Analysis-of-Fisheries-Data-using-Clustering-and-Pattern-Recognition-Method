@@ -3270,7 +3270,7 @@ def main():
 
     
     
-    elif plot_option == "HDBSCAN Monthly Outlier Detection":
+    elif plot_option == "Monthly Fisheries Outlier Detection":
 
         import plotly.express as px
        
