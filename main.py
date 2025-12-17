@@ -2883,7 +2883,97 @@ def main():
         )
 
 
-    
+    # =====================================================
+    # RUN GLOBAL HDBSCAN ONCE (CACHE IN SESSION STATE)
+    # =====================================================
+    if "global_outliers" not in st.session_state or st.session_state.data_updated:
+        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        st.session_state.data_updated = False
+
+    elif plot_option == "HDBSCAN Outlier Detection":
+
+        import plotly.express as px
+        import streamlit as st
+
+        st.subheader("🔍 Global HDBSCAN Outlier Detection (2000–Present)")
+        st.markdown(
+            "<p style='color:#ccc'>Clusters are learned globally across all years. "
+            "Anomalies represent unusual landing–vessel relationships.</p>",
+            unsafe_allow_html=True
+        )
+
+        df = st.session_state.global_outliers.copy()
+
+        if df.empty:
+            st.warning("No data available for global HDBSCAN analysis.")
+            st.stop()
+
+        # ===============================
+        # Scatter Plot (Clusters + Anomalies)
+        # ===============================
+        fig = px.scatter(
+            df,
+            x="Landing",
+            y="Vessels",
+            color=df["Cluster"].astype(str),
+            symbol="Anomaly",
+            symbol_map={True: "x", False: "circle"},
+            opacity=0.75,
+            hover_data={
+                "State": True,
+                "Year": True,
+                "Cluster": True,
+                "Outlier_Norm": ":.3f",
+                "Anomaly": True
+            },
+            title="HDBSCAN Clusters with Global Outliers (2000–Present)",
+        )
+
+        # Make anomalies visually smaller & clearer
+        fig.update_traces(
+            marker=dict(size=9),
+            selector=dict(mode="markers")
+        )
+
+        fig.update_layout(
+            template="plotly_dark",
+            legend_title_text="Cluster",
+            xaxis_title="Total Fish Landing (Tonnes)",
+            yaxis_title="Total Fishing Vessels"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # ===============================
+        # Anomaly Table
+        # ===============================
+        st.markdown("### 🚨 Detected Anomalies")
+
+        anomalies = (
+            df[df["Anomaly"]]
+            .sort_values("Outlier_Norm", ascending=False)
+            .reset_index(drop=True)
+        )
+
+        st.dataframe(
+            anomalies[[
+                "State",
+                "Year",
+                "Landing",
+                "Vessels",
+                "Cluster",
+                "Outlier_Norm"
+            ]],
+            use_container_width=True,
+            height=350
+        )
+
+        st.caption(
+            "Anomalies include HDBSCAN noise points (Cluster = -1) "
+            "and extreme members exceeding the dynamic threshold."
+        )
+
+
                     
     elif plot_option == "Hierarchical Clustering":
            
