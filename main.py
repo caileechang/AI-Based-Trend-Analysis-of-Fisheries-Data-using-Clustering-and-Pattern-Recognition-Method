@@ -2851,9 +2851,9 @@ def main():
         ax.legend()
         st.pyplot(fig)
 
-        # -----------------------------
-        # 7. CLUSTER SUMMARY
-        # -----------------------------
+       
+        # CLUSTER SUMMARY
+       
         cluster_summary = (
             df[df["HDBSCAN_Label"] != -1]
             .groupby("HDBSCAN_Label")[[
@@ -2864,8 +2864,52 @@ def main():
             .reset_index()
         )
 
-        st.markdown("### 📊 Cluster Summary")
-        st.dataframe(cluster_summary)
+        # ---- Global averages (reference baseline) ----
+        avg_land_all = df["Total Fish Landing (Tonnes)"].mean()
+        avg_ves_all = df["Total number of fishing vessels"].mean()
+
+        # ---- Interpret cluster meaning ----
+        def interpret_cluster(row):
+            land = row["Total Fish Landing (Tonnes)"]
+            ves = row["Total number of fishing vessels"]
+
+            if land >= avg_land_all and ves >= avg_ves_all:
+                return "🚢 High Production Fleet"
+            if land >= avg_land_all and ves < avg_ves_all:
+                return "⚡ Efficient Small Fleet"
+            if land < avg_land_all and ves >= avg_ves_all:
+                return "⚠️ Overcapacity Region"
+            return "🛶 Low Activity Region"
+
+        cluster_summary["Cluster Meaning"] = cluster_summary.apply(
+            interpret_cluster, axis=1
+        )
+
+        # ---- Human-readable cluster name ----
+        cluster_summary["Cluster Name"] = (
+            "Cluster " +
+            cluster_summary["HDBSCAN_Label"].astype(str) +
+            " – " +
+            cluster_summary["Cluster Meaning"]
+        )
+
+        # ---- Display table (hide raw label for users) ----
+        st.markdown("### 📊 Cluster Summary (Interpreted)")
+
+        display_cluster_summary = cluster_summary[[
+            "Cluster Name",
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]]
+
+        st.dataframe(
+            display_cluster_summary.style.format({
+                "Total Fish Landing (Tonnes)": "{:,.2f}",
+                "Total number of fishing vessels": "{:,.0f}"
+            }),
+            use_container_width=True
+        )
+
 
         # -----------------------------
         # 8. OUTLIER ANALYSIS
