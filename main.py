@@ -2518,31 +2518,33 @@ def main():
 
             st.info(f"[DEV MODE] Optimal k selected = {best_k}")
 
-        # ==================================================
-        # Step 5: Fit final model (USER DOES NOT SEE k)
-        # ==================================================
+       
+        #  Fit final model (SAFE COPY)
+       
+        df_plot = merged_df.copy()
+
         final_model = KMeans(n_clusters=best_k, random_state=42)
-        merged_df['Cluster'] = final_model.fit_predict(scaled)
+        df_plot['Cluster'] = final_model.fit_predict(scaled)
 
         # ==================================================
         # Step 6: Human-readable cluster labels
         # ==================================================
         cluster_means = (
-            merged_df
+            df_plot
             .groupby('Cluster')[[
                 'Total Fish Landing (Tonnes)',
                 'Total number of fishing vessels'
             ]]
             .mean()
         )
-
         high_cluster = cluster_means['Total Fish Landing (Tonnes)'].idxmax()
 
-        merged_df['Cluster_Label'] = merged_df['Cluster'].apply(
+        df_plot['Cluster_Label'] = df_plot['Cluster'].apply(
             lambda x: "Higher Production & Fleet Capacity"
             if x == high_cluster
             else "Lower Production & Fleet Capacity"
         )
+
 
         # ==================================================
         # Step 7: Explanation for users (NO k shown)
@@ -2559,7 +2561,7 @@ def main():
         fig2, ax = plt.subplots(figsize=(10, 6))
 
         sns.scatterplot(
-            data=merged_df,
+            data=df_plot,
             x='Total number of fishing vessels',
             y='Total Fish Landing (Tonnes)',
             hue='Cluster_Label',
@@ -2567,6 +2569,7 @@ def main():
             s=70,
             ax=ax
         )
+
 
         ax.set_title("Automatic 2D K-Means Clustering")
         ax.set_xlabel("Total Number of Fishing Vessels")
@@ -2579,8 +2582,8 @@ def main():
         # Step 9: Cluster summary (user-friendly)
         # ==================================================
         summary = (
-            merged_df
-            .groupby('Cluster_Label')[[
+            df_plot
+            .groupby('Cluster_Label')[[ 
                 'Total Fish Landing (Tonnes)',
                 'Total number of fishing vessels'
             ]]
@@ -2588,6 +2591,7 @@ def main():
             .round(0)
             .reset_index()
         )
+
 
         st.markdown("### 📊 Cluster Summary (Average Values)")
         st.dataframe(summary, use_container_width=True)
