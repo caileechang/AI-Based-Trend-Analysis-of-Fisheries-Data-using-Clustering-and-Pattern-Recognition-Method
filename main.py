@@ -2861,6 +2861,7 @@ def main():
     elif plot_option == "HDBSCAN Monthly Outlier Detection":
 
         import plotly.express as px
+        import pandas as pd
 
         # Use your existing prepared monthly data
         merged_monthly = prepare_monthly(df_land, df_vess)
