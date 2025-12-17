@@ -1845,7 +1845,7 @@ def main():
             # Cluster interpretation summary
 
             st.markdown("## 🔍 Cluster Interpretation Summary")
-           
+            import pandas as pd
 
             df_year = df_plot.copy()
             avg_fw = df_year["Freshwater (Tonnes)"].mean()
@@ -1893,7 +1893,7 @@ def main():
 
 
         if period_choice == "Monthly":
-           
+            import pandas as pd
             # Prepare monthly data
             monthly = (
                 df_land.groupby(["Year", "Month", "Type of Fish"])["Fish Landing (Tonnes)"]
@@ -2094,7 +2094,7 @@ def main():
             import plotly.graph_objects as go
             import plotly.express as px
             import numpy as np
-            
+            import pandas as pd
 
 
             # Prepare monthly dataframe for selected year
@@ -2248,6 +2248,7 @@ def main():
                 "Avg Freshwater": "{:,.2f}",
                 "Avg Marine": "{:,.2f}",
             }))
+
 
 
 
