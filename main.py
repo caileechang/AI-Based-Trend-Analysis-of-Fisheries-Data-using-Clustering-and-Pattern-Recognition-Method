@@ -587,18 +587,23 @@ def hierarchical_clustering(merged_df):
     # ----------------------------
     # Silhouette Validation (k = 2–6)
     # ----------------------------
+    # =====================================================
+    # DEV-ONLY: Silhouette & Stability Validation
+    # =====================================================
     if DEV_MODE:
-        st.markdown("### Silhouette Score Validation")
 
+        st.markdown("### 🔬 Silhouette Score Validation (Developer Only)")
+
+        # ----------------------------
+        # Silhouette Validation (k = 2–6)
+        # ----------------------------
         cand_k = [2, 3, 4, 5, 6]
         sil_scores = {}
 
         for k in cand_k:
-            # Assign hierarchical clusters
             labels = fcluster(Z, k, criterion="maxclust")
             unique_labels = np.unique(labels)
 
-            # --- VALIDATION: Silhouette requires at least 2 clusters and less than n samples
             if len(unique_labels) < 2 or len(unique_labels) >= len(labels):
                 sil_scores[k] = None
                 continue
@@ -608,12 +613,11 @@ def hierarchical_clustering(merged_df):
             except:
                 sil_scores[k] = None
 
-        # --- Filter valid scores only ---
         valid_scores = {k: v for k, v in sil_scores.items() if v is not None}
 
         if len(valid_scores) == 0:
-            st.error("Silhouette cannot be computed for this dataset.")
-            return
+            st.warning("Silhouette cannot be computed for this dataset.")
+            st.stop()
 
         best_k = max(valid_scores, key=valid_scores.get)
 
@@ -622,15 +626,11 @@ def hierarchical_clustering(merged_df):
         # ----------------------------
         apn_score = compute_apn_like(Z, scaled, best_k)
 
-
         # ----------------------------
         # Visualisation Layout
         # ----------------------------
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns(2)
 
-        # ----------------------------
-        # Silhouette Line Chart
-        # ----------------------------
         with col1:
             fig, ax = plt.subplots(figsize=(5, 3))
             ax.plot(
@@ -646,25 +646,15 @@ def hierarchical_clustering(merged_df):
             ax.legend()
             st.pyplot(fig)
 
-        # ----------------------------
-        # Silhouette Table
-        # ----------------------------
         with col2:
-            df_sil = (
-                pd.DataFrame({
-                    "k": list(valid_scores.keys()),
-                    "Silhouette Score": [round(v, 4) for v in valid_scores.values()]
-                })
-                .sort_values("k")
-                .reset_index(drop=True)
-            )
+            df_sil = pd.DataFrame({
+                "k": list(valid_scores.keys()),
+                "Silhouette Score": [round(v, 4) for v in valid_scores.values()]
+            }).sort_values("k")
 
             st.dataframe(df_sil, height=230)
 
-        # ----------------------------
-        # Best-k Display
-        # ----------------------------
-        st.success(f"Optimal number of clusters (based on Silhouette): **k = {best_k}**")
+        st.success(f"Optimal number of clusters (Silhouette): **k = {best_k}**")
 
         with st.expander("📊 Cluster Validation Summary", expanded=False):
             st.markdown(
@@ -675,6 +665,7 @@ def hierarchical_clustering(merged_df):
                 *Lower APN indicates more stable clusters.*
                 """
             )
+
 
     
     # ----------------------------
