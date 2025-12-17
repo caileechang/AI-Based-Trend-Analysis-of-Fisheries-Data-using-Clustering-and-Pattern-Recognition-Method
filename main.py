@@ -1334,6 +1334,8 @@ def main():
     # --- Sidebar for visualization selection ---
 
     st.sidebar.header("Select Visualization")
+    if DEV_MODE:
+        plot_option.append("Model Stability Test (DBSCAN vs HDBSCAN)")
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
         "Yearly Fish Landing Summary",
@@ -3155,13 +3157,14 @@ def main():
                 ["Year", "State", "Vessels_scaled", "Landing_scaled"]
             ])
 
-
+   
     elif plot_option == "Model Stability Test (DBSCAN vs HDBSCAN)":
-       
+        if not DEV_MODE:
+            st.error("Access denied.")
+            st.stop()
+
         import numpy as np
-        
         import matplotlib.pyplot as plt
-        
         from itertools import combinations
 
         st.subheader("🧪 Stability Test: DBSCAN vs HDBSCAN")
