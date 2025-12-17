@@ -1338,7 +1338,7 @@ def main():
     plot_option = st.sidebar.radio("Choose a visualization:", [
         
         "Yearly Fish Landing Summary",
-        "Optimal K for Monthly & Yearly",
+        
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering","Automatic DBSCAN","Automatic HDBSCAN",
@@ -2258,9 +2258,7 @@ def main():
 
     elif plot_option == "Optimal K for Monthly & Yearly":
 
-        if not DEV_MODE:
-            st.warning("This page is restricted to developers.")
-            st.stop()
+        
 
         st.subheader("Determination of Optimal K")
 
