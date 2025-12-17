@@ -311,9 +311,8 @@ def run_global_hdbscan_outlier_detection(merged_df):
         df["Outlier_Score"] / max_score if max_score > 0 else 0.0
     )
 
-    # -------------------------
     # Dynamic threshold (REUSED)
-    # -------------------------
+   
     chosen_threshold = dynamic_hdbscan_threshold(df)
 
     df["Anomaly"] = (
