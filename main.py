@@ -2830,7 +2830,7 @@ def main():
         n_samples = X_scaled.shape[0]
 
         # -----------------------------
-        # 3. AUTO HDBSCAN PARAMETERS
+        # AUTO HDBSCAN PARAMETERS
         # -----------------------------
         min_cluster_size = max(5, int(np.sqrt(n_samples)))
         min_samples = max(3, int(np.log(n_samples)))
@@ -2841,7 +2841,7 @@ def main():
         """)
 
         # -----------------------------
-        # 4. RUN HDBSCAN
+        # RUN HDBSCAN
         # -----------------------------
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
@@ -2866,107 +2866,56 @@ def main():
         df["Anomaly"] = df["Outlier_Norm"] >= threshold
 
         
-        plot_df = df.copy()
-
-        plot_df["Cluster_Name"] = plot_df["HDBSCAN_Cluster"].astype(str)
-        plot_df.loc[plot_df["HDBSCAN_Cluster"] == -1, "Cluster_Name"] = "Noise"
-
-        plot_df["Is_Noise"] = plot_df["HDBSCAN_Cluster"] == -1
-        plot_df["Is_Anomaly"] = plot_df["Outlier_Norm"] >= threshold
-
         
 
-        fig = go.Figure()
+        # --------------------------------
+        # PREPARE DATA FOR PLOTLY
+        # --------------------------------
+        plot_df = df.copy()
 
-        # -----------------------------
-        # NORMAL CLUSTERED POINTS
-        # -----------------------------
-        normal_clustered = plot_df[
-            (~plot_df["Is_Noise"]) & (~plot_df["Is_Anomaly"])
-        ]
+        plot_df["Cluster_Label"] = plot_df["HDBSCAN_Cluster"].astype(str)
+        plot_df.loc[plot_df["HDBSCAN_Cluster"] == -1, "Cluster_Label"] = "Noise"
 
-        fig.add_trace(go.Scatter(
-            x=normal_clustered["Total number of fishing vessels"],
-            y=normal_clustered["Total Fish Landing (Tonnes)"],
-            mode="markers",
-            marker=dict(
-                size=10,
-                color=normal_clustered["HDBSCAN_Cluster"],
-                colorscale="Viridis",
-                line=dict(width=0)
-            ),
-            name="Clustered (Normal)",
-            hovertemplate=
-                "State: %{customdata[0]}<br>"
-                "Landing: %{y:,.0f}<br>"
-                "Vessels: %{x:,.0f}<br>"
-                "<extra></extra>",
-            customdata=normal_clustered[["State"]]
-        ))
+        plot_df["Point_Type"] = np.where(
+            plot_df["Anomaly"], "Anomaly", "Normal"
+        )
 
-        # -----------------------------
-        # CLUSTERED ANOMALIES
-        # -----------------------------
-        clustered_anomaly = plot_df[
-            (~plot_df["Is_Noise"]) & (plot_df["Is_Anomaly"])
-        ]
+        # --------------------------------
+        # INTERACTIVE SCATTER
+        # --------------------------------
+        fig = px.scatter(
+            plot_df,
+            x="Total number of fishing vessels",
+            y="Total Fish Landing (Tonnes)",
+            color="Cluster_Label",
+            symbol="Point_Type",
+            size="Outlier_Norm",
+            size_max=18,
+            opacity=0.85,
+            hover_data={
+                "State": True,
+                "Year": True,
+                "Total Fish Landing (Tonnes)": ":,.0f",
+                "Total number of fishing vessels": ":,.0f",
+                "Outlier_Norm": ":.2f",
+                "Cluster_Label": False
+            },
+            title="Interactive HDBSCAN Clustering & Outlier Detection"
+        )
 
-        fig.add_trace(go.Scatter(
-            x=clustered_anomaly["Total number of fishing vessels"],
-            y=clustered_anomaly["Total Fish Landing (Tonnes)"],
-            mode="markers",
-            marker=dict(
-                size=18,
-                color=clustered_anomaly["HDBSCAN_Cluster"],
-                colorscale="Viridis",
-                line=dict(width=3, color="red")
-            ),
-            name="Clustered Anomaly",
-            hovertemplate=
-                "⚠️ ANOMALY<br>"
-                "State: %{customdata[0]}<br>"
-                "Landing: %{y:,.0f}<br>"
-                "Vessels: %{x:,.0f}<br>"
-                "<extra></extra>",
-            customdata=clustered_anomaly[["State"]]
-        ))
+        fig.update_traces(
+            marker=dict(line=dict(width=1, color="black"))
+        )
 
-        # -----------------------------
-        # NOISE (FADED)
-        # -----------------------------
-        noise = plot_df[plot_df["Is_Noise"]]
-
-        fig.add_trace(go.Scatter(
-            x=noise["Total number of fishing vessels"],
-            y=noise["Total Fish Landing (Tonnes)"],
-            mode="markers",
-            marker=dict(
-                size=8,
-                color="lightgray",
-                opacity=0.3
-            ),
-            name="Noise",
-            hovertemplate=
-                "Noise<br>"
-                "State: %{customdata[0]}<br>"
-                "<extra></extra>",
-            customdata=noise[["State"]]
-        ))
-
-        # -----------------------------
-        # LAYOUT
-        # -----------------------------
         fig.update_layout(
-            title="HDBSCAN Clustering & Anomaly Detection (Clean View)",
             xaxis_title="Fishing Vessels",
             yaxis_title="Fish Landings (Tonnes)",
+            legend_title="Cluster",
             template="plotly_white",
-            height=650,
-            legend_title="Point Type"
+            height=600
         )
 
         st.plotly_chart(fig, use_container_width=True)
-
 
 
         # -----------------------------
