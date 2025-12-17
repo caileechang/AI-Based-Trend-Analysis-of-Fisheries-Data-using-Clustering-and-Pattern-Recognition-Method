@@ -2951,12 +2951,12 @@ def main():
             st.markdown("### 🚨 Outlier Details")
            
 
-
-            st.dataframe(outliers, use_container_width=True)
-            
-            st.dataframe(
-                outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
-                use_container_width=True
+            if DEV_MODE:
+                st.dataframe(outliers, use_container_width=True)
+            else:
+                st.dataframe(
+                    outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
+                    use_container_width=True
                 )
 
 
