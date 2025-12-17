@@ -2727,11 +2727,8 @@ def main():
         import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
-        import hdbscan
-        from sklearn.preprocessing import StandardScaler
+        from sklearn.metrics import silhouette_score
         from scipy.spatial import ConvexHull
-        
-
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
         # -----------------------------
@@ -2759,6 +2756,7 @@ def main():
         ]].values
 
         X_scaled = StandardScaler().fit_transform(X)
+
         n_samples = X_scaled.shape[0]
 
         # -----------------------------
@@ -2780,48 +2778,41 @@ def main():
         )
 
         labels = clusterer.fit_predict(X_scaled)
-        df["Cluster_ID"] = labels
+        df["HDBSCAN_Label"] = labels
         df["Outlier_Score"] = clusterer.outlier_scores_
 
         # -----------------------------
-        # 5. CREATE MEANINGFUL CLUSTER NAMES
+        # 5. SILHOUETTE (clusters only)
         # -----------------------------
-        unique_clusters = sorted([c for c in set(labels) if c != -1])
-
-        cluster_name_map = {
-            cid: f"Core Cluster {chr(65 + i)}"
-            for i, cid in enumerate(unique_clusters)
-        }
-
-        def map_cluster_name(cid):
-            return "Noise / Outlier" if cid == -1 else cluster_name_map[cid]
-
-        df["Cluster Name"] = df["Cluster_ID"].apply(map_cluster_name)
+        mask = labels != -1
+        if len(set(labels[mask])) > 1:
+            sil = silhouette_score(X_scaled[mask], labels[mask])
+            st.info(f"Silhouette Score (clusters only): `{sil:.3f}`")
+        else:
+            st.warning("Silhouette unavailable — only one cluster detected.")
 
         # -----------------------------
         # 6. CLUSTER VISUALISATION
         # -----------------------------
         fig, ax = plt.subplots(figsize=(10, 6))
+        unique_labels = sorted(set(labels))
+        palette = sns.color_palette("tab10", len(unique_labels))
 
-        palette = sns.color_palette("tab10", len(unique_clusters))
+        for label in unique_labels:
+            pts = X_scaled[labels == label]
 
-        for cid in set(labels):
-            pts = X_scaled[labels == cid]
-
-            if cid == -1:
+            if label == -1:
                 ax.scatter(
                     pts[:, 1], pts[:, 0],
                     s=45, c="lightgray", edgecolor="k",
-                    alpha=0.6, label="Noise / Outliers"
+                    alpha=0.6, label="Outliers"
                 )
             else:
-                color = palette[unique_clusters.index(cid)]
-                name = cluster_name_map[cid]
-
+                color = palette[label % len(palette)]
                 ax.scatter(
                     pts[:, 1], pts[:, 0],
                     s=65, c=[color], edgecolor="k",
-                    alpha=0.85, label=f"{name} ({len(pts)})"
+                    alpha=0.85, label=f"Cluster {label} ({len(pts)})"
                 )
 
                 # Convex hull
@@ -2841,11 +2832,11 @@ def main():
         st.pyplot(fig)
 
         # -----------------------------
-        # 7. CLUSTER SUMMARY (USER-FRIENDLY)
+        # 7. CLUSTER SUMMARY
         # -----------------------------
         cluster_summary = (
-            df[df["Cluster_ID"] != -1]
-            .groupby("Cluster Name")[[
+            df[df["HDBSCAN_Label"] != -1]
+            .groupby("HDBSCAN_Label")[[
                 "Total Fish Landing (Tonnes)",
                 "Total number of fishing vessels"
             ]]
@@ -2853,13 +2844,13 @@ def main():
             .reset_index()
         )
 
-        st.markdown("### 📊 Cluster Summary (Average Characteristics)")
-        st.dataframe(cluster_summary, use_container_width=True)
+        st.markdown("### 📊 Cluster Summary")
+        st.dataframe(cluster_summary)
 
         # -----------------------------
-        # 8. OUTLIER ANALYSIS (NO TECH LABELS)
+        # 8. OUTLIER ANALYSIS
         # -----------------------------
-        outliers = df[df["Cluster_ID"] == -1].copy()
+        outliers = df[df["HDBSCAN_Label"] == -1]
         st.success(f"Detected {len(outliers)} outliers.")
 
         if not outliers.empty:
@@ -2877,17 +2868,8 @@ def main():
 
             outliers["Why Flagged"] = outliers.apply(explain, axis=1)
 
-            # Remove technical columns
-            display_cols = [
-                "State", "Year",
-                "Total Fish Landing (Tonnes)",
-                "Total number of fishing vessels",
-                "Why Flagged"
-            ]
-
             st.markdown("### 🚨 Outlier Details")
-            st.dataframe(outliers[display_cols], use_container_width=True)
-
+            st.dataframe(outliers)
 
 
 
