@@ -863,62 +863,7 @@ def run_monthly_hdbscan_outlier_detection(merged_monthly):
 def main():
     st.set_page_config(layout='wide')
 
-    st.markdown("""
-    <style>
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(12px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .neu-card {
-        background: #1b1b1b;
-        border-radius: 24px;
-        padding: 28px;
-        margin-bottom: 20px;
-        border: 1px solid rgba(255,255,255,0.06);
-
-        /* NEUMORPHISM SHADOW */
-        box-shadow:
-            9px 9px 20px rgba(0,0,0,0.55),
-            -9px -9px 20px rgba(255,255,255,0.04);
-
-        animation: fadeIn 0.55s ease-out;
-        transition: all 0.25s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    /* HOVER EFFECT */
-    .neu-card:hover {
-        transform: translateY(-6px);
-        box-shadow:
-            12px 12px 28px rgba(0,0,0,0.65),
-            -12px -12px 28px rgba(255,255,255,0.06);
-    }
-
-    /* SHIMMER HIGHLIGHT */
-    .shimmer {
-        background: linear-gradient(
-            90deg,
-            rgba(255,255,255,0) 0%,
-            rgba(255,255,255,0.15) 50%,
-            rgba(255,255,255,0) 100%
-        );
-        position: absolute;
-        top:0; left:0;
-        height:100%; width:100%;
-        transform: translateX(-100%);
-        animation: shimmerMove 2.7s infinite;
-    }
-
-    @keyframes shimmerMove {
-        0%   { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-
-    </style>
-    """, unsafe_allow_html=True)
+    
 
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
     # --- Load base data or use newly merged uploaded data ---
