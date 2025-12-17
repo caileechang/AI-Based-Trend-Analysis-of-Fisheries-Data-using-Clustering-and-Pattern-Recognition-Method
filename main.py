@@ -2955,7 +2955,7 @@ def main():
                 st.dataframe(outliers, use_container_width=True)
             else:
                 st.dataframe(
-                    outliers.drop(columns=["HDBSCAN_Label"], errors="ignore"),
+                    outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
                     use_container_width=True
                 )
 
