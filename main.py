@@ -861,7 +861,7 @@ def run_monthly_hdbscan_outlier_detection(merged_monthly):
 
 
 def main():
-    
+    st.set_page_config(layout='wide')
     st.markdown("""
     <style>
 
@@ -924,7 +924,7 @@ def main():
     
     
 
-    st.set_page_config(layout='wide')
+    
     
     # --- Load base data or use newly merged uploaded data ---
     if "base_land" not in st.session_state:
