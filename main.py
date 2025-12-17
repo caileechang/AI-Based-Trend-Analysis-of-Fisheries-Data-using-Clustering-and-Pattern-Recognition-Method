@@ -2993,70 +2993,13 @@ def main():
 
 
 
-    import plotly.express as px
     
 
-    # Recompute global outliers if data changes
-    if (
-        "global_outliers" not in st.session_state
-        or st.session_state.get("global_outliers_source") != len(merged_df)
-    ):
-        if merged_df is not None and not merged_df.empty:
-            st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
-            st.session_state.global_outliers_source = len(merged_df)
-        else:
-            st.session_state.global_outliers = pd.DataFrame()
 
 
+    
 
-    elif plot_option == "HDBSCAN test":
-
-        import plotly.express as px
-
-        st.markdown("## HDBSCAN Outlier Detection")
-
-        df = st.session_state.global_outliers.copy()
-
-        if df.empty:
-            st.warning("No data available for outlier detection.")
-            st.stop()
-
-        fig = px.scatter(
-            df,
-            x="Vessels",
-            y="Landing",
-            color=df["Cluster"].astype(str),
-            symbol="Anomaly",
-            title="HDBSCAN Clustering with Outlier Detection",
-            labels={"color": "Cluster ID"}
-        )
-
-
-        st.plotly_chart(fig, use_container_width=True)
-
-        st.markdown("### 🚨 Detected Outliers")
-
-        display_df = (
-            df[df["Anomaly"]]
-            .sort_values("Outlier_Norm", ascending=False)[
-                [
-                    "State",
-                    "Year",
-                    "Landing",
-                    "Vessels","Cluster",
-                    "Outlier_Norm"
-                ]
-            ]
-            .rename(columns={
-                "Landing": "Total Fish Landing (Tonnes)",
-                "Vessels": "Total Fishing Vessels",
-                "Outlier_Norm": "Outlier Score (0–1)"
-            })
-        )
-
-        st.dataframe(display_df, use_container_width=True)
-
-    elif plot_option == "Monthly Clustering & Outlier Detection1":
+    elif plot_option == "Monthly Clustering & Outlier Detection":
 
         import pandas as pd
         import hdbscan
