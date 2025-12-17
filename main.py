@@ -2894,7 +2894,7 @@ def main():
     # =====================================================
     # HDBSCAN CLUSTERS + ANOMALY OVERLAY (VIVA VERSION)
     # =====================================================
-    elif plot_option == "HDBSCAN Outlier Detection":
+    if plot_option == "HDBSCAN Outlier Detection":
 
         import plotly.express as px
         import streamlit as st
