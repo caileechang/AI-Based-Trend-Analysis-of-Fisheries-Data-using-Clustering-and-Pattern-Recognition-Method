@@ -2883,18 +2883,18 @@ def main():
         )
 
 
-    # =====================================================
-    # RUN GLOBAL HDBSCAN ONCE (CACHE IN SESSION STATE)
-    # =====================================================
-    if "global_outliers" not in st.session_state or st.session_state.data_updated:
-        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
-        st.session_state.data_updated = False
+        # =====================================================
+        # RUN GLOBAL HDBSCAN ONCE (CACHE IN SESSION STATE)
+        # =====================================================
+        if "global_outliers" not in st.session_state or st.session_state.data_updated:
+            st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+            st.session_state.data_updated = False
 
 
     # =====================================================
     # HDBSCAN CLUSTERS + ANOMALY OVERLAY (VIVA VERSION)
     # =====================================================
-    if plot_option == "HDBSCAN Outlier Detection":
+    elif plot_option == "HDBSCAN Outlier Detection":
 
         import plotly.express as px
         import streamlit as st
