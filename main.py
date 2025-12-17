@@ -2508,7 +2508,7 @@ def main():
     
     
         # Step 6: Human-readable cluster labels
-        # ==================================================
+      
         cluster_means = (
             merged_df
             .groupby('Cluster')[[ 
@@ -2517,13 +2517,33 @@ def main():
             ]]
             .mean()
         )
-        high_cluster = cluster_means['Total Fish Landing (Tonnes)'].idxmax()
 
-        merged_df['Cluster_Label'] = merged_df['Cluster'].apply(
-            lambda x: "Higher Fish Production and Vessels Capacity"
-            if x == high_cluster
-            else "Lower Fish Production & Vessels Capacity"
+        # Rank clusters by landing (descending)
+        cluster_means = cluster_means.sort_values(
+            by='Total Fish Landing (Tonnes)',
+            ascending=False
         )
+
+        # Define label templates (safe for k up to ~6)
+        label_templates = [
+            "Very High Fish Production & Vessel Capacity",
+            "High Fish Production & Vessel Capacity",
+            "Moderate Fish Production & Vessel Capacity",
+            "Low Fish Production & Vessel Capacity",
+            "Very Low Fish Production & Vessel Capacity",
+            "Minimal Fish Production & Vessel Capacity"
+        ]
+
+        cluster_label_map = {}
+
+        for i, cluster_id in enumerate(cluster_means.index):
+            if i < len(label_templates):
+                cluster_label_map[cluster_id] = label_templates[i]
+            else:
+                cluster_label_map[cluster_id] = f"Cluster Level {i+1}"
+
+        merged_df['Cluster_Label'] = merged_df['Cluster'].map(cluster_label_map)
+
 
         # --- Step 6: Display summary ---
         st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
