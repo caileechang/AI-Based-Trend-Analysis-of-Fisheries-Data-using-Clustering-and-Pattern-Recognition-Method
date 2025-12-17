@@ -249,18 +249,27 @@ def run_global_hdbscan_outlier_detection(merged_df):
     )
 
     # -------------------------
-    # HDBSCAN (clustering mode)
+    # AUTO-TUNE HDBSCAN PARAMS
     # -------------------------
-    params = st.session_state.get("hdbscan_params", {
-        "min_cluster_size": 3,
-        "min_samples": 3
-    })
+    best_params, best_score = auto_tune_hdbscan(
+        df,
+        min_cluster_range=range(3, 8),
+        min_samples_range=range(2, 6)
+    )
+
+    # Safe fallback
+    if best_params is None:
+        min_cluster_size, min_samples = 3, 3
+    else:
+        min_cluster_size, min_samples = best_params
+
 
     clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=params["min_cluster_size"],
-        min_samples=params["min_samples"],
+        min_cluster_size=min_cluster_size,
+        min_samples=min_samples,
         prediction_data=True
     ).fit(X)
+
 
     df["Cluster"] = clusterer.labels_          # -1 = noise
     df["Outlier_Score"] = clusterer.outlier_scores_
@@ -2689,159 +2698,42 @@ def main():
 
 
 
+    if "global_outliers" not in st.session_state or st.session_state.data_updated:
+        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        st.session_state.data_updated = False
     
+    elif plot_option == "HDBSCAN Outlier Detection":
 
+        df = st.session_state.global_outliers.copy()
 
-
-    elif plot_option == "Monthly Clustering & Outlier Detection":
-
-        import pandas as pd
-        import numpy as np
-        import streamlit as st
-        import plotly.express as px
-
-        from sklearn.preprocessing import StandardScaler
-        from sklearn.cluster import KMeans
-        from sklearn.metrics import pairwise_distances
-
-        st.subheader("📅 Monthly Clustering & Outlier Detection")
-        st.markdown(
-            "<p style='color:#ccc'>Identify unusual monthly landing–vessel patterns using clustering.</p>",
-            unsafe_allow_html=True
-        )
-
-        # =========================================================
-        # 1. Prepare monthly data
-        # =========================================================
-        dfm = merged_monthly.copy()
-
-        required_cols = [
-            "Year",
-            "Month",
-            "State",
-            "Fish Landing (Tonnes)",
-            "Total number of fishing vessels"
-        ]
-
-        # Drop invalid rows
-        dfm = dfm.dropna(subset=required_cols)
-
-        if dfm.shape[0] < 5:
-            st.warning("Not enough monthly data for clustering and outlier detection.")
+        if df.empty:
+            st.warning("No outliers detected.")
             st.stop()
 
-        # Ensure numeric
-        dfm["Fish Landing (Tonnes)"] = pd.to_numeric(
-            dfm["Fish Landing (Tonnes)"], errors="coerce"
-        )
-        dfm["Total number of fishing vessels"] = pd.to_numeric(
-            dfm["Total number of fishing vessels"], errors="coerce"
-        )
-
-        dfm = dfm.dropna(
-            subset=["Fish Landing (Tonnes)", "Total number of fishing vessels"]
-        )
-
-        # =========================================================
-        # 2. User selection (Year)
-        # =========================================================
-        years = sorted(dfm["Year"].unique())
-        selected_year = st.selectbox(
-            "Select Year:",
-            years,
-            index=len(years) - 1
-        )
-
-        dfy = dfm[dfm["Year"] == selected_year].copy()
-
-        if dfy.shape[0] < 3:
-            st.warning("Not enough monthly records in this year for clustering.")
-            st.stop()
-
-        # =========================================================
-        # 3. Feature matrix (SAFE & EXPLICIT)
-        # =========================================================
-        feature_cols = [
-            "Fish Landing (Tonnes)",
-            "Total number of fishing vessels"
-        ]
-
-        X = dfy[feature_cols].values
-        X_scaled = StandardScaler().fit_transform(X)
-
-        # =========================================================
-        # 4. K-Means clustering
-        # =========================================================
-        k = st.session_state.get("best_k_monthly", 3)
-
-        kmeans = KMeans(
-            n_clusters=k,
-            random_state=42,
-            n_init=10
-        )
-
-        dfy["Cluster"] = kmeans.fit_predict(X_scaled)
-
-        # =========================================================
-        # 5. Distance-based outlier detection
-        # =========================================================
-        centroids = kmeans.cluster_centers_
-        distances = pairwise_distances(X_scaled, centroids)
-
-        dfy["Distance_to_Centroid"] = distances.min(axis=1)
-
-        # Conservative threshold (top 5%)
-        threshold = dfy["Distance_to_Centroid"].quantile(0.95)
-
-        dfy["Anomaly"] = dfy["Distance_to_Centroid"] >= threshold
-
-        # =========================================================
-        # 6. Visualisation
-        # =========================================================
         fig = px.scatter(
-            dfy,
-            x="Fish Landing (Tonnes)",
-            y="Total number of fishing vessels",
-            color="Cluster",
-            symbol="Anomaly",
-            hover_data=["State", "Month"],
-            title=f"Monthly Clustering & Outlier Detection ({selected_year})",
-            template="plotly_dark"
+            df,
+            x="Landing",
+            y="Vessels",
+            color="Anomaly",
+            symbol="Cluster",
+            hover_data=["State", "Year"],
+            title="Automatic HDBSCAN Outlier Detection (All Years)"
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
-        # =========================================================
-        # 7. Outlier table
-        # =========================================================
-        st.markdown("### 🚨 Detected Monthly Outliers")
-
-        outliers = (
-            dfy[dfy["Anomaly"]]
-            .sort_values("Distance_to_Centroid", ascending=False)
-            .reset_index(drop=True)
+        st.markdown("### 🚨 Detected Outliers")
+        st.dataframe(
+            df[df["Anomaly"]]
+            .sort_values("Outlier_Norm", ascending=False),
+            use_container_width=True
         )
 
-        if outliers.empty:
-            st.success("No significant monthly outliers detected.")
-        else:
-            st.dataframe(
-                outliers[[
-                    "Year",
-                    "Month",
-                    "State",
-                    "Fish Landing (Tonnes)",
-                    "Total number of fishing vessels",
-                    "Cluster",
-                    "Distance_to_Centroid"
-                ]],
-                use_container_width=True
-            )
+
+
 
 
     
-    
-
                     
     elif plot_option == "Hierarchical Clustering":
            
