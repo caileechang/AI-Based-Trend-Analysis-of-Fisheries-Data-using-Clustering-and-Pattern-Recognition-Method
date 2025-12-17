@@ -2992,6 +2992,7 @@ def main():
        
         import numpy as np
         import pandas as pd
+        import matplotlib.pyplot as plt
         
         from itertools import combinations
 
@@ -3018,6 +3019,34 @@ def main():
                 for A, B in combinations(anomaly_sets, 2)
             ]
             return np.mean(scores), scores
+        df_eval = merged_df.copy()
+
+        dbscan_mean, dbscan_scores = stability_test(
+            df_eval,
+            detect_dbscan_anomalies
+        )
+
+        hdbscan_mean, hdbscan_scores = stability_test(
+            df_eval,
+            detect_hdbscan_anomalies
+        )
+
+        st.markdown("### 📊 Stability Results (Jaccard Similarity)")
+        st.write(f"**DBSCAN stability:** {dbscan_mean:.3f}")
+        st.write(f"**HDBSCAN stability:** {hdbscan_mean:.3f}")
+
+        
+
+        fig, ax = plt.subplots()
+        ax.boxplot(
+            [dbscan_scores, hdbscan_scores],
+            labels=["DBSCAN", "HDBSCAN"]
+        )
+        ax.set_ylabel("Jaccard Similarity")
+        ax.set_title("Anomaly Stability Under Data Perturbation")
+        st.pyplot(fig)
+
+
 
     
     
