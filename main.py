@@ -2808,11 +2808,16 @@ def main():
         # 4.1 DBCV VALIDATION (DEV MODE)
         # -----------------------------
         
-        try:
+        valid_clusters = set(labels) - {-1}
+
+        if len(valid_clusters) >= 2:
+            try:
                 dbcv = validity_index(X_scaled, labels, metric="euclidean")
-                st.info(f"DBCV Score: `{dbcv:.3f}`")
-        except Exception:
-                st.warning("DBCV could not be computed for this configuration.")
+                st.success(f"📐 DBCV Score (density-based): `{dbcv:.3f}`")
+            except Exception:
+                st.warning("DBCV could not be computed due to unstable density separation.")
+        else:
+            st.info("DBCV not computed: fewer than 2 stable clusters detected.")
 
         # -----------------------------
         # 5. SILHOUETTE (clusters only)
