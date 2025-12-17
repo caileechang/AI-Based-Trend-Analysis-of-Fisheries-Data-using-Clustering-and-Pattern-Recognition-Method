@@ -2760,7 +2760,11 @@ def main():
             "SABAH", "SARAWAK", "W.P. LABUAN"
         ]
 
-        df = merged_df[merged_df["State"].isin(valid_states)].copy()
+        #df = merged_df[merged_df["State"].isin(valid_states)].copy()
+        df = merged_monthly[merged_monthly["State"].isin(valid_states)].copy()
+        
+        import calendar
+        df["Month_Name"] = df["Month"].apply(lambda m: calendar.month_name[int(m)])
 
         if df.empty:
             st.warning("No valid data after filtering states.")
@@ -2952,12 +2956,34 @@ def main():
            
 
             if DEV_MODE:
-                st.dataframe(outliers, use_container_width=True)
-            else:
+                #st.dataframe(outliers, use_container_width=True)
                 st.dataframe(
-                    outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
+                    outliers[[
+                        "State",
+                        "Year",
+                        "Month",
+                        
+                        "HDBSCAN_Label",
+                        "Outlier_Score",
+                        "Total Fish Landing (Tonnes)",
+                        "Total number of fishing vessels"
+                    ]],
                     use_container_width=True
                 )
+
+            else:
+                st.dataframe(
+                    outliers[[
+                        "State",
+                        "Year",
+                        "Month",
+                        "Total Fish Landing (Tonnes)",
+                        "Total number of fishing vessels",
+                        "Why Flagged"
+                    ]],
+                    use_container_width=True
+                )
+
 
 
 
