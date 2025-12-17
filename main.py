@@ -170,6 +170,38 @@ def prepare_yearly(df_land, df_vess):
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
 
+def dynamic_hdbscan_threshold(df, score_col="Outlier_Norm"):
+    """
+    Compute a stable, sensitivity-based threshold for HDBSCAN outlier scores.
+    Returns a float threshold.
+    """
+
+    import pandas as pd
+
+    # No meaningful separation
+    if df[score_col].nunique() <= 1:
+        return 1.0
+
+    candidate_thresholds = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
+
+    sens = []
+    for t in candidate_thresholds:
+        sens.append({
+            "threshold": t,
+            "count": (df[score_col] >= t).sum()
+        })
+
+    sens_df = pd.DataFrame(sens)
+    sens_df["delta"] = sens_df["count"].diff().abs()
+
+    # Stable region → conservative choice
+    stable = sens_df[sens_df["delta"] == 0]
+
+    if not stable.empty:
+        return stable.iloc[-1]["threshold"]
+
+    # Fallback
+    return df[score_col].quantile(0.90)
 
 
 
@@ -179,29 +211,45 @@ def run_global_hdbscan_outlier_detection(merged_df):
     using auto-tuned parameters and dynamic thresholding.
     """
 
-    df = merged_df.copy()
-    if df is None or df.empty:
+    import pandas as pd
+    import hdbscan
+    from sklearn.preprocessing import StandardScaler
+
+    if merged_df is None or merged_df.empty:
         return pd.DataFrame()
 
     # -------------------------
     # Prepare features
     # -------------------------
-    df = df[[
+    df = merged_df[[
         "State",
         "Year",
         "Total Fish Landing (Tonnes)",
         "Total number of fishing vessels"
-    ]].dropna()
+    ]].dropna().copy()
 
     df.rename(columns={
         "Total Fish Landing (Tonnes)": "Landing",
         "Total number of fishing vessels": "Vessels"
     }, inplace=True)
 
-    X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+    # Ensure numeric
+    df["Landing"] = pd.to_numeric(df["Landing"], errors="coerce")
+    df["Vessels"] = pd.to_numeric(df["Vessels"], errors="coerce")
+    df = df.dropna(subset=["Landing", "Vessels"])
+
+    if df.shape[0] < 5:
+        return df
 
     # -------------------------
-    # AUTO-TUNED PARAMETERS
+    # Scale features
+    # -------------------------
+    X = StandardScaler().fit_transform(
+        df[["Landing", "Vessels"]]
+    )
+
+    # -------------------------
+    # HDBSCAN (clustering mode)
     # -------------------------
     params = st.session_state.get("hdbscan_params", {
         "min_cluster_size": 3,
@@ -214,48 +262,29 @@ def run_global_hdbscan_outlier_detection(merged_df):
         prediction_data=True
     ).fit(X)
 
-
-    df["Cluster"] = clusterer.labels_  # -1 = noise
+    df["Cluster"] = clusterer.labels_          # -1 = noise
     df["Outlier_Score"] = clusterer.outlier_scores_
 
     # -------------------------
     # Normalise outlier score
     # -------------------------
     max_score = df["Outlier_Score"].max()
-    df["Outlier_Norm"] = df["Outlier_Score"] / max_score if max_score > 0 else 0.0
+    df["Outlier_Norm"] = (
+        df["Outlier_Score"] / max_score if max_score > 0 else 0.0
+    )
 
     # -------------------------
-    # sensitivity-based threshold
+    # Dynamic threshold (REUSED)
     # -------------------------
-    if df["Outlier_Norm"].nunique() <= 1:
-        df["Anomaly"] = False
-    else:
-        candidate_thresholds = [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80]
+    chosen_threshold = dynamic_hdbscan_threshold(df)
 
-        sens = []
-        for t in candidate_thresholds:
-            sens.append({
-                "threshold": t,
-                "count": (df["Outlier_Norm"] >= t).sum()
-            })
-
-        sens_df = pd.DataFrame(sens)
-        sens_df["delta"] = sens_df["count"].diff().abs()
-
-        stable = sens_df[sens_df["delta"] == 0]
-
-        if not stable.empty:
-            chosen_threshold = stable.iloc[-1]["threshold"]
-        else:
-            chosen_threshold = df["Outlier_Norm"].quantile(0.90)
-
-        df["Anomaly"] = (
-            (df["Cluster"] == -1) |                 # explicit noise
-            (df["Outlier_Norm"] >= chosen_threshold)  # extreme members
-        )
-
+    df["Anomaly"] = (
+        (df["Cluster"] == -1) |                   # explicit noise
+        (df["Outlier_Norm"] >= chosen_threshold)  # extreme members
+    )
 
     return df
+
 
 
 
@@ -2980,7 +3009,7 @@ def main():
 
 
 
-    elif plot_option == "HDBSCAN":
+    elif plot_option == "HDBSCAN test":
 
         import plotly.express as px
 
@@ -3040,43 +3069,74 @@ def main():
             unsafe_allow_html=True
         )
 
-        years = sorted(merged_monthly["Year"].unique())
+        # ---------------------------------
+        # SAFETY CHECK
+        # ---------------------------------
+        if merged_monthly is None or merged_monthly.empty:
+            st.error("Monthly dataset is not available.")
+            st.stop()
+
+        years = sorted(merged_monthly["Year"].dropna().unique())
         sel_year = st.selectbox("Select Year:", years, index=len(years)-1)
 
-        df_year = merged_monthly[merged_monthly["Year"] == sel_year].copy()
+        df_year = merged_monthly.loc[
+            merged_monthly["Year"] == sel_year
+        ].copy()
+
         if df_year.empty:
-            st.error("No data available for this year.")
+            st.warning("No data available for this year.")
             st.stop()
 
         all_results = []
 
         # ---------------------------------
-        # Run HDBSCAN for EACH MONTH
+        # RUN HDBSCAN FOR EACH MONTH
         # ---------------------------------
-        for month in sorted(df_year["Month"].unique()):
-            df = df_year[df_year["Month"] == month].copy()
-            if len(df) < 5:
+        for month in sorted(df_year["Month"].dropna().unique()):
+
+            df_m = df_year.loc[
+                df_year["Month"] == month
+            ].copy()
+
+            if df_m.shape[0] < 5:
                 continue
 
-            required_cols = [
+            required_cols = {
                 "State", "Year", "Month",
                 "Fish Landing (Tonnes)",
                 "Total number of fishing vessels"
-            ]
-            if any(c not in df.columns for c in required_cols):
+            }
+
+            if not required_cols.issubset(df_m.columns):
                 continue
 
-            df = df[required_cols].dropna()
+            df_m = df_m[list(required_cols)].dropna()
 
-            df.rename(columns={
+            if df_m.shape[0] < 5:
+                continue
+
+            # ---------------------------------
+            # Rename + numeric safety
+            # ---------------------------------
+            df_m.rename(columns={
                 "Fish Landing (Tonnes)": "Landing",
                 "Total number of fishing vessels": "Vessels"
             }, inplace=True)
 
-            if len(df) < 5:
+            df_m["Landing"] = pd.to_numeric(df_m["Landing"], errors="coerce")
+            df_m["Vessels"] = pd.to_numeric(df_m["Vessels"], errors="coerce")
+            df_m = df_m.dropna(subset=["Landing", "Vessels"])
+
+            # Need variance for clustering
+            if df_m[["Landing", "Vessels"]].nunique().min() <= 1:
                 continue
 
-            X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+            # ---------------------------------
+            # SCALE + HDBSCAN (CLUSTERING MODE)
+            # ---------------------------------
+            X = StandardScaler().fit_transform(
+                df_m[["Landing", "Vessels"]]
+            )
 
             clusterer = hdbscan.HDBSCAN(
                 min_cluster_size=3,
@@ -3084,29 +3144,35 @@ def main():
                 prediction_data=True
             ).fit(X)
 
-            df["Cluster"] = clusterer.labels_
-            df["Outlier_Score"] = clusterer.outlier_scores_
+            df_m["Cluster"] = clusterer.labels_          # -1 = noise
+            df_m["Outlier_Score"] = clusterer.outlier_scores_
 
-            if df["Outlier_Score"].max() == 0:
+            if df_m["Outlier_Score"].max() <= 0:
                 continue
 
-            df["Outlier_Norm"] = (
-                df["Outlier_Score"] / df["Outlier_Score"].max()
+            # ---------------------------------
+            # NORMALISE OUTLIER SCORE
+            # ---------------------------------
+            df_m["Outlier_Norm"] = (
+                df_m["Outlier_Score"] /
+                df_m["Outlier_Score"].max()
             )
 
-            # -----------------------------
-            # Anomaly rule
-            # -----------------------------
-            df["Anomaly"] = (
-                (df["Cluster"] == -1) |
-                (df["Outlier_Norm"] >= 0.65)
+            # ---------------------------------
+            # DYNAMIC THRESHOLD (KEY CHANGE)
+            # ---------------------------------
+            chosen_threshold = dynamic_hdbscan_threshold(df_m)
+
+            df_m["Anomaly"] = (
+                (df_m["Cluster"] == -1) |
+                (df_m["Outlier_Norm"] >= chosen_threshold)
             )
 
-            # -----------------------------
-            # Explanation
-            # -----------------------------
-            avg_land = df["Landing"].mean()
-            avg_ves = df["Vessels"].mean()
+            # ---------------------------------
+            # EXPLANATION (ONLY FOR ANOMALIES)
+            # ---------------------------------
+            avg_land = df_m["Landing"].mean()
+            avg_ves = df_m["Vessels"].mean()
 
             def explain(row):
                 L, V = row["Landing"], row["Vessels"]
@@ -3120,11 +3186,16 @@ def main():
                     return "⚓ Intensive fishing"
                 return "Unusual pattern"
 
-            df["Explanation"] = ""
-            df.loc[df["Anomaly"], "Explanation"] = df[df["Anomaly"]].apply(explain, axis=1)
+            df_m["Explanation"] = ""
+            df_m.loc[df_m["Anomaly"], "Explanation"] = (
+                df_m[df_m["Anomaly"]].apply(explain, axis=1)
+            )
 
-            all_results.append(df)
+            all_results.append(df_m)
 
+        # ---------------------------------
+        # FINAL OUTPUT
+        # ---------------------------------
         if not all_results:
             st.success("No anomalies detected for this year.")
             st.stop()
@@ -3136,7 +3207,7 @@ def main():
         # ---------------------------------
         st.markdown("### 🔍 Detected Anomalies")
         st.dataframe(
-            final_df[final_df["Anomaly"]][[
+            final_df.loc[final_df["Anomaly"], [
                 "Year", "Month", "State", "Cluster",
                 "Landing", "Vessels",
                 "Outlier_Norm", "Explanation"
@@ -3145,7 +3216,7 @@ def main():
         )
 
         # ---------------------------------
-        # VISUALISATION (CLUSTERS + OUTLIERS)
+        # VISUALISATION
         # ---------------------------------
         fig = px.scatter(
             final_df,
@@ -3154,18 +3225,14 @@ def main():
             color=final_df["Cluster"].astype(str),
             symbol="Anomaly",
             facet_col="Month",
+            facet_col_wrap=4,
             title=f"HDBSCAN Monthly Clusters & Outliers ({sel_year})",
             labels={"color": "Cluster ID"}
         )
 
         st.plotly_chart(fig, use_container_width=True)
-
-
-      
-
+        
     
-
-   
 
                     
     elif plot_option == "Hierarchical Clustering":
