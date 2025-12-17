@@ -2526,12 +2526,12 @@ def main():
 
         # Define label templates (safe for k up to ~6)
         label_templates = [
-            "Very High Fish Production & Vessel Capacity",
+            
             "High Fish Production & Vessel Capacity",
             "Moderate Fish Production & Vessel Capacity",
             "Low Fish Production & Vessel Capacity",
             "Very Low Fish Production & Vessel Capacity",
-            "Minimal Fish Production & Vessel Capacity"
+            "Minimal Fish Production & Vessel Capacity","Very Minimal Fish Production & Vessel Capacity",
         ]
 
         cluster_label_map = {}
