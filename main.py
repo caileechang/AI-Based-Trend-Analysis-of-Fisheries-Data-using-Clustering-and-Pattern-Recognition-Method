@@ -2623,6 +2623,8 @@ def main():
         import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
+        from sklearn.metrics import silhouette_score
+        from scipy.spatial import ConvexHull
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
         # -----------------------------
