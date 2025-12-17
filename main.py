@@ -1579,7 +1579,7 @@ def main():
         # PAGE HEADER
         # ======================================
         st.markdown("""
-            <h2 style='color:#ccc;'> Fish Landing Trends (Cluster Analysis)</h2>
+            <h2 style='color:white;'> Fish Landing Trends (Cluster Analysis)</h2>
             <p style='color:#ccc; margin-top:-10px;'>
                 Compare freshwater & marine fish landings across yearly or monthly periods using K-Means cluster grouping.
             </p>
