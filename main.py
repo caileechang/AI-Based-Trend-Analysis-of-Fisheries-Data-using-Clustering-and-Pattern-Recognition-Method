@@ -2864,22 +2864,34 @@ def main():
             .reset_index()
         )
 
-        # ---- Global averages (reference baseline) ----
-        avg_land_all = df["Total Fish Landing (Tonnes)"].mean()
-        avg_ves_all = df["Total number of fishing vessels"].mean()
+        # ---- Baseline from cluster centroids  ----
 
-        # ---- Interpret cluster meaning ----
+        cluster_summary["Landing per Vessel"] = (
+            cluster_summary["Total Fish Landing (Tonnes)"] /
+            cluster_summary["Total number of fishing vessels"]
+        )
+
+        median_lpv = cluster_summary["Landing per Vessel"].median()
+        avg_land   = cluster_summary["Total Fish Landing (Tonnes)"].mean()
+
         def interpret_cluster(row):
             land = row["Total Fish Landing (Tonnes)"]
-            ves = row["Total number of fishing vessels"]
+            lpv  = row["Landing per Vessel"]
 
-            if land >= avg_land_all and ves >= avg_ves_all:
-                return "🚢 High Production Fleet"
-            if land >= avg_land_all and ves < avg_ves_all:
-                return "⚡ Efficient Small Fleet"
-            if land < avg_land_all and ves >= avg_ves_all:
+            if land >= avg_land and lpv >= median_lpv:
+                return "🚢 High Production & Efficient Fleet"
+
+            if land < avg_land and lpv >= median_lpv:
+                return "⚡ Efficient Small-Scale Fleet"
+
+            if land >= avg_land and lpv < median_lpv:
                 return "⚠️ Overcapacity Region"
+
             return "🛶 Low Activity Region"
+
+        
+        
+
 
         cluster_summary["Cluster Meaning"] = cluster_summary.apply(
             interpret_cluster, axis=1
