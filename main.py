@@ -2677,17 +2677,15 @@ def main():
 
     elif plot_option == "Automatic HDBSCAN":
         import numpy as np
-        import plotly.express as px
-        import hdbscan
-        
-        from sklearn.preprocessing import StandardScaler
+        import matplotlib.pyplot as plt
+        import seaborn as sns
         from sklearn.metrics import silhouette_score
+        from scipy.spatial import ConvexHull
+        st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
-        st.subheader("Automatic HDBSCAN Clustering & Outlier Detection (3D Interactive)")
-
-        # -------------------------------------------------
+        # -----------------------------
         # 1. FILTER VALID STATES
-        # -------------------------------------------------
+        # -----------------------------
         valid_states = [
             "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
             "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -2701,31 +2699,30 @@ def main():
             st.warning("No valid data after filtering states.")
             st.stop()
 
-        # -------------------------------------------------
+        # -----------------------------
         # 2. PREPARE FEATURES
-        # -------------------------------------------------
-        features = [
+        # -----------------------------
+        X = df[[
             "Total Fish Landing (Tonnes)",
             "Total number of fishing vessels"
-        ]
+        ]].values
 
-        X = df[features].values
         X_scaled = StandardScaler().fit_transform(X)
 
         n_samples = X_scaled.shape[0]
 
-        # -------------------------------------------------
+        # -----------------------------
         # 3. AUTO HDBSCAN PARAMETERS
-        # -------------------------------------------------
+        # -----------------------------
         min_cluster_size = max(3, int(np.sqrt(n_samples)))
         min_samples = max(2, int(np.log(n_samples)))
 
         st.markdown(f"**Auto min_cluster_size:** `{min_cluster_size}`")
         st.markdown(f"**Auto min_samples:** `{min_samples}`")
 
-        # -------------------------------------------------
+        # -----------------------------
         # 4. RUN HDBSCAN
-        # -------------------------------------------------
+        # -----------------------------
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=min_samples,
@@ -2733,13 +2730,12 @@ def main():
         )
 
         labels = clusterer.fit_predict(X_scaled)
-
         df["HDBSCAN_Label"] = labels
         df["Outlier_Score"] = clusterer.outlier_scores_
 
-        # -------------------------------------------------
-        # 5. SILHOUETTE SCORE (CLUSTERS ONLY)
-        # -------------------------------------------------
+        # -----------------------------
+        # 5. SILHOUETTE (clusters only)
+        # -----------------------------
         mask = labels != -1
         if len(set(labels[mask])) > 1:
             sil = silhouette_score(X_scaled[mask], labels[mask])
@@ -2747,86 +2743,55 @@ def main():
         else:
             st.warning("Silhouette unavailable — only one cluster detected.")
 
-        # -------------------------------------------------
-        # 6. EXPLANATION LOGIC (DEFINE ONCE)
-        # -------------------------------------------------
-        avg_land = df["Total Fish Landing (Tonnes)"].mean()
-        avg_ves = df["Total number of fishing vessels"].mean()
+        # -----------------------------
+        # 6. CLUSTER VISUALISATION
+        # -----------------------------
+        fig, ax = plt.subplots(figsize=(10, 6))
+        unique_labels = sorted(set(labels))
+        palette = sns.color_palette("tab10", len(unique_labels))
 
-        def explain(row):
-            if row["Total Fish Landing (Tonnes)"] > avg_land and row["Total number of fishing vessels"] < avg_ves:
-                return "⚠️ High landing but low vessels"
-            if row["Total Fish Landing (Tonnes)"] < avg_land and row["Total number of fishing vessels"] > avg_ves:
-                return "🐟 Low catch per vessel"
-            if row["Total Fish Landing (Tonnes)"] < avg_land and row["Total number of fishing vessels"] < avg_ves:
-                return "🛶 Low activity region"
-            return "Normal pattern"
+        for label in unique_labels:
+            pts = X_scaled[labels == label]
 
-        df["Why Flagged"] = df.apply(explain, axis=1)
+            if label == -1:
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    s=45, c="lightgray", edgecolor="k",
+                    alpha=0.6, label="Outliers"
+                )
+            else:
+                color = palette[label % len(palette)]
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    s=65, c=[color], edgecolor="k",
+                    alpha=0.85, label=f"Cluster {label} ({len(pts)})"
+                )
 
-        # -------------------------------------------------
-        # 7. PREPARE DATA FOR 3D VISUALISATION
-        # -------------------------------------------------
-        plot_df = df.copy()
-        plot_df["Type"] = np.where(
-            plot_df["HDBSCAN_Label"] == -1, "Outlier", "Cluster"
-        )
+                # Convex hull
+                if len(pts) >= 3:
+                    hull = ConvexHull(pts)
+                    hv = list(hull.vertices) + [hull.vertices[0]]
+                    ax.plot(
+                        pts[hv, 1], pts[hv, 0],
+                        color=color, linewidth=2
+                    )
 
-        # Normalize outlier score for marker size
-        if plot_df["Outlier_Score"].max() > 0:
-            plot_df["Outlier_Size"] = 6 + 30 * (
-                plot_df["Outlier_Score"] / plot_df["Outlier_Score"].max()
-            )
-        else:
-            plot_df["Outlier_Size"] = 6
+        ax.set_title("HDBSCAN Clusters & Outliers (Automatic)")
+        ax.set_xlabel("Vessels (scaled)")
+        ax.set_ylabel("Landings (scaled)")
+        ax.grid(alpha=0.3)
+        ax.legend()
+        st.pyplot(fig)
 
-        # -------------------------------------------------
-        # 8. 3D INTERACTIVE PLOT
-        # -------------------------------------------------
-        fig = px.scatter_3d(
-            plot_df,
-            x="Total number of fishing vessels",
-            y="Total Fish Landing (Tonnes)",
-            z="Outlier_Score",
-            color="HDBSCAN_Label",
-            symbol="Type",
-            size="Outlier_Size",
-            hover_data={
-                "State": True,
-                "Total Fish Landing (Tonnes)": ":,.0f",
-                "Total number of fishing vessels": ":,.0f",
-                "Outlier_Score": ":.3f",
-                "Why Flagged": True
-            },
-            title="3D Interactive HDBSCAN Clusters & Outliers",
-            color_discrete_sequence=px.colors.qualitative.Set2
-        )
-
-        fig.update_traces(
-            marker=dict(
-                line=dict(width=0.5, color="black"),
-                opacity=0.85
-            )
-        )
-
-        fig.update_layout(
-            height=700,
-            legend_title_text="Cluster ID",
-            scene=dict(
-                xaxis_title="Fishing Vessels",
-                yaxis_title="Fish Landings (Tonnes)",
-                zaxis_title="Outlier Severity"
-            )
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-        # -------------------------------------------------
-        # 9. CLUSTER SUMMARY
-        # -------------------------------------------------
+        # -----------------------------
+        # 7. CLUSTER SUMMARY
+        # -----------------------------
         cluster_summary = (
             df[df["HDBSCAN_Label"] != -1]
-            .groupby("HDBSCAN_Label")[features]
+            .groupby("HDBSCAN_Label")[[
+                "Total Fish Landing (Tonnes)",
+                "Total number of fishing vessels"
+            ]]
             .mean()
             .reset_index()
         )
@@ -2834,13 +2799,27 @@ def main():
         st.markdown("### 📊 Cluster Summary")
         st.dataframe(cluster_summary)
 
-        # -------------------------------------------------
-        # 10. OUTLIER TABLE
-        # -------------------------------------------------
+        # -----------------------------
+        # 8. OUTLIER ANALYSIS
+        # -----------------------------
         outliers = df[df["HDBSCAN_Label"] == -1]
         st.success(f"Detected {len(outliers)} outliers.")
 
         if not outliers.empty:
+            avg_land = df["Total Fish Landing (Tonnes)"].mean()
+            avg_ves = df["Total number of fishing vessels"].mean()
+
+            def explain(r):
+                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "⚠️ High landing but low vessels"
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
+                    return "🐟 Low catch per vessel"
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "🛶 Low activity region"
+                return "Atypical pattern"
+
+            outliers["Why Flagged"] = outliers.apply(explain, axis=1)
+
             st.markdown("### 🚨 Outlier Details")
             st.dataframe(outliers)
 
