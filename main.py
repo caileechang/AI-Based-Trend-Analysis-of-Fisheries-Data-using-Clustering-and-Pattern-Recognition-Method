@@ -1365,9 +1365,9 @@ def main():
         "2D KMeans Scatter",
         "3D KMeans Clustering",
         
-        "Automatic HDBSCAN",
-        "HDBSCAN Monthly Outlier Detection",
-        "Hierarchical Clustering",
+        "Yearly Fisheries Outlier Detection",
+        "Monthly Fisheries Outlier Detection",
+        "Fisheries-Based Malaysian States Grouping",
         "Geospatial Maps"
     ]
 
@@ -2775,7 +2775,7 @@ def main():
    
         
 
-    elif plot_option == "Automatic HDBSCAN":
+    elif plot_option == "Yearly Fisheries Outlier Detection":
         import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
@@ -3432,7 +3432,7 @@ def main():
     elif plot_option == "Hierarchical Clustering":
            
         with st.container():
-            st.subheader("Hierarchical Clustering of Malaysian States")
+            st.subheader("Fisheries-Based Malaysian States Grouping")
             hierarchical_clustering(merged_df)
 
            
