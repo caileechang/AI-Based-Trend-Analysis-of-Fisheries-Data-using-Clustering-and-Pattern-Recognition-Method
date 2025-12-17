@@ -2114,7 +2114,7 @@ def main():
             best_k = st.session_state.get("best_k_monthly", 3)
 
             dfm_selected["Cluster"] = KMeans(n_clusters=best_k, random_state=42).fit_predict(scaled)
-            st.markdown(f"**Optimal clusters used:** {best_k}")
+            
 
             # =============== BUILD PLOTLY FIGURE ===============
             fig = go.Figure()
