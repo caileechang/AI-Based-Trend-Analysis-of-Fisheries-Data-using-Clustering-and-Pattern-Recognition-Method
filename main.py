@@ -168,6 +168,36 @@ def prepare_yearly(df_land, df_vess):
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
+def hdbscan_stability_validation(df, base_mcs, base_ms, X):
+    import hdbscan
+    import pandas as pd
+
+    results = []
+
+    param_grid = [
+        (mcs, ms)
+        for mcs in range(base_mcs - 1, base_mcs + 2)
+        for ms in range(base_ms - 1, base_ms + 2)
+        if mcs >= 3 and ms >= 2 and ms <= mcs
+    ]
+
+    anomaly_matrix = pd.DataFrame(index=df.index)
+
+    for mcs, ms in param_grid:
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=mcs,
+            min_samples=ms
+        ).fit(X)
+
+        anomaly_matrix[f"{mcs}_{ms}"] = (
+            (clusterer.labels_ == -1) |
+            (clusterer.outlier_scores_ >
+             np.percentile(clusterer.outlier_scores_, 90))
+        )
+
+    df["Stability_Score"] = anomaly_matrix.mean(axis=1)
+
+    return df
 
 def dynamic_hdbscan_threshold(df, score_col="Outlier_Norm"):
     """
@@ -290,6 +320,13 @@ def run_global_hdbscan_outlier_detection(merged_df):
         (df["Cluster"] == -1) |                   # explicit noise
         (df["Outlier_Norm"] >= chosen_threshold)  # extreme members
     )
+    if DEV_MODE:
+        df = hdbscan_stability_validation(
+            df,
+            min_cluster_size,
+            min_samples,
+            X
+        )
 
     return df
 
