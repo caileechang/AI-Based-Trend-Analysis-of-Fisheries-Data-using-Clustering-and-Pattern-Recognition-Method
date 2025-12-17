@@ -1287,8 +1287,8 @@ def main():
         "Optimal K for Monthly & Yearly",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
-        "3D KMeans Clustering","Automatic DBSCAN",
-        "HDBSCAN Outlier Detection","HDBSCAN Monthly Outlier Detection",
+        "3D KMeans Clustering","Automatic DBSCAN","Automatic HDBSCAN",
+"HDBSCAN Monthly Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps"
     ])
@@ -2784,6 +2784,173 @@ def main():
             ax_h.set_title("Outlier Heatmap")
             st.pyplot(fig_h)
 
+        import hdbscan
+        from sklearn.preprocessing import StandardScaler
+
+    elif plot_option == "Automatic HDBSCAN":
+
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        from scipy.spatial import ConvexHull
+        import hdbscan
+        from sklearn.preprocessing import StandardScaler
+
+        st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
+
+        # -----------------------------
+        # 1. FILTER VALID STATES
+        # -----------------------------
+        valid_states = [
+            "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
+            "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
+            "KELANTAN", "PERAK", "PULAU PINANG", "KEDAH", "PERLIS",
+            "SABAH", "SARAWAK", "W.P. LABUAN"
+        ]
+
+        df = merged_df[merged_df["State"].isin(valid_states)].copy()
+
+        if df.empty:
+            st.warning("No valid data after filtering states.")
+            st.stop()
+
+        # -----------------------------
+        # 2. PREPARE FEATURES
+        # -----------------------------
+        X = df[[
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
+        ]].dropna()
+
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        n_samples = X_scaled.shape[0]
+
+        # -----------------------------
+        # 3. AUTO HDBSCAN PARAMETERS
+        # -----------------------------
+        min_cluster_size = max(5, int(np.sqrt(n_samples)))
+        min_samples = max(3, int(np.log(n_samples)))
+
+        st.markdown(f"""
+        **Auto min_cluster_size:** `{min_cluster_size}`  
+        **Auto min_samples:** `{min_samples}`
+        """)
+
+        # -----------------------------
+        # 4. RUN HDBSCAN
+        # -----------------------------
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            prediction_data=True
+        )
+
+        labels = clusterer.fit_predict(X_scaled)
+
+        df = df.loc[X.index].copy()
+        df["HDBSCAN_Cluster"] = labels
+        df["Outlier_Score"] = clusterer.outlier_scores_
+
+        # Normalize outlier score
+        if df["Outlier_Score"].max() > 0:
+            df["Outlier_Norm"] = df["Outlier_Score"] / df["Outlier_Score"].max()
+        else:
+            df["Outlier_Norm"] = 0
+
+        # Dynamic threshold (safe default)
+        threshold = 0.65
+        df["Anomaly"] = df["Outlier_Norm"] >= threshold
+
+        # -----------------------------
+        # 5. VISUALIZATION
+        # -----------------------------
+        fig, ax = plt.subplots(figsize=(10, 6))
+        unique_clusters = sorted(set(labels))
+
+        palette = sns.color_palette("tab10", len(unique_clusters))
+
+        for c in unique_clusters:
+            pts = X_scaled[labels == c]
+
+            if c == -1:
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    c="lightgray", s=45, edgecolor="k",
+                    alpha=0.6, label="Noise"
+                )
+            else:
+                color = palette[c % len(palette)]
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    c=[color], s=60, edgecolor="k",
+                    alpha=0.85, label=f"Cluster {c}"
+                )
+
+                if len(pts) >= 3:
+                    hull = ConvexHull(pts)
+                    hv = list(hull.vertices) + [hull.vertices[0]]
+                    ax.plot(pts[hv, 1], pts[hv, 0], color=color, linewidth=2)
+
+        ax.set_title("HDBSCAN Clusters with Outlier Detection")
+        ax.set_xlabel("Vessels (scaled)")
+        ax.set_ylabel("Landings (scaled)")
+        ax.legend()
+        ax.grid(alpha=0.3)
+
+        st.pyplot(fig)
+
+        # -----------------------------
+        # 6. CLUSTER SUMMARY
+        # -----------------------------
+        cluster_summary = (
+            df[df["HDBSCAN_Cluster"] != -1]
+            .groupby("HDBSCAN_Cluster")[
+                ["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]
+            ]
+            .mean()
+            .reset_index()
+        )
+
+        st.markdown("### 📊 Cluster Summary")
+        st.dataframe(cluster_summary)
+
+        # -----------------------------
+        # 7. OUTLIER ANALYSIS
+        # -----------------------------
+        outliers = df[df["Anomaly"]]
+
+        st.success(f"Detected {len(outliers)} outliers using HDBSCAN.")
+
+        if not outliers.empty:
+            avg_land = df["Total Fish Landing (Tonnes)"].mean()
+            avg_ves = df["Total number of fishing vessels"].mean()
+
+            def explain(r):
+                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "⚠️ High landing but low vessels"
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
+                    return "🐟 Low catch per vessel"
+                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
+                    return "🛶 Low activity"
+                return "Atypical national pattern"
+
+            outliers["Why Flagged"] = outliers.apply(explain, axis=1)
+
+            st.markdown("### 🚨 Outlier Details")
+            st.dataframe(outliers)
+
+            fig_h, ax_h = plt.subplots(figsize=(8, 4))
+            sns.heatmap(
+                outliers[[
+                    "Total Fish Landing (Tonnes)",
+                    "Total number of fishing vessels"
+                ]],
+                annot=True, fmt=".0f", cmap="coolwarm", cbar=False, ax=ax_h
+            )
+            ax_h.set_title("HDBSCAN Outlier Heatmap")
+            st.pyplot(fig_h)
 
 
     
