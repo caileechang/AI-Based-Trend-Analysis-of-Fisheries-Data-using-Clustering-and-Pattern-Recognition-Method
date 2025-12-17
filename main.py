@@ -2510,7 +2510,7 @@ def main():
         # Step 6: Human-readable cluster labels
         # ==================================================
         cluster_means = (
-            df_plot
+            merged_df
             .groupby('Cluster')[[ 
                 'Total Fish Landing (Tonnes)',
                 'Total number of fishing vessels'
