@@ -2956,34 +2956,12 @@ def main():
            
 
             if DEV_MODE:
-                #st.dataframe(outliers, use_container_width=True)
-                st.dataframe(
-                    outliers[[
-                        "State",
-                        "Year",
-                        "Month",
-                        
-                        "HDBSCAN_Label",
-                        "Outlier_Score",
-                        "Total Fish Landing (Tonnes)",
-                        "Total number of fishing vessels"
-                    ]],
-                    use_container_width=True
-                )
-
+                st.dataframe(outliers, use_container_width=True)
             else:
                 st.dataframe(
-                    outliers[[
-                        "State",
-                        "Year",
-                        "Month",
-                        "Total Fish Landing (Tonnes)",
-                        "Total number of fishing vessels",
-                        "Why Flagged"
-                    ]],
+                    outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
                     use_container_width=True
                 )
-
 
 
 
