@@ -2784,8 +2784,7 @@ def main():
             ax_h.set_title("Outlier Heatmap")
             st.pyplot(fig_h)
 
-        import hdbscan
-        from sklearn.preprocessing import StandardScaler
+        
 
     
     
