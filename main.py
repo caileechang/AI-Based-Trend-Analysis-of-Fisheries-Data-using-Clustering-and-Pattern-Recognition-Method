@@ -2400,6 +2400,7 @@ def main():
         import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
+        from sklearn.metrics import silhouette_score
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
     
         # --- Step 1: Prepare data ---
