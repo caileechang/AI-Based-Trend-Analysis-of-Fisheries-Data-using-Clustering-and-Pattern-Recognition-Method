@@ -3056,7 +3056,7 @@ def main():
 
         st.dataframe(display_df, use_container_width=True)
 
-    elif plot_option == "Monthly Clustering & Outlier Detection":
+    elif plot_option == "Monthly Clustering & Outlier Detection1":
 
         import pandas as pd
         import hdbscan
