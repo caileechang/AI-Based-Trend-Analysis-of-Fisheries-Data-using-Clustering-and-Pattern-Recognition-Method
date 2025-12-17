@@ -286,15 +286,15 @@ def run_global_hdbscan_outlier_detection(merged_df):
     df["Cluster"] = clusterer.labels_          # -1 = noise
     df["Outlier_Score"] = clusterer.outlier_scores_
 
-    # -------------------------
+    
     # Normalise outlier score
-    # -------------------------
+    
     max_score = df["Outlier_Score"].max()
     df["Outlier_Norm"] = (
         df["Outlier_Score"] / max_score if max_score > 0 else 0.0
     )
 
-    # Dynamic threshold (REUSED)
+    # Dynamic threshold 
    
     chosen_threshold = dynamic_hdbscan_threshold(df)
 
@@ -2615,10 +2615,6 @@ def main():
         st.markdown("### 📊 Cluster Summary (Average Values)")
         st.dataframe(summary, use_container_width=True)
 
-    
-
-    
-
     elif plot_option == "Relationship: Fish Landing vs Fishing Vessels (3D)":
         import matplotlib.pyplot as plt
         import seaborn as sns
@@ -2995,7 +2991,7 @@ def main():
 
              
             if DEV_MODE:
-                st.subheader("🔬 HDBSCAN Outlier Stability Validation")
+                st.subheader(" HDBSCAN Outlier Stability Validation")
 
                 df = st.session_state.global_outliers.copy()
 
