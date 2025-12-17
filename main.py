@@ -2854,29 +2854,18 @@ def main():
         # -----------------------------
         # 7. CLUSTER SUMMARY
         # -----------------------------
-       
         cluster_summary = (
             df[df["HDBSCAN_Label"] != -1]
-            .groupby("Cluster Type")[[
+            .groupby("HDBSCAN_Label")[[
                 "Total Fish Landing (Tonnes)",
                 "Total number of fishing vessels"
             ]]
-            .agg(["mean", "count"])
-            .round(2)
+            .mean()
+            .reset_index()
         )
 
-        cluster_summary.columns = [
-            "Avg Landing (Tonnes)",
-            "Count",
-            "Avg Vessels",
-            "Count_dup"
-        ]
-
-        cluster_summary = cluster_summary.drop(columns=["Count_dup"])
-
-        st.markdown("### 📊 Interpretable Cluster Summary")
+        st.markdown("### 📊 Cluster Summary")
         st.dataframe(cluster_summary)
-
 
         # -----------------------------
         # 8. OUTLIER ANALYSIS
