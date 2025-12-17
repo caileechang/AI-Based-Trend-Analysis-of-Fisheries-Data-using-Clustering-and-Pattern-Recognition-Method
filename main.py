@@ -2461,12 +2461,11 @@ def main():
         from sklearn.metrics import silhouette_score
         st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
     
-        # --- Step 1: Prepare data ---
+        # ---  Prepare data ---
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
         scaled = StandardScaler().fit_transform(features)
         
-    
-        # --- Step 2: Compute inertia (Elbow) and silhouette for k = 2–10 ---
+        # ---  Compute inertia (Elbow) and silhouette for k = 2–10 ---
         ks = range(2, 11)
         inertia = []
         silhouette = []
@@ -2478,29 +2477,30 @@ def main():
             sil = silhouette_score(scaled, labels)
             silhouette.append(sil)
     
-        # --- Step 3: Determine the best k (highest silhouette) ---
+        # ---  Determine the best k (highest silhouette) ---
         best_k = ks[np.argmax(silhouette)]
     
-        # --- Step 4: Plot both metrics side by side ---
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        # --- Plot both metrics side by side ---
+        if DEV_MODE:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
     
-        # Elbow plot
-        ax1.plot(ks, inertia, marker='o')
-        ax1.set_title("Elbow Method")
-        ax1.set_xlabel("k")
-        ax1.set_ylabel("Inertia")
-        ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-        ax1.legend()
-    
-        # Silhouette plot
-        ax2.plot(ks, silhouette, marker='o', color='orange')
-        ax2.set_title("Silhouette Score")
-        ax2.set_xlabel("k")
-        ax2.set_ylabel("Score")
-        ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
-        ax2.legend()
-    
-        st.pyplot(fig)
+            # Elbow plot
+            ax1.plot(ks, inertia, marker='o')
+            ax1.set_title("Elbow Method")
+            ax1.set_xlabel("k")
+            ax1.set_ylabel("Inertia")
+            ax1.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+            ax1.legend()
+        
+            # Silhouette plot
+            ax2.plot(ks, silhouette, marker='o', color='orange')
+            ax2.set_title("Silhouette Score")
+            ax2.set_xlabel("k")
+            ax2.set_ylabel("Score")
+            ax2.axvline(best_k, color='red', linestyle='--', label=f"Best k = {best_k}")
+            ax2.legend()
+        
+            st.pyplot(fig)
     
         # --- Step 5: Fit the final model using best_k ---
         final_model = KMeans(n_clusters=best_k, random_state=42)
