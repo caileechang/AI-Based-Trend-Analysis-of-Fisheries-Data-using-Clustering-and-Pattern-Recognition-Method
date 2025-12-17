@@ -1575,17 +1575,14 @@ def main():
 
         linestyles = ["solid", "dashed", "dotted", "dashdot"]
 
-        # ======================================
-        # PAGE HEADER
-        # ======================================
-        st.markdown("""
-            <h2 style='color:white;'> Fish Landing Trends (Cluster Analysis)</h2>
-            <p style='color:#ccc; margin-top:-10px;'>
-                Compare freshwater & marine fish landings across yearly or monthly periods using K-Means cluster grouping.
-            </p>
-        """, unsafe_allow_html=True)
+        st.markdown("## Fish Landing Trends (Cluster Analysis)")
 
-        st.markdown("<hr style='border:0.5px solid #444;'>", unsafe_allow_html=True)
+        st.markdown(
+            "Compare freshwater & marine fish landings across yearly or monthly periods using K-Means cluster grouping."
+        )
+
+        st.markdown("---")
+
 
   
         # OPTIONS SECTION
@@ -1593,9 +1590,9 @@ def main():
         with st.container():
 
             st.markdown(
-                "<p style='color:#ccc; margin-top:-12px; font-size:15px;'>"
+                
                 "Please select the period and trend to display the fish landing analysis."
-                "</p>",
+                ,
                 unsafe_allow_html=True
             )
 
