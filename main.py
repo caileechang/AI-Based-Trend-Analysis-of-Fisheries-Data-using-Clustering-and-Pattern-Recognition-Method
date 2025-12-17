@@ -2716,12 +2716,35 @@ def main():
             x="Landing",
             y="Vessels",
             color="Anomaly",
-            symbol="Cluster",
+            color_discrete_map={
+                True: "#FF3B3B",     # 🔴 Red = Anomaly
+                False: "#4A90E2"     # 🔵 Blue = Normal
+            },
+            size="Anomaly",
+            size_max=16,
             hover_data=["State", "Year"],
             title="Automatic HDBSCAN Outlier Detection (All Years)"
         )
 
+        # Improve visibility
+        fig.update_traces(
+            selector=dict(marker_color="#4A90E2"),
+            opacity=0.35
+        )
+
+        fig.update_traces(
+            selector=dict(marker_color="#FF3B3B"),
+            opacity=0.95,
+            marker=dict(line=dict(width=1, color="black"))
+        )
+
+        fig.update_layout(
+            legend_title_text="Outlier Status",
+            template="plotly_white"
+        )
+
         st.plotly_chart(fig, use_container_width=True)
+
 
         st.markdown("### 🚨 Detected Outliers")
         st.dataframe(
