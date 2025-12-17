@@ -2742,6 +2742,7 @@ def main():
 
             st.plotly_chart(fig, use_container_width=True)
    
+        from hdbscan.validity import validity_index
 
     elif plot_option == "Automatic HDBSCAN":
         import numpy as np
@@ -2802,6 +2803,16 @@ def main():
         labels = clusterer.fit_predict(X_scaled)
         df["HDBSCAN_Label"] = labels
         df["Outlier_Score"] = clusterer.outlier_scores_
+
+        # -----------------------------
+        # 4.1 DBCV VALIDATION (DEV MODE)
+        # -----------------------------
+        
+        try:
+                dbcv = validity_index(X_scaled, labels, metric="euclidean")
+                st.info(f"DBCV Score: `{dbcv:.3f}`")
+        except Exception:
+                st.warning("DBCV could not be computed for this configuration.")
 
         # -----------------------------
         # 5. SILHOUETTE (clusters only)
