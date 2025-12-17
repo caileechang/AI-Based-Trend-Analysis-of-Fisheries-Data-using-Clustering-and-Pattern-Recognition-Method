@@ -2760,31 +2760,7 @@ def main():
             "SABAH", "SARAWAK", "W.P. LABUAN"
         ]
 
-        #df = merged_df[merged_df["State"].isin(valid_states)].copy()
-        df = merged_monthly[merged_monthly["State"].isin(valid_states)].copy()
-        # 🔑 ADD THIS (missing step)
-        df.rename(columns={
-            "Fish Landing (Tonnes)": "Landing",
-            "Total number of fishing vessels": "Vessels"
-        }, inplace=True)
-
-        # -------------------------------------------------
-        # 🚨 CRITICAL: Clean invalid rows BEFORE scaling
-        # -------------------------------------------------
-        df = df.replace([np.inf, -np.inf], np.nan)
-        df = df.dropna(subset=["Landing", "Vessels"])
-
-        # Remove zero or negative vessels (invalid density)
-        df = df[df["Vessels"] > 0]
-
-        # Safety check
-        if df.shape[0] < 5:
-            st.warning("Not enough valid data for HDBSCAN after cleaning.")
-            st.stop()
-
-        import calendar
-        
-        df["Month_Name"] = df["Month"].apply(lambda m: calendar.month_name[int(m)])
+        df = merged_df[merged_df["State"].isin(valid_states)].copy()
 
         if df.empty:
             st.warning("No valid data after filtering states.")
@@ -2794,11 +2770,9 @@ def main():
         # 2. PREPARE FEATURES
         # -----------------------------
         X = df[[
-            "Landing",
-            "Vessels"
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels"
         ]].values
-        
-
 
         X_scaled = StandardScaler().fit_transform(X)
 
