@@ -3403,10 +3403,10 @@ def main():
 
     
                     
-    elif plot_option == "Hierarchical Clustering":
+    elif plot_option == "Fisheries-Based Malaysian States Grouping":
            
         with st.container():
-            st.subheader("Fisheries-Based Malaysian States Grouping")
+            #st.subheader("Fisheries-Based Malaysian States Grouping")
             hierarchical_clustering(merged_df)
 
            
