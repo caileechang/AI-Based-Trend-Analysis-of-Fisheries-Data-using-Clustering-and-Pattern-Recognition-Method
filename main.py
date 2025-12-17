@@ -778,6 +778,88 @@ def auto_tune_hdbscan(df, min_cluster_range, min_samples_range):
     return best_params, best_score
 
 
+def run_monthly_hdbscan_outlier_detection(merged_monthly):
+    """
+    Run HDBSCAN independently for EACH Year-Month
+    using AUTO-TUNED parameters (no fixed values).
+    """
+
+    import pandas as pd
+    import hdbscan
+    from sklearn.preprocessing import StandardScaler
+
+    results = []
+
+    if merged_monthly is None or merged_monthly.empty:
+        return pd.DataFrame()
+
+    for (year, month), g in merged_monthly.groupby(["Year", "Month"]):
+
+        # HDBSCAN needs enough points
+        if g.shape[0] < 5:
+            continue
+
+        df = g.copy()
+
+        # Rename for consistency
+        df.rename(columns={
+            "Fish Landing (Tonnes)": "Landing",
+            "Total number of fishing vessels": "Vessels"
+        }, inplace=True)
+
+        # Ensure numeric
+        df["Landing"] = pd.to_numeric(df["Landing"], errors="coerce")
+        df["Vessels"] = pd.to_numeric(df["Vessels"], errors="coerce")
+        df = df.dropna(subset=["Landing", "Vessels"])
+
+        if df.shape[0] < 5:
+            continue
+
+        # Scale
+        X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
+
+        # =====================================================
+        # 🔧 AUTO-TUNE HDBSCAN (REUSE YOUR FUNCTION)
+        # =====================================================
+        best_params, best_score = auto_tune_hdbscan(
+            df,
+            min_cluster_range=range(3, 8),
+            min_samples_range=range(2, 6)
+        )
+
+        # Safe fallback (VERY IMPORTANT)
+        if best_params is None:
+            min_cluster_size, min_samples = 3, 3
+        else:
+            min_cluster_size, min_samples = best_params
+
+        # =====================================================
+        # 🚀 HDBSCAN (AUTOMATIC)
+        # =====================================================
+        clusterer = hdbscan.HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples
+        ).fit(X)
+
+        df["Cluster"] = clusterer.labels_
+
+        # =====================================================
+        # 🚨 MONTHLY ANOMALY RULE (STABLE)
+        # =====================================================
+        df["Anomaly"] = (df["Cluster"] == -1)
+
+        # Time label
+        df["YearMonth"] = f"{int(year)}-{int(month):02d}"
+
+        results.append(df)
+
+    if not results:
+        return pd.DataFrame()
+
+    return pd.concat(results, ignore_index=True)
+
+
+
 def main():
     
     st.markdown("""
@@ -1200,7 +1282,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering","Automatic DBSCAN",
-        "HDBSCAN Outlier Detection","HDBSCAN","Monthly Clustering & Outlier Detection",
+        "HDBSCAN Outlier Detection","HDBSCAN Monthly Outlier Detection"
         "Hierarchical Clustering",
         "Geospatial Maps"
     ])
@@ -2696,6 +2778,109 @@ def main():
             ax_h.set_title("Outlier Heatmap")
             st.pyplot(fig_h)
 
+
+    elif plot_option == "HDBSCAN Monthly Outlier Detection":
+
+        import plotly.express as px
+
+        # Use your existing prepared monthly data
+        merged_monthly = prepare_monthly(df_land, df_vess)
+
+        monthly_outliers = run_monthly_hdbscan_outlier_detection(merged_monthly)
+
+        if monthly_outliers.empty:
+            st.warning("Not enough monthly data for HDBSCAN outlier detection.")
+            st.stop()
+
+        # ==========================================================
+        # 📊 VIEW 1 — MONTH-TO-MONTH ANOMALY COUNT (BEST OVERVIEW)
+        # ==========================================================
+        summary = (
+            monthly_outliers
+            .groupby("YearMonth")["Anomaly"]
+            .sum()
+            .reset_index()
+            .rename(columns={"Anomaly": "Anomaly Count"})
+        )
+
+        fig = px.line(
+            summary,
+            x="YearMonth",
+            y="Anomaly Count",
+            markers=True,
+            title="Monthly HDBSCAN Anomaly Trend"
+        )
+
+        fig.update_layout(
+            template="plotly_white",
+            xaxis_title="Month",
+            yaxis_title="Number of Anomalies"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("---")
+
+        # ==========================================================
+        # 🔍 VIEW 2 — SELECT A MONTH (FOCUSED & CLEAN)
+        # ==========================================================
+        selected_month = st.selectbox(
+            "Select Month to Inspect:",
+            sorted(monthly_outliers["YearMonth"].unique())
+        )
+
+        df_plot = monthly_outliers[
+            monthly_outliers["YearMonth"] == selected_month
+        ]
+
+        # Clean visual: background + red anomalies
+        fig = px.scatter(
+            df_plot,
+            x="Landing",
+            y="Vessels",
+            title=f"HDBSCAN Monthly Outliers — {selected_month}",
+            opacity=0.25
+        )
+
+        anomalies = df_plot[df_plot["Anomaly"]]
+
+        fig.add_scatter(
+            x=anomalies["Landing"],
+            y=anomalies["Vessels"],
+            mode="markers",
+            marker=dict(
+                size=14,
+                color="red",
+                line=dict(width=1, color="black")
+            ),
+            name="Anomaly",
+            hovertext=anomalies["State"]
+        )
+
+        fig.update_layout(
+            template="plotly_white",
+            xaxis_title="Fish Landing (Tonnes)",
+            yaxis_title="Number of Fishing Vessels",
+            legend_title_text="Legend"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        # ==========================================================
+        # 📋 VIEW 3 — TABLE (OPTIONAL BUT USEFUL)
+        # ==========================================================
+        st.markdown("### 🚨 Detected Monthly Anomalies")
+
+        st.dataframe(
+            anomalies[[
+                "Year",
+                "Month",
+                "State",
+                "Landing",
+                "Vessels"
+            ]].sort_values(["Year", "Month"]),
+            use_container_width=True
+        )
 
 
     if "global_outliers" not in st.session_state or st.session_state.data_updated:
