@@ -171,6 +171,7 @@ def prepare_yearly(df_land, df_vess):
 def hdbscan_stability_validation(df, base_mcs, base_ms, X):
     import hdbscan
     import pandas as pd
+    import numpy as np
 
     results = []
 
@@ -200,12 +201,6 @@ def hdbscan_stability_validation(df, base_mcs, base_ms, X):
     return df
 
 def dynamic_hdbscan_threshold(df, score_col="Outlier_Norm"):
-    """
-    Compute a stable, sensitivity-based threshold for HDBSCAN outlier scores.
-    Returns a float threshold.
-    """
-
-    
 
     # No meaningful separation
     if df[score_col].nunique() <= 1:
@@ -232,24 +227,15 @@ def dynamic_hdbscan_threshold(df, score_col="Outlier_Norm"):
     # Fallback
     return df[score_col].quantile(0.90)
 
-
-
 def run_global_hdbscan_outlier_detection(merged_df):
-    """
-    Run ONE global HDBSCAN over ALL years
-    using auto-tuned parameters and dynamic thresholding.
-    """
-
-    
+ 
     import hdbscan
     from sklearn.preprocessing import StandardScaler
 
     if merged_df is None or merged_df.empty:
         return pd.DataFrame()
 
-    # -------------------------
     # Prepare features
-    # -------------------------
     df = merged_df[[
         "State",
         "Year",
@@ -285,20 +271,17 @@ def run_global_hdbscan_outlier_detection(merged_df):
         min_cluster_range=range(3, 8),
         min_samples_range=range(2, 6)
     )
-
     # Safe fallback
     if best_params is None:
         min_cluster_size, min_samples = 3, 3
     else:
         min_cluster_size, min_samples = best_params
 
-
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=min_cluster_size,
         min_samples=min_samples,
         prediction_data=True
     ).fit(X)
-
 
     df["Cluster"] = clusterer.labels_          # -1 = noise
     df["Outlier_Score"] = clusterer.outlier_scores_
