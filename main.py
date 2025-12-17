@@ -2681,7 +2681,7 @@ def main():
         from sklearn.preprocessing import StandardScaler
         from sklearn.metrics import silhouette_score
         import hdbscan
-        import streamlit as st
+        
 
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
