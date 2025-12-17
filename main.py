@@ -1282,7 +1282,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering","Automatic DBSCAN",
-        "HDBSCAN Outlier Detection","HDBSCAN Monthly Outlier Detection"
+        "HDBSCAN Outlier Detection","HDBSCAN Monthly Outlier Detection",
         "Hierarchical Clustering",
         "Geospatial Maps"
     ])
