@@ -2988,6 +2988,15 @@ def main():
             ax_h.set_title("Outlier Heatmap")
             st.pyplot(fig_h)
 
+            outliers_debug = outliers.copy()
+            outliers_debug["Vessels_scaled"] = scaled[labels == -1][:, 1]
+            outliers_debug["Landing_scaled"] = scaled[labels == -1][:, 0]
+
+            st.dataframe(outliers_debug[
+                ["Year", "State", "Vessels_scaled", "Landing_scaled"]
+            ])
+
+
     elif plot_option == "Model Stability Test (DBSCAN vs HDBSCAN)":
        
         import numpy as np
