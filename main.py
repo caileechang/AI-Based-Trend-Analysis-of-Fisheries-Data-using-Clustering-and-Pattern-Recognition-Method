@@ -1362,8 +1362,8 @@ def main():
     plot_options = [
         "Yearly Fish Landing Summary",
         "Yearly Cluster Trends for Marine and Freshwater Fish",
-        "2D KMeans Scatter",
-        "3D KMeans Clustering",
+        "Relationship: Fish Landing vs Fishing Vessels (2D)",
+        "Relationship: Fish Landing vs Fishing Vessels (3D)",
         
         "Yearly Fisheries Outlier Detection",
         "Monthly Fisheries Outlier Detection",
@@ -2482,7 +2482,7 @@ def main():
             Using both methods together helps select the most **statistically valid K**.
             """)
 
-    elif plot_option == "2D KMeans Scatter":
+    elif plot_option =="Relationship: Fish Landing vs Fishing Vessels (2D)":
         import numpy as np
         import matplotlib.pyplot as plt
         import seaborn as sns
@@ -2619,7 +2619,7 @@ def main():
 
     
 
-    elif plot_option == "3D KMeans Clustering":
+    elif plot_option == "Relationship: Fish Landing vs Fishing Vessels (3D)":
         import matplotlib.pyplot as plt
         import seaborn as sns
         import numpy as np
