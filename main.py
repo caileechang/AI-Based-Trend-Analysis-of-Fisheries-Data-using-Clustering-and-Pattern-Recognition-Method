@@ -2800,9 +2800,7 @@ def main():
 
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
-        # -----------------------------
-        # 1. FILTER VALID STATES
-        # -----------------------------
+   
         valid_states = [
             "JOHOR TIMUR/EAST JOHORE", "JOHOR BARAT/WEST JOHORE", "JOHOR",
             "MELAKA", "NEGERI SEMBILAN", "SELANGOR", "PAHANG", "TERENGGANU",
@@ -2830,7 +2828,7 @@ def main():
         n_samples = X_scaled.shape[0]
 
         # -----------------------------
-        # AUTO HDBSCAN PARAMETERS
+        # 3. AUTO HDBSCAN PARAMETERS
         # -----------------------------
         min_cluster_size = max(5, int(np.sqrt(n_samples)))
         min_samples = max(3, int(np.log(n_samples)))
@@ -2841,7 +2839,7 @@ def main():
         """)
 
         # -----------------------------
-        # RUN HDBSCAN
+        # 4. RUN HDBSCAN
         # -----------------------------
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
@@ -2865,58 +2863,43 @@ def main():
         threshold = 0.65
         df["Anomaly"] = df["Outlier_Norm"] >= threshold
 
-        
-        
+        # -----------------------------
+        # 5. VISUALIZATION
+        # -----------------------------
+        fig, ax = plt.subplots(figsize=(10, 6))
+        unique_clusters = sorted(set(labels))
 
-        # --------------------------------
-        # PREPARE DATA FOR PLOTLY
-        # --------------------------------
-        plot_df = df.copy()
+        palette = sns.color_palette("tab10", len(unique_clusters))
 
-        plot_df["Cluster_Label"] = plot_df["HDBSCAN_Cluster"].astype(str)
-        plot_df.loc[plot_df["HDBSCAN_Cluster"] == -1, "Cluster_Label"] = "Noise"
+        for c in unique_clusters:
+            pts = X_scaled[labels == c]
 
-        plot_df["Point_Type"] = np.where(
-            plot_df["Anomaly"], "Anomaly", "Normal"
-        )
+            if c == -1:
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    c="lightgray", s=45, edgecolor="k",
+                    alpha=0.6, label="Noise"
+                )
+            else:
+                color = palette[c % len(palette)]
+                ax.scatter(
+                    pts[:, 1], pts[:, 0],
+                    c=[color], s=60, edgecolor="k",
+                    alpha=0.85, label=f"Cluster {c}"
+                )
 
-        # --------------------------------
-        # INTERACTIVE SCATTER
-        # --------------------------------
-        fig = px.scatter(
-            plot_df,
-            x="Total number of fishing vessels",
-            y="Total Fish Landing (Tonnes)",
-            color="Cluster_Label",
-            symbol="Point_Type",
-            size="Outlier_Norm",
-            size_max=18,
-            opacity=0.85,
-            hover_data={
-                "State": True,
-                "Year": True,
-                "Total Fish Landing (Tonnes)": ":,.0f",
-                "Total number of fishing vessels": ":,.0f",
-                "Outlier_Norm": ":.2f",
-                "Cluster_Label": False
-            },
-            title="Interactive HDBSCAN Clustering & Outlier Detection"
-        )
+                if len(pts) >= 3:
+                    hull = ConvexHull(pts)
+                    hv = list(hull.vertices) + [hull.vertices[0]]
+                    ax.plot(pts[hv, 1], pts[hv, 0], color=color, linewidth=2)
 
-        fig.update_traces(
-            marker=dict(line=dict(width=1, color="black"))
-        )
+        ax.set_title("HDBSCAN Clusters with Outlier Detection")
+        ax.set_xlabel("Vessels (scaled)")
+        ax.set_ylabel("Landings (scaled)")
+        ax.legend()
+        ax.grid(alpha=0.3)
 
-        fig.update_layout(
-            xaxis_title="Fishing Vessels",
-            yaxis_title="Fish Landings (Tonnes)",
-            legend_title="Cluster",
-            template="plotly_white",
-            height=600
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
+        st.pyplot(fig)
 
         # -----------------------------
         # 6. CLUSTER SUMMARY
@@ -2968,7 +2951,6 @@ def main():
             )
             ax_h.set_title("HDBSCAN Outlier Heatmap")
             st.pyplot(fig_h)
-
 
     
     elif plot_option == "HDBSCAN Monthly Outlier Detection":
