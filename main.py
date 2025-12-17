@@ -2889,7 +2889,16 @@ def main():
             outliers["Why Flagged"] = outliers.apply(explain, axis=1)
 
             st.markdown("### 🚨 Outlier Details")
-            st.dataframe(outliers)
+           
+
+            if DEV_MODE:
+                st.dataframe(outliers, use_container_width=True)
+            else:
+                st.dataframe(
+                    outliers.drop(columns=["HDBSCAN_Label"], errors="ignore"),
+                    use_container_width=True
+                )
+
 
 
 
