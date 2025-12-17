@@ -3274,14 +3274,24 @@ def main():
             monthly_outliers["YearMonth"] == selected_month
         ]
 
-        # Clean visual: background + red anomalies
         fig = px.scatter(
             df_plot,
             x="Landing",
             y="Vessels",
             title=f"HDBSCAN Monthly Outliers — {selected_month}",
-            opacity=0.25
         )
+
+        #  Make NORMAL points solid blue
+        fig.update_traces(
+            marker=dict(
+                color="#1f77b4",   # Plotly default blue (strong)
+                size=10,
+                opacity=0.7,
+                line=dict(width=0)
+            ),
+            selector=dict(mode="markers")
+        )
+
 
         anomalies = df_plot[df_plot["Anomaly"]]
         # ==========================================================
