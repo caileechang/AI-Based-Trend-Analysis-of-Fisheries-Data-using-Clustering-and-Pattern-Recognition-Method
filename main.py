@@ -180,8 +180,8 @@ def run_global_hdbscan_outlier_detection(merged_df):
     """
 
     df = merged_df.copy()
-    if df.empty:
-        return df
+    if df is None or df.empty:
+        return pd.DataFrame()
 
     # -------------------------
     # Prepare features
@@ -211,10 +211,11 @@ def run_global_hdbscan_outlier_detection(merged_df):
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=params["min_cluster_size"],
         min_samples=params["min_samples"],
-        gen_min_span_tree=True
+        prediction_data=True
     ).fit(X)
 
-    df["Cluster"] = clusterer.labels_
+
+    df["Cluster"] = clusterer.labels_  # -1 = noise
     df["Outlier_Score"] = clusterer.outlier_scores_
 
     # -------------------------
@@ -224,7 +225,7 @@ def run_global_hdbscan_outlier_detection(merged_df):
     df["Outlier_Norm"] = df["Outlier_Score"] / max_score if max_score > 0 else 0.0
 
     # -------------------------
-    # GLOBAL sensitivity-based threshold
+    # sensitivity-based threshold
     # -------------------------
     if df["Outlier_Norm"].nunique() <= 1:
         df["Anomaly"] = False
@@ -248,7 +249,11 @@ def run_global_hdbscan_outlier_detection(merged_df):
         else:
             chosen_threshold = df["Outlier_Norm"].quantile(0.90)
 
-        df["Anomaly"] = df["Outlier_Norm"] >= chosen_threshold
+        df["Anomaly"] = (
+            (df["Cluster"] == -1) |                 # explicit noise
+            (df["Outlier_Norm"] >= chosen_threshold)  # extreme members
+        )
+
 
     return df
 
@@ -1153,8 +1158,7 @@ def main():
 
     merged_monthly = prepare_monthly(df_land, df_vess)
 
-    
-
+    # --- Sidebar for visualization selection ---
 
     st.sidebar.header("Select Visualization")
     plot_option = st.sidebar.radio("Choose a visualization:", [
@@ -1168,9 +1172,6 @@ def main():
         "Hierarchical Clustering",
         "Geospatial Maps"
     ])
-
-    
-   
 
     if plot_option == "Yearly Fish Landing Summary":
            
@@ -2626,7 +2627,10 @@ def main():
             else:
                 chosen_threshold = df["Outlier_Norm"].quantile(0.90)
 
-            df["Anomaly"] = df["Outlier_Norm"] >= chosen_threshold
+            df["Anomaly"] = (
+                (df["Cluster"] == -1) |
+                (df["Outlier_Norm"] >= chosen_threshold)
+            )
 
 
         avg_land = df["Landing"].mean()
@@ -2655,7 +2659,7 @@ def main():
         st.markdown("### 🔍 Detected State-Level Outliers")
 
         outliers = df[df["Anomaly"] == True][[
-            "State", "Landing", "Vessels", "Outlier_Norm", "Explanation"
+            "State", "Landing", "Cluster", "Vessels", "Outlier_Norm", "Explanation"
         ]].rename(columns={"Outlier_Norm": "Outlier Score (0-1)"})
 
         if outliers.empty:
@@ -2996,12 +3000,14 @@ def main():
 
         fig = px.scatter(
             df,
-            x="Landing",
-            y="Vessels",
-            color="Anomaly",
-            hover_data=["State", "Year"],
-            title="Outliers Across All Years"
+            x="Vessels",
+            y="Landing",
+            color=df["Cluster"].astype(str),
+            symbol="Anomaly",
+            title="HDBSCAN Clustering with Outlier Detection",
+            labels={"color": "Cluster ID"}
         )
+
 
         st.plotly_chart(fig, use_container_width=True)
 
@@ -3014,7 +3020,7 @@ def main():
                     "State",
                     "Year",
                     "Landing",
-                    "Vessels",
+                    "Vessels","Cluster",
                     "Outlier_Norm"
                 ]
             ]
