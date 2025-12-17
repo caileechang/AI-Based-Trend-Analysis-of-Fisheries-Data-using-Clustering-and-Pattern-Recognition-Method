@@ -2750,12 +2750,6 @@ def main():
         unique_labels = sorted(set(labels))
         palette = sns.color_palette("tab10", len(unique_labels))
 
-
-        df["Vessels_scaled"] = X_scaled[:, 1]
-        df["Landing_scaled"] = X_scaled[:, 0]
-
-        outlier_df = df[df["HDBSCAN_Label"] == -1]
-
         for label in unique_labels:
             pts = X_scaled[labels == label]
 
@@ -2765,17 +2759,6 @@ def main():
                     s=45, c="lightgray", edgecolor="k",
                     alpha=0.6, label="Outliers"
                 )
-
-                # 🔹 Label OUTLIERS only (using SCALED coordinates)
-                for _, row in outlier_df.iterrows():
-                    ax.text(
-                        row["Vessels_scaled"],
-                        row["Landing_scaled"],
-                        row["State"],
-                        fontsize=8,
-                        alpha=0.8
-                    )
-
             else:
                 color = palette[label % len(palette)]
                 ax.scatter(
@@ -2792,7 +2775,6 @@ def main():
                         pts[hv, 1], pts[hv, 0],
                         color=color, linewidth=2
                     )
-
 
         ax.set_title("HDBSCAN Clusters & Outliers (Automatic)")
         ax.set_xlabel("Vessels (scaled)")
