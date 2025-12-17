@@ -2773,10 +2773,9 @@ def main():
         # -----------------------------
         # 2. PREPARE FEATURES
         # -----------------------------
-        X = df[[
-            "Total Fish Landing (Tonnes)",
-            "Total number of fishing vessels"
-        ]].values
+        
+        X = df[["Landing", "Vessels"]].values
+
 
         X_scaled = StandardScaler().fit_transform(X)
 
