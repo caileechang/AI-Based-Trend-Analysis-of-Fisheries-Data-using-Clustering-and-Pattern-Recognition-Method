@@ -2520,9 +2520,9 @@ def main():
         high_cluster = cluster_means['Total Fish Landing (Tonnes)'].idxmax()
 
         merged_df['Cluster_Label'] = merged_df['Cluster'].apply(
-            lambda x: "Higher Production & Fleet Capacity"
+            lambda x: "Higher Fish Production and Vessels Capacity"
             if x == high_cluster
-            else "Lower Production & Fleet Capacity"
+            else "Lower Fish Production & Vessels Capacity"
         )
 
         # --- Step 6: Display summary ---
