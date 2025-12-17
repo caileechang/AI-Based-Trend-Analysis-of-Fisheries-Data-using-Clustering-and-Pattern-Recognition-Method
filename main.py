@@ -375,6 +375,60 @@ def prepare_monthly(df_land, df_vess):
     merged_monthly = merged_monthly.sort_values(["Year", "Month", "State"]).reset_index(drop=True)
     return merged_monthly
 
+def detect_hdbscan_anomalies(df):
+    from sklearn.preprocessing import StandardScaler
+    import hdbscan
+    import numpy as np
+
+    X = df[[
+        "Total Fish Landing (Tonnes)",
+        "Total number of fishing vessels"
+    ]].values
+
+    X_scaled = StandardScaler().fit_transform(X)
+
+    n_samples = X_scaled.shape[0]
+    min_cluster_size = max(3, int(np.sqrt(n_samples)))
+    min_samples = max(2, int(np.log(n_samples)))
+
+    clusterer = hdbscan.HDBSCAN(
+        min_cluster_size=min_cluster_size,
+        min_samples=min_samples
+    ).fit(X_scaled)
+
+    labels = clusterer.labels_
+    return set(df.index[labels == -1])
+
+def detect_dbscan_anomalies(df):
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.neighbors import NearestNeighbors
+    from sklearn.cluster import DBSCAN
+    from kneed import KneeLocator
+    import numpy as np
+
+    X = df[[
+        "Total Fish Landing (Tonnes)",
+        "Total number of fishing vessels"
+    ]].values
+
+    X_scaled = StandardScaler().fit_transform(X)
+
+    n_samples = X_scaled.shape[0]
+    min_samples = max(3, int(np.log(n_samples)) + X_scaled.shape[1])
+
+    neigh = NearestNeighbors(n_neighbors=min_samples)
+    distances, _ = neigh.fit(X_scaled).kneighbors(X_scaled)
+    distances = np.sort(distances[:, min_samples - 1])
+
+    knee = KneeLocator(range(len(distances)), distances,
+                       curve="convex", direction="increasing")
+    eps = distances[knee.knee] if knee.knee else np.percentile(distances, 90)
+
+    labels = DBSCAN(eps=eps, min_samples=min_samples).fit_predict(X_scaled)
+
+    return set(df.index[labels == -1])
+
+
 
 def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
     from sklearn.cluster import KMeans
@@ -1288,7 +1342,7 @@ def main():
         "Yearly Cluster Trends for Marine and Freshwater Fish",
         "2D KMeans Scatter",
         "3D KMeans Clustering","Automatic DBSCAN","Automatic HDBSCAN",
-"HDBSCAN Monthly Outlier Detection",
+"HDBSCAN Monthly Outlier Detection","Model Stability Test (DBSCAN vs HDBSCAN)",
         "Hierarchical Clustering",
         "Geospatial Maps"
     ])
@@ -2934,7 +2988,36 @@ def main():
             ax_h.set_title("Outlier Heatmap")
             st.pyplot(fig_h)
 
-        
+    elif plot_option == "Model Stability Test (DBSCAN vs HDBSCAN)":
+       
+        import numpy as np
+        import pandas as pd
+        import streamlit as st
+        from itertools import combinations
+
+        st.subheader("🧪 Stability Test: DBSCAN vs HDBSCAN")
+
+        def jaccard(A, B):
+            if len(A | B) == 0:
+                return 1.0
+            return len(A & B) / len(A | B)
+
+        def stability_test(df, detector, runs=10, drop_frac=0.1):
+            rng = np.random.default_rng(42)
+            anomaly_sets = []
+
+            for _ in range(runs):
+                drop_n = int(len(df) * drop_frac)
+                drop_idx = rng.choice(df.index, drop_n, replace=False)
+                df_sub = df.drop(drop_idx)
+
+                anomaly_sets.append(detector(df_sub))
+
+            scores = [
+                jaccard(A, B)
+                for A, B in combinations(anomaly_sets, 2)
+            ]
+            return np.mean(scores), scores
 
     
     
