@@ -856,15 +856,9 @@ def auto_tune_hdbscan(df, min_cluster_range, min_samples_range):
 
 
 def run_monthly_hdbscan_outlier_detection(merged_monthly):
-    """
-    Run HDBSCAN independently for EACH Year-Month
-    using AUTO-TUNED parameters (no fixed values).
-    """
-
-    
+ 
     import hdbscan
     from sklearn.preprocessing import StandardScaler
-
     results = []
 
     if merged_monthly is None or merged_monthly.empty:
@@ -895,9 +889,8 @@ def run_monthly_hdbscan_outlier_detection(merged_monthly):
         # Scale
         X = StandardScaler().fit_transform(df[["Landing", "Vessels"]])
 
-        # =====================================================
-        # 🔧 AUTO-TUNE HDBSCAN (REUSE YOUR FUNCTION)
-        # =====================================================
+        #  AUTO-TUNE HDBSCAN 
+     
         best_params, best_score = auto_tune_hdbscan(
             df,
             min_cluster_range=range(3, 8),
@@ -910,9 +903,9 @@ def run_monthly_hdbscan_outlier_detection(merged_monthly):
         else:
             min_cluster_size, min_samples = best_params
 
-        # =====================================================
-        # 🚀 HDBSCAN (AUTOMATIC)
-        # =====================================================
+
+        #  HDBSCAN (AUTOMATIC)
+  
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=min_samples
@@ -920,9 +913,9 @@ def run_monthly_hdbscan_outlier_detection(merged_monthly):
 
         df["Cluster"] = clusterer.labels_
 
-        # =====================================================
-        # 🚨 MONTHLY ANOMALY RULE (STABLE)
-        # =====================================================
+  
+        # MONTHLY ANOMALY RULE (STABLE)
+   
         df["Anomaly"] = (df["Cluster"] == -1)
 
         # Time label
@@ -2795,9 +2788,7 @@ def main():
             st.warning("No valid data after filtering states.")
             st.stop()
 
-        # -----------------------------
-        # 2. PREPARE FEATURES
-        # -----------------------------
+        #  PREPARE FEATURES
         X = df[[
             "Total Fish Landing (Tonnes)",
             "Total number of fishing vessels"
@@ -2807,9 +2798,8 @@ def main():
 
         n_samples = X_scaled.shape[0]
 
-        # -----------------------------
-        # 3. AUTO HDBSCAN PARAMETERS
-        # -----------------------------
+        # AUTO HDBSCAN PARAMETERS
+   
         min_cluster_size = max(3, int(np.sqrt(n_samples)))
         min_samples = max(2, int(np.log(n_samples)))
 
@@ -2818,9 +2808,7 @@ def main():
             st.markdown(f"**Auto min_samples:** `{min_samples}`")
 
 
-        # -----------------------------
-        # 4. RUN HDBSCAN
-        # -----------------------------
+        # RUN HDBSCAN
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=min_samples,
@@ -2831,10 +2819,7 @@ def main():
         df["HDBSCAN_Label"] = labels
         df["Outlier_Score"] = clusterer.outlier_scores_
 
-        
-        # -----------------------------
-        # 5. SILHOUETTE (clusters only)
-        # -----------------------------
+    
         mask = labels != -1
         if DEV_MODE:
             if len(set(labels[mask])) > 1:
@@ -2843,11 +2828,8 @@ def main():
             else:
                     st.warning("Silhouette unavailable — only one cluster detected.")
 
-            
-        
-        # -----------------------------
-        # 6. CLUSTER VISUALISATION
-        # -----------------------------
+        # CLUSTER VISUALISATION
+   
         fig, ax = plt.subplots(figsize=(10, 6))
         unique_labels = sorted(set(labels))
         palette = sns.color_palette("tab10", len(unique_labels))
@@ -3235,7 +3217,7 @@ def main():
         import matplotlib.pyplot as plt
         from itertools import combinations
 
-        st.subheader("🧪 Stability Test: DBSCAN vs HDBSCAN")
+        st.subheader(" Stability Test: DBSCAN vs HDBSCAN")
 
         def jaccard(A, B):
             if len(A | B) == 0:
@@ -3270,7 +3252,7 @@ def main():
             detect_hdbscan_anomalies
         )
 
-        st.markdown("### 📊 Stability Results (Jaccard Similarity)")
+        st.markdown("### Stability Results (Jaccard Similarity)")
         st.write(f"**DBSCAN stability:** {dbscan_mean:.3f}")
         st.write(f"**HDBSCAN stability:** {hdbscan_mean:.3f}")
 
@@ -3302,9 +3284,7 @@ def main():
             st.warning("Not enough monthly data for HDBSCAN outlier detection.")
             st.stop()
 
-        # ==========================================================
-        # 📊 VIEW 1 — MONTH-TO-MONTH ANOMALY COUNT (BEST OVERVIEW)
-        # ==========================================================
+        # VIEW 1 — MONTH-TO-MONTH ANOMALY COUNT
         summary = (
             monthly_outliers
             .groupby("YearMonth")["Anomaly"]
@@ -3331,9 +3311,8 @@ def main():
 
         st.markdown("---")
 
-        # ==========================================================
-        # 🔍 VIEW 2 — SELECT A MONTH (FOCUSED & CLEAN)
-        # ==========================================================
+        # VIEW 2 — SELECT A MONTH 
+      
         selected_month = st.selectbox(
             "Select Month to Inspect:",
             sorted(monthly_outliers["YearMonth"].unique())
@@ -3406,9 +3385,9 @@ def main():
 
         st.plotly_chart(fig, use_container_width=True)
 
-        # ==========================================================
-        # 📋 VIEW 3 — TABLE (OPTIONAL BUT USEFUL)
-        # ==========================================================
+      
+        #  VIEW 3 — TABLE 
+       
         st.markdown("### 🚨 Detected Monthly Anomalies")
 
         st.dataframe(
