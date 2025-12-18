@@ -283,11 +283,13 @@ def run_global_hdbscan_outlier_detection(merged_df):
         prediction_data=True
     ).fit(X)
 
-    df["Cluster"] = clusterer.labels_          # -1 = noise
-    df["Outlier_Score"] = clusterer.outlier_scores_
+
+# --- GLOSH  ---
+    df["Cluster"] = clusterer.labels_         # -1 = noise
+    df["Outlier_Score"] = clusterer.outlier_scores_  # GLOSH 
 
     
-    # Normalise outlier score
+    # Normalise 
     
     max_score = df["Outlier_Score"].max()
     df["Outlier_Norm"] = (
@@ -299,8 +301,8 @@ def run_global_hdbscan_outlier_detection(merged_df):
     chosen_threshold = dynamic_hdbscan_threshold(df)
 
     df["Anomaly"] = (
-        (df["Cluster"] == -1) |                   # explicit noise
-        (df["Outlier_Norm"] >= chosen_threshold)  # extreme members
+        (df["Cluster"] == -1) |                   # density-based anomaly
+        (df["Outlier_Norm"] >= chosen_threshold)  # GLOSH-based anomaly
     )
 
     if DEV_MODE:
@@ -3279,7 +3281,7 @@ def main():
             detect_hdbscan_anomalies
         )
 
-        st.markdown("### Stability Results (Jaccard Similarity)")
+        st.markdown("### Stability Results ")
         st.write(f"**DBSCAN stability:** {dbscan_mean:.3f}")
         st.write(f"**HDBSCAN stability:** {hdbscan_mean:.3f}")
 
