@@ -1673,7 +1673,7 @@ def main():
             selected_year = st.selectbox(
                 "Select Year:",
                 available_years,
-                index=available_years.index(selected_year)
+                index=available_years.index(latest_year)
             )
 
             prev_year = selected_year - 1
