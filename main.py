@@ -1558,13 +1558,7 @@ def main():
       
         #  SHOW YEAR SELECTOR & TABLE
   
-        st.markdown("### Select a Year to View Full Details")
-
-        selected_year = st.selectbox(
-            "Choose a year:",
-            sorted(yearly_summary["Year"].unique()),
-            index=len(yearly_summary["Year"].unique()) - 1,
-        )
+        
 
         filtered_selected = yearly_summary[
             yearly_summary["Year"] == selected_year
