@@ -2986,7 +2986,7 @@ def main():
             outliers["Why Flagged"] = outliers.apply(explain, axis=1)
 
 
-        st.markdown("### 🚨 Outlier Details")
+            st.markdown("### 🚨 Outlier Details")
            
 
             if DEV_MODE:
