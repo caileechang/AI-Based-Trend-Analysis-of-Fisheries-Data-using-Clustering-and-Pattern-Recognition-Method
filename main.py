@@ -1461,7 +1461,7 @@ def main():
         medal_colors = ["#FFD700", "#C0C0C0", "#CD7F32"]
 
         
-        st.markdown(f"### 🏅 Top 3 States in {latest_year}")
+        st.markdown(f"### 🏅 Top 3 States in {selected_year}")
 
         card_cols = st.columns(3)
         
@@ -1504,7 +1504,7 @@ def main():
 
         # CHART FOR LATEST YEAR
    
-        st.markdown(f"### Total Fish Landing by State ({latest_year})")
+        st.markdown(f"### Total Fish Landing by State ({selected_year})")
 
         filtered_sorted = filtered_latest.sort_values(
             "Total Fish Landing (Tonnes)", ascending=True
