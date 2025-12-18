@@ -2938,12 +2938,36 @@ def main():
             use_container_width=True
         )
 
+        # =====================================================
+        # GLOBAL HDBSCAN + STABILITY (RUN ONCE)
+        # =====================================================
+        if "global_outliers" not in st.session_state or st.session_state.data_updated:
 
-        # -----------------------------
-        # 8. OUTLIER ANALYSIS
-        # -----------------------------
-        outliers = df[df["HDBSCAN_Label"] == -1]
+            base_df = run_global_hdbscan_outlier_detection(merged_df)
+
+            X = base_df[[
+                "Total Fish Landing (Tonnes)",
+                "Total number of fishing vessels"
+            ]].values
+
+            base_df = hdbscan_stability_validation(
+                base_df,
+                base_mcs=8,
+                base_ms=5,
+                X=X
+            )
+
+            st.session_state.global_outliers = base_df
+            st.session_state.data_updated = False
+
+        
+        # OUTLIER ANALYSIS
+      
+        df = st.session_state.global_outliers.copy()
+
+        outliers = df[df["Anomaly"] == True]
         st.success(f"Detected {len(outliers)} outliers.")
+
 
         if not outliers.empty:
             avg_land = df["Total Fish Landing (Tonnes)"].mean()
@@ -2967,17 +2991,19 @@ def main():
                 st.dataframe(outliers, use_container_width=True)
             else:
                 st.dataframe(
-                    outliers.drop(columns=["HDBSCAN_Label","Outlier_Score"], errors="ignore"),
+                    outliers.drop(
+                        columns=["HDBSCAN_Label", "Outlier_Score", "Stability_Score"],
+                        errors="ignore"
+                    ),
                     use_container_width=True
                 )
 
-             
+
+
+            
+
             if DEV_MODE:
                 st.subheader(" HDBSCAN Outlier Stability Validation")
-
-                df = st.session_state.global_outliers.copy()
-
-                
 
                 # Classify stability strength
                 def stability_label(v):
