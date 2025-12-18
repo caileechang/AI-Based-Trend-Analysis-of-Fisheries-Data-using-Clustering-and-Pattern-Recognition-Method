@@ -1416,9 +1416,9 @@ def main():
             yearly_summary["Year"] == selected_year
         ]
 
-        prev_year = latest_year - 1
+        prev_year = selected_year - 1
 
-        filtered_latest = yearly_summary[yearly_summary["Year"] == latest_year].copy()
+        filtered_latest = yearly_summary[yearly_summary["Year"] == selected_year].copy()
 
         # Sort by landing
         sorted_desc = filtered_latest.sort_values(
