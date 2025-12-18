@@ -1575,6 +1575,7 @@ def main():
 
 
 
+
     elif plot_option == "Yearly Cluster Trends for Marine and Freshwater Fish":
 
         import matplotlib.pyplot as plt
