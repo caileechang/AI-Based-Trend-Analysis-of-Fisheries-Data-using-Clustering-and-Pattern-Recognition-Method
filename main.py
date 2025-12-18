@@ -2971,17 +2971,19 @@ def main():
 
         if not outliers.empty:
 
-            avg_land = df["Total Fish Landing (Tonnes)"].mean()
-            avg_ves = df["Total number of fishing vessels"].mean()
+            avg_land = df["Landing"].mean()
+            avg_ves  = df["Vessels"].mean()
+
 
             def explain(r):
-                if r["Total Fish Landing (Tonnes)"] > avg_land and r["Total number of fishing vessels"] < avg_ves:
+                if r["Landing"] > avg_land and r["Vessels"] < avg_ves:
                     return "⚠️ High landing but low vessels"
-                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] > avg_ves:
+                if r["Landing"] < avg_land and r["Vessels"] > avg_ves:
                     return "🐟 Low catch per vessel"
-                if r["Total Fish Landing (Tonnes)"] < avg_land and r["Total number of fishing vessels"] < avg_ves:
+                if r["Landing"] < avg_land and r["Vessels"] < avg_ves:
                     return "🛶 Low activity region"
                 return "Atypical pattern"
+
 
             outliers["Why Flagged"] = outliers.apply(explain, axis=1)
 
