@@ -2970,6 +2970,7 @@ def main():
 
 
         if not outliers.empty:
+
             avg_land = df["Total Fish Landing (Tonnes)"].mean()
             avg_ves = df["Total number of fishing vessels"].mean()
 
@@ -2984,7 +2985,8 @@ def main():
 
             outliers["Why Flagged"] = outliers.apply(explain, axis=1)
 
-            st.markdown("### 🚨 Outlier Details")
+
+        st.markdown("### 🚨 Outlier Details")
            
 
             if DEV_MODE:
