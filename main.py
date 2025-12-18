@@ -2977,9 +2977,7 @@ def main():
 
                 df = st.session_state.global_outliers.copy()
 
-                if "Stability_Score" not in df.columns:
-                    st.warning("Stability score not computed.")
-                    st.stop()
+                
 
                 # Classify stability strength
                 def stability_label(v):
