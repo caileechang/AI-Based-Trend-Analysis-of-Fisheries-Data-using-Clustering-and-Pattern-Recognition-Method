@@ -2722,8 +2722,8 @@ def main():
         # ===================================================
         # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
         # ===================================================
+       
         else:
- 
 
             # Prepare dataframe for clustering
             df = merged_df.copy()
@@ -2731,31 +2731,52 @@ def main():
             df["Vessels"] = pd.to_numeric(df["Total number of fishing vessels"], errors="coerce")
             df = df.dropna(subset=["Landing", "Vessels"])
 
-            # Compute global averages (for interpretation rules)
-            avg_landing = df["Landing"].mean()
-            avg_vessels = df["Vessels"].mean()
+            # ================================================
+            # DYNAMIC CLUSTER INTERPRETATION BASED ON k
+            # ================================================
 
-            # Interpretation rules 
-            def interpret(row):
-                if row["Landing"] >= avg_landing and row["Vessels"] >= avg_vessels:
-                    return "🐟 High Production"
-                elif row["Landing"] >= avg_landing and row["Vessels"] < avg_vessels:
-                    return "🌊 Marine Dominant"
-                elif row["Landing"] < avg_landing and row["Vessels"] >= avg_vessels:
-                    return "⚓ Fleet-Driven Growth"
-                else:
-                    return "⚠️ Low Production"
+            # Compute cluster averages
+            cluster_stats = (
+                df.groupby("Cluster")[["Landing", "Vessels"]]
+                .mean()
+                .reset_index()
+            )
 
-            df["Cluster_Label"] = df.apply(interpret, axis=1)
+            cluster_stats["Score"] = cluster_stats["Landing"] + cluster_stats["Vessels"]
+            cluster_stats = cluster_stats.sort_values("Score")  # low → high
 
-            # Discrete color map
-            color_map = {
-                "🐟 High Production": "#00E676",
-                "🌊 Marine Dominant": "#4FC3F7",
-                "⚓ Fleet-Driven Growth": "#9575CD",
-                "⚠️ Low Production": "#FF6D00"
+            # Assign meaningful names based on k
+            names_by_k = {
+                2: ["⚠️ Low Production", "🐟 High Production"],
+                3: ["⚠️ Low Production", "🌊 Moderate Production", "🐟 High Production"],
+                4: ["⚠️ Low Production", "⚓ Fleet-driven Growth", "🌊 Marine Dominant", "🐟 High Production"],
+                5: ["🚨 Very Low", "⚠️ Low", "🌊 Moderate", "⚓ Fleet-driven", "🐟 High"]
             }
 
+            # Fallback if k > 5
+            name_list = names_by_k.get(best_k, names_by_k[3])
+
+            # Map clusters → names
+            cluster_name_map = {}
+
+            for idx, (cluster, _) in enumerate(cluster_stats[["Cluster", "Score"]].values):
+                if idx < len(name_list):
+                    cluster_name_map[int(cluster)] = name_list[idx]
+                else:
+                    cluster_name_map[int(cluster)] = f"Cluster {cluster}"
+
+            df["Cluster_Label"] = df["Cluster"].map(cluster_name_map)
+
+            # ================================================
+            # COLOR MATCHING WITH NUMBER OF CLUSTERS
+            # ================================================
+            base_colors = ["#FF6D00", "#00E676", "#4FC3F7", "#9575CD", "#E91E63"]
+            color_map = {cluster_name_map[c]: base_colors[i] 
+                        for i, c in enumerate(cluster_name_map.keys())}
+
+            # ================================================
+            # PLOT INTERACTIVE 3D CLUSTER RESULTS
+            # ================================================
             fig = px.scatter_3d(
                 df,
                 x='Vessels',
@@ -2782,7 +2803,7 @@ def main():
                 legend_title="Cluster Category",
                 paper_bgcolor='#111111',
                 font_color='white',
-                coloraxis_showscale=False,
+                coloraxis_showscale=False,  # remove bad color bar
                 scene=dict(
                     xaxis_title="Fishing Vessels",
                     yaxis_title="Fish Landing (Tonnes)",
@@ -2796,7 +2817,9 @@ def main():
 
             st.plotly_chart(fig, use_container_width=True)
 
-            # Cluster Summary
+            # ================================================
+            # CLUSTER SUMMARY TABLE
+            # ================================================
             st.markdown("### Cluster Interpretation Summary")
 
             summary = (
@@ -2811,7 +2834,6 @@ def main():
                 "Avg Vessels": "{:,.0f}"
             }), use_container_width=True)
 
-            
         
 
     elif plot_option == "Yearly Fisheries Outlier Detection":
