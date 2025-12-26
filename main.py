@@ -2723,7 +2723,19 @@ def main():
         # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
         # ===================================================
         else:
-             # Interpretation rules
+ 
+
+            # Prepare dataframe for clustering
+            df = merged_df.copy()
+            df["Landing"] = pd.to_numeric(df["Total Fish Landing (Tonnes)"], errors="coerce")
+            df["Vessels"] = pd.to_numeric(df["Total number of fishing vessels"], errors="coerce")
+            df = df.dropna(subset=["Landing", "Vessels"])
+
+            # Compute global averages (for interpretation rules)
+            avg_landing = df["Landing"].mean()
+            avg_vessels = df["Vessels"].mean()
+
+            # Interpretation rules 
             def interpret(row):
                 if row["Landing"] >= avg_landing and row["Vessels"] >= avg_vessels:
                     return "🐟 High Production"
@@ -2743,8 +2755,7 @@ def main():
                 "⚓ Fleet-Driven Growth": "#9575CD",
                 "⚠️ Low Production": "#FF6D00"
             }
-            
-            # Build 3D Plot
+
             fig = px.scatter_3d(
                 df,
                 x='Vessels',
@@ -2767,12 +2778,11 @@ def main():
                 )
             )
 
-            # Layout Styling
             fig.update_layout(
                 legend_title="Cluster Category",
                 paper_bgcolor='#111111',
                 font_color='white',
-                coloraxis_showscale=False,  # REMOVE messy colorbar
+                coloraxis_showscale=False,
                 scene=dict(
                     xaxis_title="Fishing Vessels",
                     yaxis_title="Fish Landing (Tonnes)",
@@ -2786,7 +2796,7 @@ def main():
 
             st.plotly_chart(fig, use_container_width=True)
 
-            # Cluster Summary Table
+            # Cluster Summary
             st.markdown("### Cluster Interpretation Summary")
 
             summary = (
@@ -2800,7 +2810,8 @@ def main():
                 "Avg Landing": "{:,.0f}",
                 "Avg Vessels": "{:,.0f}"
             }), use_container_width=True)
-   
+
+            
         
 
     elif plot_option == "Yearly Fisheries Outlier Detection":
