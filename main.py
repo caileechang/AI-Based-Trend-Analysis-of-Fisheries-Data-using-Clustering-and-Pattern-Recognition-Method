@@ -2658,51 +2658,53 @@ def main():
         # ===================================================
         # STATIC VERSION 
         # ===================================================
+       
         if vis_mode == "Static":
             st.sidebar.markdown("### Adjust 3D View")
             elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
             azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
-           
 
             plt.close('all')
 
-            fig = plt.figure(figsize=(5, 4), dpi=150)
+            # Prepare dataframe for plotting
+            df = merged_df.copy()
+            df["Landing"] = pd.to_numeric(df["Total Fish Landing (Tonnes)"], errors="coerce")
+            df["Vessels"] = pd.to_numeric(df["Total number of fishing vessels"], errors="coerce")
+            df = df.dropna(subset=["Landing", "Vessels"])
+
+            # Use same cluster label logic as Interactive version
+            df["Cluster_Label"] = df["Cluster"].map(cluster_name_map)
+
+            # Colors match interactive view
+            cluster_colors = {label: color_map[label] for label in df["Cluster_Label"].unique()}
+
+            fig = plt.figure(figsize=(7, 6), dpi=120)
             ax = fig.add_subplot(111, projection='3d')
 
-            # PREMIUM COLOR PALETTE
-            cmap = plt.cm.coolwarm
+            # Plot each cluster separately for legend support
+            for label in df["Cluster_Label"].unique():
+                sub = df[df["Cluster_Label"] == label]
+                ax.scatter(
+                    sub['Vessels'],
+                    sub['Landing'],
+                    sub['Year'],
+                    c=cluster_colors[label],
+                    s=40,
+                    alpha=0.85,
+                    edgecolor="white",
+                    linewidth=0.5,
+                    label=label  # Adds legend entry
+                )
 
-            # Scatter plot with nicer styling
-            ax.scatter(
-                merged_df['Total number of fishing vessels'],
-                merged_df['Total Fish Landing (Tonnes)'],
-                merged_df['Year'],
-                c=merged_df['Cluster'],
-                cmap=cmap,
-                s=40,
-                alpha=0.88,
-                edgecolor="white",
-                linewidth=0.4,
-                depthshade=True
-            )
-
-            # =====================================================
-            # MODERN GRID & BACKGROUND WITHOUT USING _axinfo
-            # =====================================================
-
-            # Light grey background
+            # Modern styling
             ax.set_facecolor("#F5F5F5")
-
-            # Grid style
             ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.3)
 
-            # Tick style
-            ax.tick_params(colors="#444", labelsize=7)
+            ax.set_xlabel("Vessels", fontsize=8, labelpad=8)
+            ax.set_ylabel("Landings", fontsize=8, labelpad=8)
+            ax.set_zlabel("Year", fontsize=8, labelpad=8)
 
-            # Label style
-            ax.set_xlabel("Vessels", fontsize=8, labelpad=6, color="#333")
-            ax.set_ylabel("Landings", fontsize=8, labelpad=6, color="#333")
-            ax.set_zlabel("Year", fontsize=8, labelpad=6, color="#333")
+            ax.view_init(elev=elev, azim=azim)
 
             # Title
             ax.set_title(
@@ -2713,11 +2715,17 @@ def main():
                 color="#222"
             )
 
-            # Camera angles
-            ax.view_init(elev=elev, azim=azim)
+            # Add a clean legend
+            ax.legend(
+                title="Cluster Meaning",
+                fontsize=7,
+                title_fontsize=8,
+                frameon=True,
+                facecolor="white"
+            )
 
             plt.tight_layout()
-            st.pyplot(fig, use_container_width=False)
+            st.pyplot(fig, use_container_width=True)
 
             
 

@@ -4811,6 +4811,66 @@ if uploaded_file:
         # ===================================================
         # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
         # ===================================================
+        if vis_mode == "Static":
+            st.sidebar.markdown("### Adjust 3D View")
+            elev = st.sidebar.slider("Vertical tilt", 0, 90, 30)
+            azim = st.sidebar.slider("Horizontal rotation", 0, 360, 45)
+           
+
+            plt.close('all')
+
+            fig = plt.figure(figsize=(5, 4), dpi=150)
+            ax = fig.add_subplot(111, projection='3d')
+
+            # PREMIUM COLOR PALETTE
+            cmap = plt.cm.coolwarm
+
+            # Scatter plot with nicer styling
+            ax.scatter(
+                merged_df['Total number of fishing vessels'],
+                merged_df['Total Fish Landing (Tonnes)'],
+                merged_df['Year'],
+                c=merged_df['Cluster'],
+                cmap=cmap,
+                s=40,
+                alpha=0.88,
+                edgecolor="white",
+                linewidth=0.4,
+                depthshade=True
+            )
+
+            # =====================================================
+            # MODERN GRID & BACKGROUND WITHOUT USING _axinfo
+            # =====================================================
+
+            # Light grey background
+            ax.set_facecolor("#F5F5F5")
+
+            # Grid style
+            ax.grid(True, linestyle="--", linewidth=0.4, alpha=0.3)
+
+            # Tick style
+            ax.tick_params(colors="#444", labelsize=7)
+
+            # Label style
+            ax.set_xlabel("Vessels", fontsize=8, labelpad=6, color="#333")
+            ax.set_ylabel("Landings", fontsize=8, labelpad=6, color="#333")
+            ax.set_zlabel("Year", fontsize=8, labelpad=6, color="#333")
+
+            # Title
+            ax.set_title(
+                f"Static 3D KMeans (k={best_k})",
+                fontsize=10,
+                weight="bold",
+                pad=12,
+                color="#222"
+            )
+
+            # Camera angles
+            ax.view_init(elev=elev, azim=azim)
+
+            plt.tight_layout()
+            st.pyplot(fig, use_container_width=False)
         else:
             fig = px.scatter_3d(
                 merged_df,
