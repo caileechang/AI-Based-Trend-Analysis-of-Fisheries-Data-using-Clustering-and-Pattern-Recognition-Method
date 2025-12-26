@@ -2673,10 +2673,10 @@ def main():
 
         # Label sets depending on best_k
         names_by_k = {
-            2: ["⚠️ Low Production", "🐟 High Production"],
-            3: ["⚠️ Low Production", "🌊 Moderate Production", "🐟 High Production"],
-            4: ["⚠️ Low", "⚓ Fleet-driven", "🌊 Marine", "🐟 High"],
-            5: ["🚨 Very Low", "⚠️ Low", "🌊 Moderate", "⚓ Fleet-driven", "🐟 High"]
+            2: [" Low Production", " High Production"],
+            3: [" Low Production", " Moderate Production", " High Production"],
+            4: [" Low", " Fleet-driven", " Marine", " High"],
+            5: [" Very Low", " Low", " Moderate", "Vessels-driven", " High"]
         }
 
         name_list = names_by_k.get(best_k, names_by_k[3])
