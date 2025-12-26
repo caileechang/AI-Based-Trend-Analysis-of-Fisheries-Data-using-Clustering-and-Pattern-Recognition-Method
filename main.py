@@ -2650,7 +2650,9 @@ def main():
         )
         
 
-        st.markdown(f"**Optimal number of clusters:** {best_k}")
+        #st.markdown(f"**Optimal number of clusters:** {best_k}")
+        st.markdown(f"<small><b>Optimal number of clusters: {best_k}</b></small>", unsafe_allow_html=True)
+
         #st.markdown("Clusters selected automatically using the highest Silhouette score.")
 
         # ===================================================
