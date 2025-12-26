@@ -2651,7 +2651,7 @@ def main():
         
 
         st.markdown(f"**Optimal number of clusters:** {best_k}")
-        st.markdown("Clusters selected automatically using the highest Silhouette score.")
+        #st.markdown("Clusters selected automatically using the highest Silhouette score.")
 
         # ===================================================
         # STATIC VERSION 
@@ -2723,41 +2723,83 @@ def main():
         # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
         # ===================================================
         else:
+             # Interpretation rules
+            def interpret(row):
+                if row["Landing"] >= avg_landing and row["Vessels"] >= avg_vessels:
+                    return "🐟 High Production"
+                elif row["Landing"] >= avg_landing and row["Vessels"] < avg_vessels:
+                    return "🌊 Marine Dominant"
+                elif row["Landing"] < avg_landing and row["Vessels"] >= avg_vessels:
+                    return "⚓ Fleet-Driven Growth"
+                else:
+                    return "⚠️ Low Production"
+
+            df["Cluster_Label"] = df.apply(interpret, axis=1)
+
+            # Discrete color map
+            color_map = {
+                "🐟 High Production": "#00E676",
+                "🌊 Marine Dominant": "#4FC3F7",
+                "⚓ Fleet-Driven Growth": "#9575CD",
+                "⚠️ Low Production": "#FF6D00"
+            }
+            
+            # Build 3D Plot
             fig = px.scatter_3d(
-                merged_df,
-                x='Total number of fishing vessels',
-                y='Total Fish Landing (Tonnes)',
+                df,
+                x='Vessels',
+                y='Landing',
                 z='Year',
-                color='Cluster',
-                color_continuous_scale='Viridis',
-                symbol='Cluster',
-                hover_data=['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels'],
+                color='Cluster_Label',
+                symbol='Cluster_Label',
+                hover_name='State',
+                hover_data={'Landing': ':,.0f', 'Vessels': ':,.0f', 'Year': True},
+                color_discrete_map=color_map,
                 title=f"Interactive 3D KMeans Clustering (k={best_k})",
-                height=600
+                height=600,
+                opacity=0.85
             )
 
             fig.update_traces(
                 marker=dict(
-                    size=5,
-                    line=dict(width=0.7, color='black')
+                    size=6,
+                    line=dict(width=0.8, color='black')
                 )
             )
 
+            # Layout Styling
             fig.update_layout(
+                legend_title="Cluster Category",
+                paper_bgcolor='#111111',
+                font_color='white',
+                coloraxis_showscale=False,  # REMOVE messy colorbar
                 scene=dict(
-                    xaxis_title="Vessels",
-                    yaxis_title="Landings",
+                    xaxis_title="Fishing Vessels",
+                    yaxis_title="Fish Landing (Tonnes)",
                     zaxis_title="Year",
                     xaxis=dict(backgroundcolor='#1f1f1f'),
                     yaxis=dict(backgroundcolor='#1f1f1f'),
                     zaxis=dict(backgroundcolor='#1f1f1f'),
                 ),
-                paper_bgcolor='#111111',
-                font_color='white',
                 margin=dict(l=0, r=0, b=0, t=50)
             )
 
             st.plotly_chart(fig, use_container_width=True)
+
+            # Cluster Summary Table
+            st.markdown("### Cluster Interpretation Summary")
+
+            summary = (
+                df.groupby("Cluster_Label")[["Landing", "Vessels"]]
+                .mean()
+                .rename(columns={"Landing": "Avg Landing", "Vessels": "Avg Vessels"})
+                .reset_index()
+            )
+
+            st.dataframe(summary.style.format({
+                "Avg Landing": "{:,.0f}",
+                "Avg Vessels": "{:,.0f}"
+            }), use_container_width=True)
    
         
 

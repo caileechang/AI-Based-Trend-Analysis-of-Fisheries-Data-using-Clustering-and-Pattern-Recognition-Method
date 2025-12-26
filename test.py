@@ -4806,3 +4806,44 @@ if uploaded_file:
 
         st.plotly_chart(fig, use_container_width=True)
         
+
+
+        # ===================================================
+        # INTERACTIVE VERSION — PLOTLY (FULL 3D ROTATION)
+        # ===================================================
+        else:
+            fig = px.scatter_3d(
+                merged_df,
+                x='Total number of fishing vessels',
+                y='Total Fish Landing (Tonnes)',
+                z='Year',
+                color='Cluster',
+                color_continuous_scale='Viridis',
+                symbol='Cluster',
+                hover_data=['State', 'Year', 'Total Fish Landing (Tonnes)', 'Total number of fishing vessels'],
+                title=f"Interactive 3D KMeans Clustering (k={best_k})",
+                height=600
+            )
+
+            fig.update_traces(
+                marker=dict(
+                    size=5,
+                    line=dict(width=0.7, color='black')
+                )
+            )
+
+            fig.update_layout(
+                scene=dict(
+                    xaxis_title="Vessels",
+                    yaxis_title="Landings",
+                    zaxis_title="Year",
+                    xaxis=dict(backgroundcolor='#1f1f1f'),
+                    yaxis=dict(backgroundcolor='#1f1f1f'),
+                    zaxis=dict(backgroundcolor='#1f1f1f'),
+                ),
+                paper_bgcolor='#111111',
+                font_color='white',
+                margin=dict(l=0, r=0, b=0, t=50)
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
