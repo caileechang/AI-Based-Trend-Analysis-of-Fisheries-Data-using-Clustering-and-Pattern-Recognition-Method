@@ -2654,6 +2654,37 @@ def main():
         st.markdown(f"<small><b>Optimal number of clusters: {best_k}</b></small>", unsafe_allow_html=True)
 
         #st.markdown("Clusters selected automatically using the highest Silhouette score.")
+        # Compute cluster averages
+        cluster_stats = (
+            merged_df.groupby("Cluster")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
+            .mean()
+            .reset_index()
+        )
+
+        cluster_stats["Score"] = cluster_stats["Total Fish Landing (Tonnes)"] + cluster_stats["Total number of fishing vessels"]
+        cluster_stats = cluster_stats.sort_values("Score")  # low → high performance
+
+        # Label sets depending on best_k
+        names_by_k = {
+            2: ["⚠️ Low Production", "🐟 High Production"],
+            3: ["⚠️ Low Production", "🌊 Moderate Production", "🐟 High Production"],
+            4: ["⚠️ Low", "⚓ Fleet-driven", "🌊 Marine", "🐟 High"],
+            5: ["🚨 Very Low", "⚠️ Low", "🌊 Moderate", "⚓ Fleet-driven", "🐟 High"]
+        }
+
+        name_list = names_by_k.get(best_k, names_by_k[3])
+
+        # Create mapping Cluster ID → Label
+        cluster_name_map = {}
+        for idx, (cluster, _) in enumerate(cluster_stats[["Cluster", "Score"]].values):
+            cluster_name_map[int(cluster)] = name_list[idx] if idx < len(name_list) else f"Cluster {cluster}"
+
+        # Store in merged_df
+        merged_df["Cluster_Label"] = merged_df["Cluster"].map(cluster_name_map)
+
+        # Color palette matched to number of clusters
+        base_colors = ["#FF6D00", "#00E676", "#4FC3F7", "#9575CD", "#E91E63"]
+        color_map = {cluster_name_map[c]: base_colors[i] for i, c in enumerate(cluster_name_map.keys())}
 
         # ===================================================
         # STATIC VERSION 
