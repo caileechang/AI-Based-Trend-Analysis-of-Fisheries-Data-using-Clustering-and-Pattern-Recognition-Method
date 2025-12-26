@@ -2755,7 +2755,7 @@ def main():
 
             # Add a clean legend
             ax.legend(
-                title="Cluster Meaning",
+                title="Cluster",
                 fontsize=7,
                 title_fontsize=8,
                 frameon=True,
