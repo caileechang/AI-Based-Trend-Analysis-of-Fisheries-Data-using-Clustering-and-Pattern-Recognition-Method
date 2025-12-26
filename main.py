@@ -2589,7 +2589,7 @@ def main():
         st.pyplot(fig2)
 
         # ==================================================
-        #Cluster summary
+        # Cluster Summary (Improved Column Naming)
         # ==================================================
         summary = (
             merged_df
@@ -2602,8 +2602,15 @@ def main():
             .reset_index()
         )
 
+        # Rename to reflect what the values represent
+        summary = summary.rename(columns={
+            'Total Fish Landing (Tonnes)': 'Avg Fish Landing (Tonnes)',
+            'Total number of fishing vessels': 'Avg Fishing Vessels'
+        })
+
         st.markdown("### 📊 Cluster Summary (Average Values)")
         st.dataframe(summary, use_container_width=True)
+
 
     elif plot_option == "Relationship: Fish Landing vs Fishing Vessels (3D)":
         import matplotlib.pyplot as plt
