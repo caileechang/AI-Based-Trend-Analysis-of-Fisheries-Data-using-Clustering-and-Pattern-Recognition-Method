@@ -3068,7 +3068,7 @@ def main():
         )
 
         # ---- Display table (hide raw label for users) ----
-        st.markdown("### 📊 Cluster Summary (Interpreted)")
+        st.markdown("### 📊 Cluster Summary")
 
         display_cluster_summary = cluster_summary[[
             "Cluster Name",
