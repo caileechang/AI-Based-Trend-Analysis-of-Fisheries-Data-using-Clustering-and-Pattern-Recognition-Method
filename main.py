@@ -1358,10 +1358,10 @@ def main():
     # =====================================================
     # RUN GLOBAL HDBSCAN ONCE (CACHE IN SESSION STATE)
     # =====================================================
-    if "global_outliers" not in st.session_state or st.session_state.get("data_updated", False):
+   # if "global_outliers" not in st.session_state or st.session_state.get("data_updated", False):
         #st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
-        st.session_state.global_outliers = get_global_outliers(merged_df)
-        st.session_state.data_updated = False
+       # st.session_state.global_outliers = get_global_outliers(merged_df)
+      #  st.session_state.data_updated = False
 
 
     #merged_monthly = prepare_monthly(df_land, df_vess)
