@@ -168,6 +168,7 @@ def prepare_yearly(df_land, df_vess):
 
     return merged.sort_values(['Year', 'State']).reset_index(drop=True)
 
+
 def hdbscan_stability_validation(df, base_mcs, base_ms, X):
     import hdbscan
     import pandas as pd
@@ -395,6 +396,20 @@ def prepare_monthly(df_land, df_vess):
 
     merged_monthly = merged_monthly.sort_values(["Year", "Month", "State"]).reset_index(drop=True)
     return merged_monthly
+
+#  Cached wrappers to speed up performance
+
+@st.cache_data
+def get_yearly_data(df_land, df_vess):
+    return prepare_yearly(df_land, df_vess)
+
+@st.cache_data
+def get_monthly_data(df_land, df_vess):
+    return prepare_monthly(df_land, df_vess)
+
+@st.cache_data
+def get_global_outliers(merged_df):
+    return run_global_hdbscan_outlier_detection(merged_df)
 
 def detect_hdbscan_anomalies(df):
     from sklearn.preprocessing import StandardScaler
@@ -1333,8 +1348,8 @@ def main():
         
         
 
-    merged_df = prepare_yearly(df_land, df_vess)
-
+    #merged_df = prepare_yearly(df_land, df_vess)
+    merged_df = get_yearly_data(df_land, df_vess)
     
 
 
@@ -1344,12 +1359,13 @@ def main():
     # RUN GLOBAL HDBSCAN ONCE (CACHE IN SESSION STATE)
     # =====================================================
     if "global_outliers" not in st.session_state or st.session_state.get("data_updated", False):
-        st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        #st.session_state.global_outliers = run_global_hdbscan_outlier_detection(merged_df)
+        st.session_state.global_outliers = get_global_outliers(merged_df)
         st.session_state.data_updated = False
 
 
-    merged_monthly = prepare_monthly(df_land, df_vess)
-
+    #merged_monthly = prepare_monthly(df_land, df_vess)
+    merged_monthly = get_monthly_data(df_land, df_vess)
     # --- Sidebar for visualization selection ---
     st.sidebar.header("Select Visualization")
 
@@ -2891,8 +2907,17 @@ def main():
         import seaborn as sns
         from sklearn.metrics import silhouette_score
         from scipy.spatial import ConvexHull
-        st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
 
+        #  Run anomaly detection only when needed
+        if "global_outliers" not in st.session_state or st.session_state.get("data_updated", False):
+            with st.spinner("🔍 Detecting anomalies... Please wait."):
+                st.session_state.global_outliers = get_global_outliers(merged_df)
+                st.session_state.data_updated = False
+
+        df_global_outliers = st.session_state.global_outliers
+
+        st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
+        st.dataframe(df_global_outliers)
         # -----------------------------
         # 1. FILTER VALID STATES
         # -----------------------------
@@ -3424,8 +3449,8 @@ def main():
         import plotly.express as px
        
         # Use your existing prepared monthly data
-        merged_monthly = prepare_monthly(df_land, df_vess)
-
+        #merged_monthly = prepare_monthly(df_land, df_vess)
+        merged_monthly = get_monthly_data(df_land, df_vess)
         monthly_outliers = run_monthly_hdbscan_outlier_detection(merged_monthly)
 
         if monthly_outliers.empty:
