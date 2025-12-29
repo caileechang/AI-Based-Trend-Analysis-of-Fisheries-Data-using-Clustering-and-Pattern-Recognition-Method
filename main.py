@@ -1009,12 +1009,18 @@ def main():
 
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
     # --- Load base data or use newly merged uploaded data ---
+    # --- Load base data only once & show a smooth loading UX ---
     if "base_land" not in st.session_state:
-        st.session_state.base_land, st.session_state.base_vess = load_data()
-        st.session_state.data_updated = False  # no uploaded data yet
+        with st.spinner("📥 Loading base fisheries dataset…"):
+            st.session_state.base_land, st.session_state.base_vess = load_data()
+        st.session_state.data_updated = False
+        st.success("Base dataset loaded!")
+
     
-    df_land = st.session_state.base_land.copy()
-    df_vess = st.session_state.base_vess.copy()
+  #  df_land = st.session_state.base_land.copy()
+    #df_vess = st.session_state.base_vess.copy()
+    df_land = st.session_state.base_land
+    df_vess = st.session_state.base_vess
 
    
 
