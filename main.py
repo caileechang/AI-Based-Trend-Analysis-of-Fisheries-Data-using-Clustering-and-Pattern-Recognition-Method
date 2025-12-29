@@ -1321,7 +1321,7 @@ def main():
                     
                     
 
-                    msg1=st.toast(" Uploaded data successfully merged with existing dataset.")
+                    #msg1=st.toast(" Uploaded data successfully merged with existing dataset.")
                     
                     # --- Clean uploaded vessel data to match base format ---
                     #user_vess.columns = user_vess.columns.str.strip().str.title()
