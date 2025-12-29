@@ -1014,7 +1014,7 @@ def main():
         with st.spinner("📥 Loading base fisheries dataset…"):
             st.session_state.base_land, st.session_state.base_vess = load_data()
         st.session_state.data_updated = False
-        st.success("Base dataset loaded!")
+        
 
     
   #  df_land = st.session_state.base_land.copy()
