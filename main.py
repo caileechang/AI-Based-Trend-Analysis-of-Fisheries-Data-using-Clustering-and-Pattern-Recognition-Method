@@ -1061,7 +1061,7 @@ def main():
                 if {"Fish Landing", "Fish Vessels"} <= set(excel.sheet_names):
                     user_land = pd.read_excel(excel, "Fish Landing")
                     user_vess = pd.read_excel(excel, "Fish Vessels")
-                    st.toast("Excel loaded successfully", icon="✅")
+                    
 
                 else:
                     st.error("Excel must contain sheets: Fish Landing & Fish Vessels")
