@@ -2923,7 +2923,7 @@ def main():
         df_global_outliers = st.session_state.global_outliers
 
         st.subheader("Automatic HDBSCAN Clustering & Outlier Detection")
-        st.dataframe(df_global_outliers)
+        #st.dataframe(df_global_outliers)
         # -----------------------------
         # 1. FILTER VALID STATES
         # -----------------------------
