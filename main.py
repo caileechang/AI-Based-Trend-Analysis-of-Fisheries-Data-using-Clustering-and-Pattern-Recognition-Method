@@ -1011,7 +1011,7 @@ def main():
     # --- Load base data or use newly merged uploaded data ---
     # --- Load base data only once & show a smooth loading UX ---
     if "base_land" not in st.session_state:
-        with st.spinner("📥 Loading base fisheries dataset…"):
+        with st.spinner("📥 Loading fisheries dataset…"):
             st.session_state.base_land, st.session_state.base_vess = load_data()
         st.session_state.data_updated = False
         
