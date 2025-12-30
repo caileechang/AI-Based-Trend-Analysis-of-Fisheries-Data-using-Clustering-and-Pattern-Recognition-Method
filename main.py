@@ -2643,7 +2643,7 @@ def main():
             'Total number of fishing vessels': 'Avg Fishing Vessels'
         })
 
-        st.markdown("### 📊 Cluster Summary (Average Values)")
+        st.markdown("### 📊 Cluster Summary")
         st.dataframe(summary, use_container_width=True)
 
 
