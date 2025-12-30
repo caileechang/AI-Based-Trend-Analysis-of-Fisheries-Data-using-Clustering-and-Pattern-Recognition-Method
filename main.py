@@ -21,10 +21,9 @@ import hdbscan
 
 
 # Developer mode flag
-DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
+#DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
 
-#IS_STREAMLIT_CLOUD = "STREAMLIT_SHARING" in os.environ
-#DEV_MODE = not IS_STREAMLIT_CLOUD
+DEV_MODE = "STREAMLIT_RUNTIME_VERSION" not in os.environ
 
 
 # from clustering_method import hierarchical_clustering
