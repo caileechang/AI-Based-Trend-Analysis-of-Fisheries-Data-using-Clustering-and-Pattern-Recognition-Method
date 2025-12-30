@@ -1048,20 +1048,11 @@ def main():
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
     # --- Load base data or use newly merged uploaded data ---
     # --- Load base data only once & show a smooth loading UX ---
- #   if "base_land" not in st.session_state:
+    if "base_land" not in st.session_state:
         
-     #   st.session_state.base_land, st.session_state.base_vess = load_data()
-     #   st.session_state.data_updated = False
-
-
-
-
-if "base_land" not in st.session_state:
-    with st.spinner("📥 Loading dataset…"):
         st.session_state.base_land, st.session_state.base_vess = load_data()
-    st.session_state.data_updated = False
+        st.session_state.data_updated = False
 
-        
 
     
   #  df_land = st.session_state.base_land.copy()
@@ -1070,7 +1061,6 @@ if "base_land" not in st.session_state:
     df_vess = st.session_state.base_vess
 
    
-
 
     def detect_dataset_type(filename):
         name = filename.lower().replace(" ", "").replace("_", "")
