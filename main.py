@@ -20,7 +20,9 @@ import hdbscan
 
 
 # Developer mode flag
-DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
+#DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
+DEV_MODE = True
+
 
 # from clustering_method import hierarchical_clustering
 @st.cache_data
