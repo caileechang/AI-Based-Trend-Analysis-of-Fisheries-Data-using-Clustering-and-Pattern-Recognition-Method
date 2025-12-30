@@ -1382,7 +1382,7 @@ def main():
                    # st.session_state.base_land = df_land.copy()
                     #st.session_state.base_vess = df_vess.copy()
                     st.session_state.data_updated = True  # mark that new data exists
-                    #st.cache_data.clear()
+                    st.cache_data.clear()
                     
 
                     st.sidebar.success("New dataset merged. Visualizations will refresh automatically.")
