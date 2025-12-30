@@ -2703,7 +2703,7 @@ def main():
 
         # Color palette matched to number of clusters
         base_colors = ["#FF6D00", "#00E676", "#4FC3F7", "#9575CD", "#E91E63"]
-        color_map = {cluster_name_map[c]: base_colors[i] for i, c in enumerate(cluster_name_map.keys())}
+        color_map = {cluster_label_map[c]: base_colors[i] for i, c in enumerate(cluster_label_map.keys())}
 
         # ===================================================
         # STATIC VERSION 
@@ -2723,7 +2723,7 @@ def main():
             df = df.dropna(subset=["Landing", "Vessels"])
 
             # Use same cluster label logic as Interactive version
-            df["Cluster_Label"] = df["Cluster"].map(cluster_name_map)
+            df["Cluster_Label"] = df["Cluster"].map(cluster_label_map)
 
             # Colors match interactive view
             cluster_colors = {label: color_map[label] for label in df["Cluster_Label"].unique()}
