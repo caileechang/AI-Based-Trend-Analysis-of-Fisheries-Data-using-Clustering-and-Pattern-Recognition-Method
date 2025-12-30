@@ -2536,7 +2536,7 @@ def main():
         import matplotlib.pyplot as plt
         import seaborn as sns
         from sklearn.metrics import silhouette_score
-        st.subheader("Automatic 2D K-Means Clustering (with Elbow & Silhouette Analysis)")
+        st.subheader("Automatic 2D K-Means Clustering")
     
         # ---  Prepare data ---
         features = merged_df[['Total Fish Landing (Tonnes)', 'Total number of fishing vessels']]
