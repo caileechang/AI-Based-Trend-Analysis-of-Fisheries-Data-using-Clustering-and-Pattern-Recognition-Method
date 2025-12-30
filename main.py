@@ -21,9 +21,12 @@ import hdbscan
 
 
 # Developer mode flag
-DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
+#DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
 
-#DEV_MODE = "STREAMLIT_RUNTIME_VERSION" not in os.environ
+DEV_MODE = "STREAMLIT_RUNTIME_VERSION" not in os.environ
+
+HIST_LAND = "data/historical_land.csv"
+HIST_VESS = "data/historical_vess.csv"
 
 
 # from clustering_method import hierarchical_clustering
@@ -1046,10 +1049,28 @@ def main():
     #st.title("Fisheries Clustering & Pattern Recognition Dashboard")
     # --- Load base data or use newly merged uploaded data ---
     # --- Load base data only once & show a smooth loading UX ---
-    if "base_land" not in st.session_state:
-        with st.spinner("📥 Loading fisheries dataset…"):
-            st.session_state.base_land, st.session_state.base_vess = load_data()
-        st.session_state.data_updated = False
+ #   if "base_land" not in st.session_state:
+        
+     #   st.session_state.base_land, st.session_state.base_vess = load_data()
+     #   st.session_state.data_updated = False
+
+def load_historical_or_default():
+    base_land, base_vess = load_data()
+
+    # If persistent CSV exists, use that instead
+    if os.path.exists(HIST_LAND) and os.path.exists(HIST_VESS):
+        st.info("📂 Loaded saved historical dataset.")
+        return pd.read_csv(HIST_LAND), pd.read_csv(HIST_VESS)
+
+    st.info(" No saved history — using original dataset.")
+    return base_land, base_vess
+
+
+if "base_land" not in st.session_state:
+    with st.spinner("📥 Loading dataset…"):
+        st.session_state.base_land, st.session_state.base_vess = load_historical_or_default()
+    st.session_state.data_updated = False
+
         
 
     
@@ -1386,6 +1407,44 @@ def main():
                     
 
                     st.sidebar.success("New dataset merged. Visualizations will refresh automatically.")
+                    st.success("Dataset validated. Choose how to apply it:")
+                    confirm_col, temp_col, cancel_col = st.columns(3)
+
+                    with confirm_col:
+                        if st.button("📌 Add to Historical Database"):
+                            # Merge + dedupe LAND
+                            df_land = pd.concat([st.session_state.base_land, user_land], ignore_index=True)
+                            df_land.drop_duplicates(subset=["State", "Year", "Month", "Type of Fish"], keep="last", inplace=True)
+
+                            # Merge + dedupe VESS
+                            df_vess = pd.concat([st.session_state.base_vess, user_vess], ignore_index=True)
+                            df_vess.drop_duplicates(subset=["State", "Year"], keep="last", inplace=True)
+
+                            # Persist to local storage
+                            df_land.to_csv(HIST_LAND, index=False)
+                            df_vess.to_csv(HIST_VESS, index=False)
+
+                            # Update in-memory state
+                            st.session_state.base_land = df_land.copy()
+                            st.session_state.base_vess = df_vess.copy()
+                            st.session_state.data_updated = True
+                            st.cache_data.clear()
+
+                            st.success("🎉 Historical dataset updated permanently!")
+
+                    with temp_col:
+                        if st.button("Use for Current Analysis Only"):
+                            st.session_state.base_land = user_land.copy()
+                            st.session_state.base_vess = user_vess.copy()
+                            st.session_state.data_updated = True
+                            st.info("⏳ Dataset applied to this session only.")
+
+                    with cancel_col:
+                        if st.button("Cancel Upload ❌"):
+                            st.warning("Upload discarded. No changes saved.")
+                            st.stop()
+
+
 
         
         
