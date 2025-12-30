@@ -464,6 +464,38 @@ def detect_dbscan_anomalies(df):
 
     return set(df.index[labels == -1])
 
+def generate_cluster_label_map(df, cluster_col, landing_col, vessel_col, best_k):
+    # Compute cluster scores (higher = better production)
+    cluster_stats = (
+        df.groupby(cluster_col)[[landing_col, vessel_col]]
+        .mean()
+        .reset_index()
+    )
+    cluster_stats["Score"] = cluster_stats[landing_col] + cluster_stats[vessel_col]
+
+    # Sort high → low for score
+    cluster_stats = cluster_stats.sort_values("Score", ascending=False)
+
+    # Your label sets
+    names_by_k = {
+        2: ["High Production", "Low Production"],
+        3: ["High Production", "Moderate Production", "Low Production"],
+        4: ["High Production", "Marine Driven", "Fleet-driven", "Low"],
+        5: ["High", "Fleet-driven", "Moderate", "Low", "Very Low"]
+    }
+
+    label_list = names_by_k.get(best_k, names_by_k[3])
+
+    # Create mapping Cluster ID → Label
+    label_map = {}
+    for i, cluster in enumerate(cluster_stats[cluster_col].values):
+        if i < len(label_list):
+            label_map[int(cluster)] = label_list[i]
+        else:
+            label_map[int(cluster)] = f"Cluster {cluster}"
+    
+    return label_map
+
 
 
 def evaluate_kmeans_k(data, title_prefix, use_streamlit=True):
@@ -2551,40 +2583,16 @@ def main():
     
         # Step 6: Human-readable cluster labels
       
-        cluster_means = (
-            merged_df
-            .groupby('Cluster')[[ 
-                'Total Fish Landing (Tonnes)',
-                'Total number of fishing vessels'
-            ]]
-            .mean()
+        cluster_label_map = generate_cluster_label_map(
+            merged_df,
+            "Cluster",
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels",
+            best_k
         )
 
-        # Rank clusters by landing (descending)
-        cluster_means = cluster_means.sort_values(
-            by='Total Fish Landing (Tonnes)',
-            ascending=False
-        )
+        merged_df["Cluster_Label"] = merged_df["Cluster"].map(cluster_label_map)
 
-        # Define label templates (safe for k up to ~6)
-        label_templates = [
-            
-            "High Fish Production & Vessel Capacity",
-            "Moderate Fish Production & Vessel Capacity",
-            "Low Fish Production & Vessel Capacity",
-            "Very Low Fish Production & Vessel Capacity",
-            "Minimal Fish Production & Vessel Capacity","Very Minimal Fish Production & Vessel Capacity",
-        ]
-
-        cluster_label_map = {}
-
-        for i, cluster_id in enumerate(cluster_means.index):
-            if i < len(label_templates):
-                cluster_label_map[cluster_id] = label_templates[i]
-            else:
-                cluster_label_map[cluster_id] = f"Cluster Level {i+1}"
-
-        merged_df['Cluster_Label'] = merged_df['Cluster'].map(cluster_label_map)
 
         if DEV_MODE:
         # --- Step 6: Display summary ---
@@ -2683,33 +2691,15 @@ def main():
         st.markdown(f"<small><b>Optimal number of clusters: {best_k}</b></small>", unsafe_allow_html=True)
 
         #st.markdown("Clusters selected automatically using the highest Silhouette score.")
-        # Compute cluster averages
-        cluster_stats = (
-            merged_df.groupby("Cluster")[["Total Fish Landing (Tonnes)", "Total number of fishing vessels"]]
-            .mean()
-            .reset_index()
+        cluster_label_map = generate_cluster_label_map(
+            merged_df,
+            "Cluster",
+            "Total Fish Landing (Tonnes)",
+            "Total number of fishing vessels",
+            best_k
         )
+        merged_df["Cluster_Label"] = merged_df["Cluster"].map(cluster_label_map)
 
-        cluster_stats["Score"] = cluster_stats["Total Fish Landing (Tonnes)"] + cluster_stats["Total number of fishing vessels"]
-        cluster_stats = cluster_stats.sort_values("Score")  # low → high performance
-
-        # Label sets depending on best_k
-        names_by_k = {
-            2: [" Low Production", " High Production"],
-            3: [" Low Production", " Moderate Production", " High Production"],
-            4: [" Low", " Fleet-driven", " Marine", " High"],
-            5: [" Very Low", " Low", " Moderate", "Vessels-driven", " High"]
-        }
-
-        name_list = names_by_k.get(best_k, names_by_k[3])
-
-        # Create mapping Cluster ID → Label
-        cluster_name_map = {}
-        for idx, (cluster, _) in enumerate(cluster_stats[["Cluster", "Score"]].values):
-            cluster_name_map[int(cluster)] = name_list[idx] if idx < len(name_list) else f"Cluster {cluster}"
-
-        # Store in merged_df
-        merged_df["Cluster_Label"] = merged_df["Cluster"].map(cluster_name_map)
 
         # Color palette matched to number of clusters
         base_colors = ["#FF6D00", "#00E676", "#4FC3F7", "#9575CD", "#E91E63"]
@@ -2806,44 +2796,24 @@ def main():
             # DYNAMIC CLUSTER INTERPRETATION BASED ON k
             # ================================================
 
-            # Compute cluster averages
-            cluster_stats = (
-                df.groupby("Cluster")[["Landing", "Vessels"]]
-                .mean()
-                .reset_index()
+            # Unified & consistent cluster naming
+            cluster_label_map = generate_cluster_label_map(
+                df,
+                "Cluster",
+                "Landing",
+                "Vessels",
+                best_k
             )
+            df["Cluster_Label"] = df["Cluster"].map(cluster_label_map)
 
-            cluster_stats["Score"] = cluster_stats["Landing"] + cluster_stats["Vessels"]
-            cluster_stats = cluster_stats.sort_values("Score")  # low → high
-
-            # Assign meaningful names based on k
-            names_by_k = {
-                2: ["⚠️ Low Production", "🐟 High Production"],
-                3: ["⚠️ Low Production", "🌊 Moderate Production", "🐟 High Production"],
-                4: ["⚠️ Low Production", "⚓ Fleet-driven Growth", "🌊 Marine Dominant", "🐟 High Production"],
-                5: ["🚨 Very Low", "⚠️ Low", "🌊 Moderate", "⚓ Fleet-driven", "🐟 High"]
+            # Color mapping
+            base_colors = ["#FF6D00", "#00E676", "#4FC3F7", "#9575CD", "#E91E63"]
+            color_map = {
+                label: base_colors[i]
+                for i, label in enumerate(cluster_label_map.values())
             }
 
-            # Fallback if k > 5
-            name_list = names_by_k.get(best_k, names_by_k[3])
-
-            # Map clusters → names
-            cluster_name_map = {}
-
-            for idx, (cluster, _) in enumerate(cluster_stats[["Cluster", "Score"]].values):
-                if idx < len(name_list):
-                    cluster_name_map[int(cluster)] = name_list[idx]
-                else:
-                    cluster_name_map[int(cluster)] = f"Cluster {cluster}"
-
-            df["Cluster_Label"] = df["Cluster"].map(cluster_name_map)
-
-            # ================================================
-            # COLOR MATCHING WITH NUMBER OF CLUSTERS
-            # ================================================
-            base_colors = ["#FF6D00", "#00E676", "#4FC3F7", "#9575CD", "#E91E63"]
-            color_map = {cluster_name_map[c]: base_colors[i] 
-                        for i, c in enumerate(cluster_name_map.keys())}
+            
 
             # ================================================
             # PLOT INTERACTIVE 3D CLUSTER RESULTS
