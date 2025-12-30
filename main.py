@@ -1407,7 +1407,13 @@ def main():
 
 
     #merged_monthly = prepare_monthly(df_land, df_vess)
+# Refresh cached monthly summary if new data was uploaded
+    if st.session_state.get("data_updated", False):
+        st.cache_data.clear()
+        st.session_state.data_updated = False
+
     merged_monthly = get_monthly_data(df_land, df_vess)
+
     # --- Sidebar for visualization selection ---
     st.sidebar.header("Select Visualization")
 
@@ -3430,7 +3436,13 @@ def main():
        
         # Use your existing prepared monthly data
         #merged_monthly = prepare_monthly(df_land, df_vess)
+        # Refresh cached monthly summary if new data was uploaded
+        if st.session_state.get("data_updated", False):
+            st.cache_data.clear()
+            st.session_state.data_updated = False
+
         merged_monthly = get_monthly_data(df_land, df_vess)
+
         monthly_outliers = run_monthly_hdbscan_outlier_detection(merged_monthly)
 
         if monthly_outliers.empty:
