@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -21,7 +22,9 @@ import hdbscan
 
 # Developer mode flag
 #DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
-DEV_MODE = True
+
+IS_STREAMLIT_CLOUD = "STREAMLIT_SHARING" in os.environ
+DEV_MODE = not IS_STREAMLIT_CLOUD
 
 
 # from clustering_method import hierarchical_clustering
