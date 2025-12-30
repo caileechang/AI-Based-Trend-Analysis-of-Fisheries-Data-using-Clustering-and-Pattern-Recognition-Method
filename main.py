@@ -407,7 +407,7 @@ def prepare_monthly(df_land, df_vess):
 def get_yearly_data(df_land, df_vess):
     return prepare_yearly(df_land, df_vess)
 
-@st.cache_data
+
 def get_monthly_data(df_land, df_vess):
     return prepare_monthly(df_land, df_vess)
 
