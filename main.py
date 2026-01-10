@@ -3131,7 +3131,7 @@ def main():
             else:
                 st.dataframe(
                     outliers.drop(
-                        columns=["HDBSCAN_Label", "Outlier_Score", "Stability_Score"],
+                        columns=["HDBSCAN_Label", "Outlier_Score","Outlier_Norm", "Stability_Score"],
                         errors="ignore"
                     ),
                     use_container_width=True
