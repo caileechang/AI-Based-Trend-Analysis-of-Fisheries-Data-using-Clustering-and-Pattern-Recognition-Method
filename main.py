@@ -18,6 +18,7 @@ import time
 import plotly.express as px
 import plotly.graph_objects as go
 import hdbscan
+import streamlit.components.v1 as components
 
 
 # Developer mode flag
@@ -2672,7 +2673,7 @@ def main():
                 )
 
 
-        import streamlit.components.v1 as components
+        
 
         components.html(
             f"""
