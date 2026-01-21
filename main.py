@@ -2682,9 +2682,7 @@ def main():
 
                 
 
-                box-shadow:
-                    0 12px 30px rgba(0,0,0,0.35),
-                    inset 0 1px 0 rgba(255,255,255,0.15);
+               
 
                 color: white;
                 font-family: 'Segoe UI', sans-serif;
