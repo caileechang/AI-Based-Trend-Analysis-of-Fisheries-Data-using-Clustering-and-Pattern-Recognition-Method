@@ -2675,12 +2675,12 @@ def main():
         components.html(
             f"""
             <div style="
-                 background: linear-gradient(145deg, #2563EB, #3B82F6);
+                 background: #2563EB;
                 border-radius: 20px;
                 padding: 24px;
                 margin-bottom: 22px;
 
-                border-left: 6px solid #93C5FD;
+                
 
                 box-shadow:
                     0 12px 30px rgba(0,0,0,0.35),
