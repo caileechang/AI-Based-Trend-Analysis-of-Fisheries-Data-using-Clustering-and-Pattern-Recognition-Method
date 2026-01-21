@@ -2613,9 +2613,86 @@ def main():
             st.success(f"Optimal number of clusters automatically determined: **k = {best_k}**")
         
             st.markdown("Clusters below are determined automatically based on the **highest Silhouette Score** and Elbow consistency.")
+
+
+        # ==================================================
+        # CORRELATION INSIGHT (Pearson r)
+        # ==================================================
+
+        x = merged_df["Total number of fishing vessels"]
+        y = merged_df["Total Fish Landing (Tonnes)"]
+
+        pearson_r = x.corr(y)
+
+        abs_r = abs(pearson_r)
+
+        # Strength interpretation
+        if abs_r >= 0.8:
+            strength = "Very strong"
+        elif abs_r >= 0.6:
+            strength = "Strong"
+        elif abs_r >= 0.4:
+            strength = "Moderate"
+        elif abs_r >= 0.2:
+            strength = "Weak"
+        else:
+            strength = "Very weak"
+
+        # Direction
+        if pearson_r > 0:
+            direction = "Positive ↑"
+            emoji = "📈"
+            color = "#2ecc71"
+            explanation = "Higher vessel counts are associated with higher fish landings."
+        elif pearson_r < 0:
+            direction = "Negative ↓"
+            emoji = "📉"
+            color = "#e74c3c"
+            explanation = "Higher vessel counts are associated with lower fish landings."
+        else:
+            direction = "No relationship"
+            emoji = "➖"
+            color = "#f1c40f"
+            explanation = "No clear linear relationship is observed."
+
+
+        st.markdown(
+            f"""
+            <div style="
+                background: linear-gradient(145deg, #0f172a, #020617);
+                border-radius: 18px;
+                padding: 24px;
+                margin-bottom: 20px;
+                border-left: 6px solid {color};
+                box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+            ">
+                <h3 style="margin:0; color:white;">
+                    {emoji} Relationship Insight
+                </h3>
+
+                <p style="margin-top:10px; font-size:18px; color:white;">
+                    <b>Correlation Direction:</b>
+                    <span style="color:{color}; font-weight:700;">
+                        {direction}
+                    </span>
+                </p>
+
+                <p style="font-size:16px; color:#cbd5e1;">
+                    <b>Pearson r:</b> {pearson_r:.2f} ({strength})
+                </p>
+
+                <p style="font-size:16px; color:#e5e7eb;">
+                    {explanation}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
     
         # --- Step 7: Show 2D scatter ---
         fig2, ax = plt.subplots(figsize=(10, 6))
+        
         sns.scatterplot(
             data=merged_df,
             x='Total number of fishing vessels',
