@@ -2672,13 +2672,10 @@ def main():
                     "No meaningful linear relationship is observed between the variables."
                 )
 
-
-        
-
         components.html(
             f"""
             <div style="
-                background: linear-gradient(145deg, #0f172a, #020617);
+                background: #e8f2ff;
                 border-radius: 18px;
                 padding: 24px;
                 margin-bottom: 20px;
