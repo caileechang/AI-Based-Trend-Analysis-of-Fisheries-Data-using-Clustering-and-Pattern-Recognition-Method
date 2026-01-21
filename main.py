@@ -2676,7 +2676,7 @@ def main():
             f"""
             <div style="
                  background: #2563EB;
-                border-radius: 20px;
+                border-radius: 24px;
                
                 padding: 24px;
                 margin-bottom: 22px;
@@ -2686,7 +2686,8 @@ def main():
                
 
                 
-                font-family: 'Segoe UI', sans-serif;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
                 max-width: 900px;
             ">
 
