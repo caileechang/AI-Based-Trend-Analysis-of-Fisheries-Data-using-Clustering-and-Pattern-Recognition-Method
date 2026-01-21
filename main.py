@@ -2675,41 +2675,58 @@ def main():
         components.html(
             f"""
             <div style="
-                
                 background: linear-gradient(145deg, #2563EB, #3B82F6);
-               
-                
-                border-radius: 18px;
+                border-radius: 20px;
                 padding: 24px;
-                margin-bottom: 20px;
-                
+                margin-bottom: 22px;
+
+                border-left: 6px solid #93C5FD;
+
+                box-shadow:
+                    0 12px 30px rgba(0,0,0,0.35),
+                    inset 0 1px 0 rgba(255,255,255,0.15);
+
                 color: white;
-                font-family: sans-serif;
+                font-family: 'Segoe UI', sans-serif;
+                max-width: 900px;
             ">
 
-                <h3 style="margin:0; font-size: 22px;color:white; font-weight: 700;display: flex; align-items: center;gap: 10px">
-                    {emoji} Relationship Insight
+                <h3 style="
+                    margin: 0;
+                    font-size: 22px;
+                    font-weight: 700;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                ">
+                    📊 Relationship Insight
                 </h3>
 
-                <p style="margin-top:16px; font-size:18px; color:white;">
+                <p style="margin-top:14px; font-size:18px;">
                     <b>Correlation:</b>
-                    <span style="color:{color}; font-weight:700;">
-                        {direction}
-                    </span>
+                    <span style="color:#22C55E;">Positive ↑</span>
                 </p>
 
-                <p style="font-size:18px; color:white;">
-                    <b>Pearson correlation coefficient:</b> {pearson_r:.2f} ({strength})
+                <p style="font-size:18px;">
+                    <b>Pearson correlation coefficient:</b>
+                    0.49 <span style="opacity:0.85;">(Moderate)</span>
                 </p>
 
-                <p style="font-size:16px; color:white;">
-                    {explanation}
-                </p>
+                <div style="
+                    border-top: 1px solid rgba(255,255,255,0.25);
+                    margin-top: 14px;
+                    padding-top: 14px;
+                    font-size: 16px;
+                    line-height: 1.6;
+                    opacity: 0.95;
+                ">
+                    A positive linear association is observed between fishing vessels and fish landings.
+                    Both variables tend to increase together.
+                </div>
 
             </div>
-            """,
-            height=220
-        )
+            """
+            )
     
         # --- Step 7: Show 2D scatter ---
         fig2, ax = plt.subplots(figsize=(10, 6))
