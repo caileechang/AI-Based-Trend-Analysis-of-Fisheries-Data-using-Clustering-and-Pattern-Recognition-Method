@@ -2655,7 +2655,6 @@ def main():
             color = "#f1c40f"
             explanation = "No clear linear relationship is observed."
 
-
         st.markdown(
             f"""
             <div style="
@@ -2686,8 +2685,9 @@ def main():
                 </p>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True   # ✅ THIS IS THE KEY
         )
+
 
     
         # --- Step 7: Show 2D scatter ---
