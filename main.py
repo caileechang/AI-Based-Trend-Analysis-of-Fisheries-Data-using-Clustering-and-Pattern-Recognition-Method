@@ -2677,7 +2677,7 @@ def main():
             <div style="
                  background: #2563EB;
                 border-radius: 20px;
-                overflow: hidden;
+               
                 padding: 24px;
                 margin-bottom: 22px;
 
@@ -2685,7 +2685,7 @@ def main():
 
                
 
-                color: white;
+                
                 font-family: 'Segoe UI', sans-serif;
                 max-width: 900px;
             ">
