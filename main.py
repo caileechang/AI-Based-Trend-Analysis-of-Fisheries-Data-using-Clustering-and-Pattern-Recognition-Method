@@ -2678,8 +2678,6 @@ def main():
                 
                 background-color: #2563EB;
 
-
-              
                 border-radius: 18px;
                 padding: 24px;
                 margin-bottom: 20px;
