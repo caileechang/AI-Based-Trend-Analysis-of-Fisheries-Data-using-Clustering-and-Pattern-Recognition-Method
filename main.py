@@ -2676,7 +2676,8 @@ def main():
             f"""
             <div style="
                 
-                background-color: linear-gradient( #2563EB);
+                
+                background: linear-gradient(145deg, #2563EB, #2563EB);
 
                 border-radius: 18px;
                 padding: 24px;
