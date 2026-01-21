@@ -2675,7 +2675,9 @@ def main():
         components.html(
             f"""
             <div style="
-                background: linear-gradient(145deg, #0f172a, #020617);
+                
+                background-color: #2563EB;
+
               
                 border-radius: 18px;
                 padding: 24px;
@@ -2708,7 +2710,6 @@ def main():
             """,
             height=220
         )
-
     
         # --- Step 7: Show 2D scatter ---
         fig2, ax = plt.subplots(figsize=(10, 6))
