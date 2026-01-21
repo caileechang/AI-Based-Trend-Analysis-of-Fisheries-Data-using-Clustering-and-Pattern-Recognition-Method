@@ -2675,8 +2675,9 @@ def main():
         components.html(
             f"""
             <div style="
-          
-                #background: linear-gradient(145deg, #0f172a, #020617);
+                
+                background: linear-gradient(145deg, #2563EB, #1E40AF);
+               
                 
                 border-radius: 18px;
                 padding: 24px;
