@@ -2624,36 +2624,53 @@ def main():
 
         pearson_r = x.corr(y)
 
-        abs_r = abs(pearson_r)
-
-        # Strength interpretation
-        if abs_r >= 0.8:
-            strength = "Very strong"
-        elif abs_r >= 0.6:
-            strength = "Strong"
-        elif abs_r >= 0.4:
-            strength = "Moderate"
-        elif abs_r >= 0.2:
-            strength = "Weak"
+        if pd.isna(pearson_r):
+            direction = "Insufficient data"
+            emoji = "⚠️"
+            color = "#f59e0b"
+            strength = "N/A"
+            explanation = (
+                "Correlation could not be computed reliably due to limited "
+                "data variation."
+            )
         else:
-            strength = "Very weak"
+            abs_r = abs(pearson_r)
 
-        # Direction
-        if pearson_r > 0:
-            direction = "Positive ↑"
-            emoji = "📈"
-            color = "#2ecc71"
-            explanation = "Higher vessel counts are associated with higher fish landings."
-        elif pearson_r < 0:
-            direction = "Negative ↓"
-            emoji = "📉"
-            color = "#e74c3c"
-            explanation = "Higher vessel counts are associated with lower fish landings."
-        else:
-            direction = "No relationship"
-            emoji = "➖"
-            color = "#f1c40f"
-            explanation = "No clear linear relationship is observed."
+            if abs_r >= 0.8:
+                strength = "Very strong"
+            elif abs_r >= 0.6:
+                strength = "Strong"
+            elif abs_r >= 0.4:
+                strength = "Moderate"
+            elif abs_r >= 0.2:
+                strength = "Weak"
+            else:
+                strength = "Very weak"
+
+            if pearson_r > 0:
+                direction = "Positive ↑"
+                emoji = "📈"
+                color = "#2ecc71"
+                explanation = (
+                    "A positive linear association is observed between vessel count "
+                    "and fish landings. Both variables tend to increase together."
+                )
+            elif pearson_r < 0:
+                direction = "Negative ↓"
+                emoji = "📉"
+                color = "#e74c3c"
+                explanation = (
+                    "An inverse linear association is observed between vessel count "
+                    "and fish landings. As one increases, the other tends to decrease."
+                )
+            else:
+                direction = "No relationship"
+                emoji = "➖"
+                color = "#9ca3af"
+                explanation = (
+                    "No meaningful linear relationship is observed between the variables."
+                )
+
 
         st.markdown(
             f"""
