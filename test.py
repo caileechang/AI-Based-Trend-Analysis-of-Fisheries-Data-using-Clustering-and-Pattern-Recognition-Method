@@ -496,6 +496,7 @@ def hierarchical_clustering(merged_df):
     # INTERPRETATION CARDS
 
     st.markdown("## Interpretation of Clusters")
+    # background: linear-gradient(145deg, #0f766e, #022c22);
     
     #background: linear-gradient(145deg, #0f172a, #020617);
 
