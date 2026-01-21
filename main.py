@@ -2677,7 +2677,7 @@ def main():
             <div style="
                 
                 background-color: #2563EB;
-;
+
 
               
                 border-radius: 18px;
