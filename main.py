@@ -31,6 +31,7 @@ DEV_MODE = st.secrets.get("DEV_MODE", "false").lower() == "true"
 # from clustering_method import hierarchical_clustering
 @st.cache_data
 def load_data():
+    print("Loading data...")
     url = 'https://www.dropbox.com/scl/fi/4cl5zaor1l32ikyudvf2e/Fisheries-Dataset-vessels-fish-landing.xlsx?rlkey=q2ewpeuzj288ewd17rcqxeuie&st=6h4zijb8&dl=1'
     df_land = pd.read_excel(url, sheet_name='Fish Landing')
     df_vess = pd.read_excel(url, sheet_name='Fish Vessels')
