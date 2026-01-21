@@ -2678,37 +2678,63 @@ def main():
         components.html(
             f"""
             <div style="
-                background: linear-gradient(145deg, #0f172a, #020617);
-                border-radius: 18px;
-                padding: 24px;
-                margin-bottom: 20px;
-                border-left: 6px solid {color};
-                box-shadow: 0 6px 20px rgba(0,0,0,0.45);
-                font-family: sans-serif;
+                background-color: #0b1220;
+                border-radius: 16px;
+                padding: 26px 30px;
+                margin-bottom: 24px;
+                border-left: 5px solid {color};
+                box-shadow: 0 10px 28px rgba(0,0,0,0.55);
+                font-family: 'Segoe UI', sans-serif;
+                color: #e5e7eb;
             ">
 
-                <h3 style="margin:0; color:white;">
-                    {emoji} Relationship Insight
-                </h3>
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    margin-bottom: 18px;
+                ">
+                    <span style="font-size:26px;">{emoji}</span>
+                    <span style="
+                        font-size:22px;
+                        font-weight:700;
+                        color:#f9fafb;
+                    ">
+                        Relationship Insight
+                    </span>
+                </div>
 
-                <p style="margin-top:14px; font-size:18px; color:white;">
-                    <b>Correlation Direction:</b>
-                    <span style="color:{color}; font-weight:700;">
+                <div style="font-size:17px; margin-bottom:10px;">
+                    <b style="color:#f9fafb;">Correlation Direction:</b>
+                    <span style="
+                        color:{color};
+                        font-weight:700;
+                        margin-left:6px;
+                    ">
                         {direction}
                     </span>
-                </p>
+                </div>
 
-                <p style="font-size:16px; color:#cbd5e1;">
-                    <b>Pearson r:</b> {pearson_r:.2f} ({strength})
-                </p>
+                <div style="
+                    font-size:16px;
+                    color:#cbd5e1;
+                    margin-bottom:14px;
+                ">
+                    <b>Pearson r:</b> {pearson_r:.2f}
+                    <span style="opacity:0.8;">({strength})</span>
+                </div>
 
-                <p style="font-size:16px; color:#e5e7eb;">
+                <div style="
+                    font-size:15.5px;
+                    line-height:1.6;
+                    color:#d1d5db;
+                ">
                     {explanation}
-                </p>
+                </div>
 
             </div>
             """,
-            height=220
+            height=210
         )
 
     
