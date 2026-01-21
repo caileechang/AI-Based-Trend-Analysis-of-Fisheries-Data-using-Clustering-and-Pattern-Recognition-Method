@@ -2683,7 +2683,7 @@ def main():
                 padding: 24px;
                 margin-bottom: 20px;
                 
-                box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+                color: white;
                 font-family: sans-serif;
             ">
 
