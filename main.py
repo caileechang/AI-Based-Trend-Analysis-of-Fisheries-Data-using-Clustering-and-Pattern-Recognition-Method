@@ -2675,8 +2675,8 @@ def main():
         components.html(
             f"""
             <div style="
-                
-                background: #3B82F6;
+          
+                #background: linear-gradient(145deg, #0f172a, #020617);
                 
                 border-radius: 18px;
                 padding: 24px;
@@ -2691,7 +2691,7 @@ def main():
                 </h3>
 
                 <p style="margin-top:16px; font-size:18px; color:white;">
-                    <b>Correlation Direction:</b>
+                    <b>Correlation:</b>
                     <span style="color:{color}; font-weight:700;">
                         {direction}
                     </span>
