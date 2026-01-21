@@ -2685,7 +2685,7 @@ def main():
                 </p>
             </div>
             """,
-            unsafe_allow_html=True   # ✅ THIS IS THE KEY
+            unsafe_allow_html=True   
         )
 
 
