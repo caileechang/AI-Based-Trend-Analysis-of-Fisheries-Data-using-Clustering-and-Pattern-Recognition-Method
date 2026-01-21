@@ -2698,11 +2698,11 @@ def main():
                     </span>
                 </p>
 
-                <p style="font-size:16px; color:#cbd5e1;">
+                <p style="font-size:16px; color:white;">
                     <b>Pearson correlation coefficient:</b> {pearson_r:.2f} ({strength})
                 </p>
 
-                <p style="font-size:16px; color:#e5e7eb;">
+                <p style="font-size:16px; color:white;">
                     {explanation}
                 </p>
 
