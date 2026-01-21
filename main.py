@@ -2675,7 +2675,7 @@ def main():
         components.html(
             f"""
             <div style="
-                background: #e8f2ff;
+                background: linear-gradient(145deg, #0f172a, #020617);
                 border-radius: 18px;
                 padding: 24px;
                 margin-bottom: 20px;
@@ -2696,7 +2696,7 @@ def main():
                 </p>
 
                 <p style="font-size:16px; color:#cbd5e1;">
-                    <b>Pearson r:</b> {pearson_r:.2f} ({strength})
+                    <b>Pearson correlation coefficient:</b> {pearson_r:.2f} ({strength})
                 </p>
 
                 <p style="font-size:16px; color:#e5e7eb;">
