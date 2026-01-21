@@ -2653,7 +2653,7 @@ def main():
                 emoji = "📈"
                 color = "#2ecc71"
                 explanation = (
-                    "A positive linear association is observed between vessel count "
+                    "A positive linear association is observed between fish vessel "
                     "and fish landings. Both variables tend to increase together."
                 )
             elif pearson_r < 0:
@@ -2661,7 +2661,7 @@ def main():
                 emoji = "📉"
                 color = "#e74c3c"
                 explanation = (
-                    "An inverse linear association is observed between vessel count "
+                    "An inverse linear association is observed between fish vessel  "
                     "and fish landings. As one increases, the other tends to decrease."
                 )
             else:
