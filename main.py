@@ -2686,7 +2686,7 @@ def main():
                 font-family: sans-serif;
             ">
 
-                <h3 style="margin:0; color:white; font-weight: 700;display: flex; align-items: center;gap: 10px">
+                <h3 style="margin:0; font-size: 22px;color:white; font-weight: 700;display: flex; align-items: center;gap: 10px">
                     {emoji} Relationship Insight
                 </h3>
 
