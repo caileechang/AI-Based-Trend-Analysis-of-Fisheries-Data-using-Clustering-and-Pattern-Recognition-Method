@@ -2711,8 +2711,8 @@ def main():
                 </p>
 
             </div>
-            """
-           
+            """,
+            height=260
         )
     
         # --- Step 7: Show 2D scatter ---
