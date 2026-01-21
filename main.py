@@ -2672,7 +2672,9 @@ def main():
                 )
 
 
-        st.markdown(
+        import streamlit.components.v1 as components
+
+        components.html(
             f"""
             <div style="
                 background: linear-gradient(145deg, #0f172a, #020617);
@@ -2681,12 +2683,14 @@ def main():
                 margin-bottom: 20px;
                 border-left: 6px solid {color};
                 box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+                font-family: sans-serif;
             ">
+
                 <h3 style="margin:0; color:white;">
                     {emoji} Relationship Insight
                 </h3>
 
-                <p style="margin-top:10px; font-size:18px; color:white;">
+                <p style="margin-top:14px; font-size:18px; color:white;">
                     <b>Correlation Direction:</b>
                     <span style="color:{color}; font-weight:700;">
                         {direction}
@@ -2700,11 +2704,11 @@ def main():
                 <p style="font-size:16px; color:#e5e7eb;">
                     {explanation}
                 </p>
+
             </div>
             """,
-            unsafe_allow_html=True   
+            height=220
         )
-
 
     
         # --- Step 7: Show 2D scatter ---
