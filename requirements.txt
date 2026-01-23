@@ -1,11 +1,11 @@
 streamlit==1.37.0
 altair==4.2.2
 
-pandas==2.2.3
 numpy==1.26.4
+pandas==2.2.3
+scipy==1.11.4
 
 scikit-learn==1.4.2
-scipy==1.11.4
 
 matplotlib==3.8.4
 seaborn==0.13.2
@@ -20,4 +20,5 @@ kneed==0.8.5
 
 openpyxl==3.1.2
 streamlit-js-eval==1.0.0
+
 
