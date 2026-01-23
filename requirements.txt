@@ -1,25 +1,19 @@
 streamlit
 altair
-
 pandas
 numpy
-
 scikit-learn
 scipy
-
 matplotlib
 seaborn
-
 plotly
-
 folium
 streamlit-folium
-
 hdbscan
 kneed
-
 openpyxl
 streamlit-js-eval
+
 
 
 
