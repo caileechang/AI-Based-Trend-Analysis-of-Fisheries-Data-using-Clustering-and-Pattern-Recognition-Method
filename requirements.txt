@@ -10,6 +10,7 @@ streamlit-folium
 plotly 
 streamlit-js-eval 
 hdbscan
+altair
 
 
 
