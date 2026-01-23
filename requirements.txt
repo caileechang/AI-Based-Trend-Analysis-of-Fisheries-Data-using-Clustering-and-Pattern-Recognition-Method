@@ -8,6 +8,8 @@ openpyxl
 folium
 streamlit-folium 
 plotly 
-streamlit-js-eval hdbscan
+streamlit-js-eval 
+hdbscan
+
 
 
