@@ -1,16 +1,26 @@
-pandas
-streamlit
-kneed 
-scikit-learn
-matplotlib 
-seaborn 
-openpyxl 
-folium
-streamlit-folium 
-plotly 
-streamlit-js-eval 
-hdbscan
-altair
+streamlit==1.37.0
+altair==4.2.2
+
+pandas==2.2.3
+numpy==1.26.4
+
+scikit-learn==1.4.2
+scipy==1.11.4
+
+matplotlib==3.8.4
+seaborn==0.13.2
+
+plotly==5.22.0
+
+folium==0.16.0
+streamlit-folium==0.18.0
+
+hdbscan==0.8.33
+kneed==0.8.5
+
+openpyxl==3.1.2
+streamlit-js-eval==1.0.0
+
 
 
 
