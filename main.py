@@ -1837,7 +1837,7 @@ def main():
             st.markdown("---")
     
     
-            #  K-MEANS CLUSTERING (REQUIRED FOR PLOTLY)
+            #  K-MEANS CLUSTERING 
          
             features = ["Freshwater (Tonnes)", "Marine (Tonnes)"]
             scaled = StandardScaler().fit_transform(yearly[features])
@@ -2186,8 +2186,6 @@ def main():
             import plotly.express as px
             import numpy as np
             
-
-
             # Prepare monthly dataframe for selected year
             dfm = monthly.copy()
             dfm["MonthYear"] = pd.to_datetime(dfm["MonthYear"])
@@ -2619,12 +2617,9 @@ def main():
         # ==================================================
         # CORRELATION INSIGHT (Pearson r)
         # ==================================================
-
         x = merged_df["Total number of fishing vessels"]
         y = merged_df["Total Fish Landing (Tonnes)"]
-
         pearson_r = x.corr(y)
-
         if pd.isna(pearson_r):
             direction = "Insufficient data"
             emoji = "⚠️"
@@ -2802,8 +2797,6 @@ def main():
             horizontal=True
         )
         
-
-       
         #st.markdown(f"<small><b>Optimal number of clusters: {best_k}</b></small>", unsafe_allow_html=True)
 
         #st.markdown("Clusters selected automatically using the highest Silhouette score.")
